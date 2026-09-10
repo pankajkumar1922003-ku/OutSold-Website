@@ -3,41 +3,17 @@ import { ArrowLeft, FileText, Mail } from "lucide-react";
 const TermsConditions = () => {
   return (
     <div className="min-h-screen bg-[#f8faf9] text-[#123331]">
-      
-      {/* Header */}
-      <div className="border-b border-[#123331]/10 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 sm:px-8">
-          
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 text-sm font-medium text-[#123331]/70 transition hover:text-[#007A78]"
-          >
-            <ArrowLeft size={18} />
-            Back
-          </button>
-
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#007A78]/10 text-[#007A78]">
-              <FileText size={22} />
-            </div>
-
-            <span className="text-xl font-bold">
-              Out<span className="text-[#007A78]">Sold</span>
-            </span>
-          </div>
-        </div>
-      </div>
 
       {/* Hero Section */}
       <section className="border-b border-[#123331]/10 bg-white">
-        <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-5xl px-5 py-10">
           
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
+          <div className="mt-20 inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
             <FileText size={16} />
             Please read these terms carefully
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
             Terms & Conditions
           </h1>
 
@@ -53,7 +29,7 @@ const TermsConditions = () => {
       </section>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+      <main className="mx-auto max-w-5xl px-5 py-12">
         <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#123331]/5 sm:p-10 lg:p-14">
           
           <p className="leading-8 text-[#123331]/70">

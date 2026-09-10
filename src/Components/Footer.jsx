@@ -1,20 +1,68 @@
+import { useEffect } from "react";
 import {
   FaInstagram,
   FaLinkedinIn,
   FaFacebookF,
-  FaXTwitter,
   FaArrowUpRightFromSquare,
   FaEnvelope,
   FaLocationDot,
   FaHeart,
 } from "react-icons/fa6";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const scrollToSection = (id) => {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-    });
+    if (location.pathname === "/") {
+      const element = document.getElementById(id);
+
+      if (element) {
+        const yOffset = -100;
+
+        const y =
+          element.getBoundingClientRect().top +
+          window.pageYOffset +
+          yOffset;
+
+        window.scrollTo({
+          top: y,
+          behavior: "smooth",
+        });
+      }
+    } else {
+      navigate("/", {
+        state: { scrollTo: id },
+      });
+    }
   };
+
+  useEffect(() => {
+    if (location.pathname === "/" && location.state?.scrollTo) {
+      const id = location.state.scrollTo;
+
+      setTimeout(() => {
+        const element = document.getElementById(id);
+
+        if (element) {
+          const yOffset = -100;
+
+          const y =
+            element.getBoundingClientRect().top +
+            window.pageYOffset +
+            yOffset;
+
+          window.scrollTo({
+            top: y,
+            behavior: "smooth",
+          });
+        }
+
+        navigate("/", { replace: true, state: null });
+      }, 100);
+    }
+  }, [location, navigate]);
 
   const footerLinks = {
     Platform: [

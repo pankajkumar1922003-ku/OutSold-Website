@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import {
     ArrowRight,
-    Play,
     Sparkles,
     ChevronDown,
 } from "lucide-react";
@@ -133,18 +132,6 @@ const Hero = () => {
                             className="transition-transform duration-300 group-hover:translate-x-1"
                         />
                     </a>
-
-                    {/* Secondary Button */}
-                    <button
-                        onClick={scrollToJourney}
-                        className="group flex w-full items-center justify-center gap-3 rounded-full border border-white/25 bg-white/10 px-7 py-4 text-base font-semibold text-white backdrop-blur-md transition duration-300 hover:scale-105 hover:bg-white/20 sm:w-auto"
-                    >
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
-                            <Play size={13} fill="currentColor" />
-                        </span>
-
-                        Explore the Journey
-                    </button>
                 </motion.div>
             </div>
 

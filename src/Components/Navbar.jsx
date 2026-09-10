@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import logo from "/Outsold Logo.png";
@@ -14,11 +13,8 @@ const navLinks = [
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
   const location = useLocation();
-
-  const isInnerPage =
-    location.pathname === "/privacy-policy" ||
-    location.pathname === "/terms-conditions";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,48 +27,86 @@ const Navbar = () => {
   }, []);
 
   const scrollToSection = (id) => {
-    const element = document.getElementById(id);
+    if (location.pathname === "/") {
+      const element = document.getElementById(id);
 
-    if (element) {
-      const yOffset = -100;
+      if (element) {
+        const yOffset = -100;
 
-      const y =
-        element.getBoundingClientRect().top +
-        window.pageYOffset +
-        yOffset;
+        const y =
+          element.getBoundingClientRect().top +
+          window.pageYOffset +
+          yOffset;
 
-      window.scrollTo({
-        top: y,
-        behavior: "smooth",
+        window.scrollTo({
+          top: y,
+          behavior: "smooth",
+        });
+      }
+    } else {
+      navigate("/", {
+        state: { scrollTo: id },
       });
     }
   };
 
+  useEffect(() => {
+    if (location.pathname === "/" && location.state?.scrollTo) {
+      const id = location.state.scrollTo;
+
+      setTimeout(() => {
+        const element = document.getElementById(id);
+
+        if (element) {
+          const yOffset = -100;
+
+          const y =
+            element.getBoundingClientRect().top +
+            window.pageYOffset +
+            yOffset;
+
+          window.scrollTo({
+            top: y,
+            behavior: "smooth",
+          });
+        }
+
+        navigate("/", { replace: true, state: null });
+      }, 100);
+    }
+  }, [location, navigate]);
+
   return (
-    <header className="pointer-events-none fixed left-0 top-0 z-50 flex w-full justify-center md:pt-2">
+    <header className="fixed top-0 left-0 z-50 flex w-full justify-center pointer-events-none md:mt-0.5">
       <motion.nav
         layout
         transition={{
           duration: 0.45,
           ease: "easeInOut",
         }}
-        className={`pointer-events-auto flex flex-col items-center justify-between transition-all duration-500 ease-in-out ${isScrolled || isInnerPage
+        className={`pointer-events-auto flex flex-col items-center justify-between md:flex-row
+          transition-all duration-500 ease-in-out md:rounded-lg
+          ${isScrolled
             ? `
-      w-full border-b border-white/10
-      bg-[#062b2a]/95
-      px-5 py-4
-      shadow-lg shadow-black/10
-      backdrop-blur-xl
-      md:w-[900px] md:rounded-2xl md:border md:border-white/20 md:px-6 md:py-3
-    `
+                w-full md:w-225
+                bg-[#062b2a]/70
+                backdrop-blur-xl
+                shadow-lg shadow-black/10
+                border border-white/20
+                px-6 py-4
+              `
             : `
-      w-full max-w-7xl
-      border border-transparent
-      bg-transparent
-      px-5 py-4
-      md:px-8 md:py-5
-    `
-          }`}
+                w-full max-w-7xl
+              ${location.pathname !== "/"
+              ? "bg-[#062b2a]/90 backdrop-blur-xl"
+              : "bg-transparent"
+            }
+          border border-transparent
+          px-5 py-4
+          md:px-8 md:py-5
+              `
+          }
+        `}
       >
         {/* Logo */}
         <motion.button
@@ -105,11 +139,15 @@ const Navbar = () => {
                 duration: 0.5,
                 delay: 0.1 + index * 0.08,
               }}
-              className="group cursor-pointer relative flex-1 whitespace-nowrap rounded-md px-1 py-1 text-[13px] font-medium text-white/85 transition-all duration-300 hover:bg-white/10 hover:text-white active:scale-95 min-[400px]:px-2 min-[400px]:text-[11px] sm:flex-none sm:px-3 sm:text-xs md:px-4 md:py-2 md:text-sm"
+              className="group relative flex-1 cursor-pointer whitespace-nowrap rounded-md
+                px-1 py-1 text-[13px] font-medium text-white/85
+                transition-all duration-300 hover:bg-white/10 hover:text-white
+                active:scale-95 min-[400px]:px-2 min-[400px]:text-[11px]
+                sm:flex-none sm:px-3 sm:text-xs md:px-4 md:py-2 md:text-sm"
             >
               {link.name}
 
-              <span className="absolute bottom-1 left-1/2 h-[2px] w-0 -translate-x-1/2 rounded-full bg-[#48D1CC] transition-all duration-300 group-hover:w-5" />
+              <span className="absolute bottom-1 left-1/2 h-0.5 w-0 -translate-x-1/2 rounded-full bg-[#48D1CC] transition-all duration-300 group-hover:w-5" />
             </motion.button>
           ))}
 
@@ -122,7 +160,11 @@ const Navbar = () => {
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.45 }}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-[#007A78] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#f3ffff] hover:shadow-md active:translate-y-0"
+              className="inline-flex items-center gap-2 rounded-xl
+                bg-white px-5 py-2.5 text-sm font-semibold text-[#007A78]
+                transition-all duration-300
+                hover:-translate-y-0.5 hover:bg-[#f3ffff]
+                hover:shadow-md active:translate-y-0"
             >
               Get Started
 
@@ -139,3 +181,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
