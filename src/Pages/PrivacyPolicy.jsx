@@ -6,18 +6,18 @@ const PrivacyPolicy = () => {
 
       {/* Hero */}
       <section className="border-b border-[#123331]/10 bg-white">
-        <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-5xl px-5 py-10">
           
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
+          <div className="mt-20 inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
             <ShieldCheck size={16} />
             Your privacy matters to us
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
             Privacy Policy
           </h1>
 
-          <p className="mt-6 max-w-3xl text-base leading-8 text-[#123331]/65 sm:text-lg">
+          <p className="mt-4 max-w-3xl text-base leading-8 text-[#123331]/65 sm:text-lg">
             This Privacy Policy explains how OutSold collects, uses, stores,
             and protects your information when you use our website and
             platform.
@@ -30,7 +30,7 @@ const PrivacyPolicy = () => {
       </section>
 
       {/* Content */}
-      <main className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+      <main className="mx-auto max-w-5xl px-5 py-12">
         <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#123331]/5 sm:p-10 lg:p-14">
           
           <p className="leading-8 text-[#123331]/70">
