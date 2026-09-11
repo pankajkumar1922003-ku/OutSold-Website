@@ -17,51 +17,35 @@ const features = [
     {
         icon: Layers3,
         title: "All-in-One Management",
-        description:
-            "Create, manage and track your entire event from one powerful platform.",
     },
     {
         icon: Users,
         title: "Smart Attendee Management",
-        description:
-            "Import attendees, manage registrations and handle event check-ins effortlessly.",
     },
     {
         icon: BarChart3,
         title: "Real-Time Analytics",
-        description:
-            "Track ticket sales, revenue and overall event performance in real time.",
     },
     {
         icon: Wallet,
         title: "Built-In Profit & Loss",
-        description:
-            "Track event expenses and automatically calculate your overall profitability.",
     },
     {
         icon: QrCode,
         title: "Flexible UPI Payments",
-        description:
-            "Accept direct payments through your own UPI QR without a mandatory payment gateway.",
         highlight: true,
     },
     {
         icon: ShieldCheck,
         title: "Role-Based Team Access",
-        description:
-            "Add your team and control access with smart permissions for every role.",
     },
     {
         icon: Ticket,
         title: "Smart Ticket Control",
-        description:
-            "Control ticket visibility and schedule exactly when each ticket tier goes live.",
     },
     {
         icon: FileText,
         title: "Powerful Reports",
-        description:
-            "Access detailed sales, customer and event performance reports whenever you need them.",
     },
 ];
 
@@ -108,7 +92,7 @@ const WhyChooseUs = () => {
                 </motion.div>
 
                 {/* Features Grid */}
-                <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="md:mt-16 mt-10 grid gap-2 md:gap-5 grid-cols-2 md:grid-cols-4">
                     {features.map((feature, index) => {
                         const Icon = feature.icon;
 
@@ -131,7 +115,7 @@ const WhyChooseUs = () => {
                                 whileHover={{
                                     y: -8,
                                 }}
-                                className={`group relative overflow-hidden rounded-3xl border p-6 transition duration-300 ${
+                                className={`group relative overflow-hidden rounded-lg border p-6 transition duration-300 ${
                                     feature.highlight
                                         ? "border-[#007A78]/25 bg-[#007A78] shadow-xl shadow-[#007A78]/20"
                                         : "border-[#007A78]/10 bg-white shadow-lg shadow-[#007A78]/5 hover:border-[#007A78]/25 hover:shadow-xl"
@@ -167,24 +151,6 @@ const WhyChooseUs = () => {
                                 >
                                     {feature.title}
                                 </h3>
-
-                                <p
-                                    className={`relative mt-3 text-sm leading-6 ${
-                                        feature.highlight
-                                            ? "text-white/70"
-                                            : "text-[#16302E]/55"
-                                    }`}
-                                >
-                                    {feature.description}
-                                </p>
-
-                                <div
-                                    className={`relative mt-6 h-px w-full ${
-                                        feature.highlight
-                                            ? "bg-white/20"
-                                            : "bg-[#007A78]/10"
-                                    }`}
-                                />
                             </motion.div>
                         );
                     })}
@@ -196,7 +162,7 @@ const WhyChooseUs = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.7 }}
-                    className="relative mt-16 overflow-hidden rounded-[32px] border border-[#007A78]/15 bg-white p-8 shadow-xl shadow-[#007A78]/5 sm:p-12"
+                    className="relative mt-10 md:mt-16 overflow-hidden rounded-[32px] border border-[#007A78]/15 bg-white p-8 shadow-xl shadow-[#007A78]/5 sm:p-12"
                 >
                     {/* Green Side Background */}
                     <div className="absolute right-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-transparent to-[#007A78]/10" />

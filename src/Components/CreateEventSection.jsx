@@ -15,26 +15,18 @@ const organizerFeatures = [
     {
         icon: Ticket,
         title: "Sell Tickets Online",
-        description:
-            "Create ticket types, set pricing, manage availability and start selling instantly.",
     },
     {
         icon: Users,
         title: "Manage Attendees",
-        description:
-            "Track registrations, attendee details and event check-ins from one dashboard.",
     },
     {
         icon: BarChart3,
         title: "Track Performance",
-        description:
-            "Monitor ticket sales, revenue and event performance with real-time insights.",
     },
     {
         icon: WalletCards,
         title: "Manage Payments",
-        description:
-            "Keep track of transactions, revenue and event earnings in one organized place.",
     },
 ];
 
@@ -398,7 +390,7 @@ const CreateEventSection = () => {
                 </div>
 
                 {/* FEATURES */}
-                <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="mt-10 md:mt-14 grid gap-2 md:gap-5 grid-cols-2 md:grid-cols-4">
                     {organizerFeatures.map((feature, index) => {
                         const Icon = feature.icon;
 
@@ -413,7 +405,7 @@ const CreateEventSection = () => {
                                     delay: index * 0.1,
                                 }}
                                 whileHover={{ y: -7 }}
-                                className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-400/10 transition hover:border-[#007A78]/20 hover:shadow-xl"
+                                className="group rounded-lg border border-slate-200 bg-white p-6 shadow-lg shadow-slate-400/10 transition hover:border-[#007A78]/20 hover:shadow-xl"
                             >
                                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#007A78]/10 text-[#007A78] transition duration-300 group-hover:bg-[#007A78] group-hover:text-white">
                                     <Icon size={22} />

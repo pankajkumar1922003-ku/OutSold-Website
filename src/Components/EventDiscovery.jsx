@@ -169,7 +169,7 @@ const EventDiscovery = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.7 }}
-                    className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"
+                    className="flex flex-col text-center justify-between gap-3 lg:flex-row lg:items-end"
                 >
                     <div>
                         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#007A78]/15 bg-[#007A78]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#007A78]">
@@ -177,10 +177,10 @@ const EventDiscovery = () => {
                             Discover Experiences
                         </div>
 
-                        <h2 className="max-w-2xl text-4xl font-bold tracking-tight text-[#102B2A] sm:text-5xl lg:text-6xl">
+                        <h2 className="text-center max-w-2xl text-2xl font-bold tracking-tight text-[#102B2A] md:text-4xl">
                             Find Your Next
 
-                            <span className="block bg-gradient-to-r from-[#007A78] via-[#00918E] to-[#20B2AA] bg-clip-text text-transparent">
+                            <span className="block text-4xl md:text-5xl bg-gradient-to-r from-[#007A78] via-[#00918E] to-[#20B2AA] bg-clip-text text-transparent">
                                 Unforgettable Experience.
                             </span>
                         </h2>
@@ -198,13 +198,13 @@ const EventDiscovery = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: 0.15 }}
-                    className="mt-8 md:mt-10 overflow-hidden rounded-[28px] border border-[#007A78]/10 bg-white p-4 shadow-xl shadow-[#007A78]/5 sm:p-6"
+                    className="mt-6 md:mt-10 overflow-hidden rounded-[28px] border border-[#007A78]/10 bg-white p-4 shadow-xl shadow-[#007A78]/5 sm:p-6"
                 >
                     {/* Top Search Row */}
                     <div className="flex flex-col gap-4 lg:flex-row">
 
                         {/* Search */}
-                        <div className="flex flex-1 items-center gap-3 rounded-2xl border border-[#007A78]/10 bg-[#F4FAFA] px-5 py-4 transition focus-within:border-[#007A78]/30 focus-within:shadow-lg focus-within:shadow-[#007A78]/5">
+                        <div className="flex flex-1 items-center gap-3 rounded-2xl border border-[#007A78]/10 bg-[#F4FAFA] px-4 py-3 md:py-2 transition focus-within:border-[#007A78]/30 focus-within:shadow-lg focus-within:shadow-[#007A78]/5">
                             <Search
                                 size={20}
                                 className="shrink-0 text-[#007A78]"
@@ -233,7 +233,7 @@ const EventDiscovery = () => {
                         {/* Mobile Filter */}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center justify-center gap-2 rounded-2xl border border-[#007A78]/10 bg-[#F4FAFA] px-6 py-4 font-medium text-[#102B2A] transition hover:bg-[#007A78]/10 lg:hidden"
+                            className="flex items-center justify-center gap-2 rounded-2xl border border-[#007A78]/10 bg-[#F4FAFA]  px-4 py-2 font-medium text-[#102B2A] transition hover:bg-[#007A78]/10 lg:hidden"
                         >
                             <SlidersHorizontal size={18} />
                             {showFilters ? "Hide Filters" : "Filters"}
@@ -242,7 +242,7 @@ const EventDiscovery = () => {
                         {/* Clear Filters */}
                         <button
                             onClick={clearFilters}
-                            className="hidden items-center justify-center gap-2 rounded-2xl border border-[#007A78]/10 px-6 py-4 text-sm font-medium text-[#102B2A]/65 transition hover:bg-[#007A78]/5 hover:text-[#007A78] lg:flex"
+                            className="hidden items-center justify-center gap-2 rounded-2xl border border-[#007A78]/10 px-6 py-4 text-sm font-medium text-[#102B2A]/65 transition hover:bg-[#007A78]/5 hover:text-[#007A78] lg:flex cursor-pointer"
                         >
                             <X size={17} />
                             Clear Filters
@@ -317,7 +317,7 @@ const EventDiscovery = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 overflow-x-auto pb-2">
+                                <div className="flex flex-wrap gap-3 pb-2">
                                     {categories.map((category) => {
                                         const Icon = category.icon;
                                         const isSelected =

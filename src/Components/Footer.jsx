@@ -5,10 +5,12 @@ import {
   FaFacebookF,
   FaArrowUpRightFromSquare,
   FaEnvelope,
-  FaLocationDot,
+  FaPhone,
   FaHeart,
 } from "react-icons/fa6";
 import { useLocation, useNavigate } from "react-router-dom";
+import logo from "/Outsold Logo.png";
+import { motion } from "framer-motion";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -81,7 +83,7 @@ const Footer = () => {
   return (
     <footer
       id="footer"
-      className="relative overflow-hidden bg-[#123331] pt-14 text-white sm:pt-20"
+      className="relative overflow-hidden bg-[#123331] pt-5 text-white sm:pt-20"
     >
       {/* Background Glow */}
       <div className="absolute -left-32 top-0 h-72 w-72 rounded-full bg-[#007A78]/20 blur-[120px]" />
@@ -93,14 +95,21 @@ const Footer = () => {
 
           {/* Brand Section */}
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
-            <button
+            <motion.button
               onClick={() => scrollToSection("home")}
-              className="text-3xl font-bold tracking-tight"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="group flex cursor-pointer items-center select-none"
             >
-              Out<span className="text-[#48D1CC]">Sold</span>
-            </button>
+              <img
+                src={logo}
+                alt="OutSold Logo"
+                className="h-16 w-20 md:h-20 md:w-28 object-contain"
+              />
+            </motion.button>
 
-            <p className="mt-5 max-w-sm text-sm leading-7 text-white/55">
+            <p className="md:mt-5 mt-2 max-w-sm text-sm leading-7 text-white/55">
               Everything you need to create, manage and grow unforgettable
               events all in one powerful platform.
             </p>
@@ -140,7 +149,7 @@ const Footer = () => {
           </div>
 
           {/* Platform & Company */}
-          <div className="grid grid-cols-2 gap-8 lg:contents">
+          <div className="grid grid-cols-2 gap-8 lg:contents ml-6">
 
             {/* Platform */}
             <div>
@@ -204,23 +213,30 @@ const Footer = () => {
               Have questions about our platform? We'd love to hear from you.
             </p>
 
-            <a
-              href="mailto:hello@OutSold.com"
-              className="mt-5 flex items-center gap-3 text-sm text-white/70 transition hover:text-[#48D1CC]"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[#48D1CC]">
-                <FaEnvelope size={16} />
-              </span>
+            <div className="mt-5 flex items-center justify-center gap-2 md:gap-5 mx-auto">
+              {/* Email */}
+              <a
+                href="mailto:sellarsuite@gmail.com"
+                className="flex items-center gap-2 text-sm text-white/70 transition hover:text-[#48D1CC]"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[#48D1CC]">
+                  <FaEnvelope size={16} />
+                </span>
 
-              sellarsuite@gmail.com
-            </a>
+                sellarsuite@gmail.com
+              </a>
 
-            <div className="mt-4 flex items-center gap-3 text-sm text-white/60">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[#48D1CC]">
-                <FaLocationDot size={17} />
-              </span>
+              {/* Phone */}
+              <a
+                href="tel:9818815838"
+                className="flex items-center gap-2 text-sm text-white/70 transition hover:text-[#48D1CC]"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-[#48D1CC]">
+                  <FaPhone size={16} />
+                </span>
 
-              India
+                9818815838
+              </a>
             </div>
           </div>
 

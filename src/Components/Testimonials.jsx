@@ -59,7 +59,7 @@ const Testimonials = () => {
     return (
         <section
             id="testimonials"
-            className="relative overflow-hidden bg-[#F7FAF9] py-14 sm:py-20"
+            className="relative overflow-hidden bg-[#F7FAF9] py-14"
         >
             {/* Background Decorations */}
             <div className="absolute -left-40 top-1/3 h-[450px] w-[450px] rounded-full bg-[#007A78]/10 blur-[150px]" />
@@ -81,28 +81,28 @@ const Testimonials = () => {
                         Loved By Organizers
                     </div>
 
-                    <h2 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-[#16302E] sm:text-5xl lg:text-6xl">
+                    <h2 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-[#16302E] sm:text-5xl lg:text-6xl">
                         Built For Events.
 
-                        <span className="mt-2 block text-[#007A78]">
+                        <span className="block text-[#007A78]">
                             Loved By People.
                         </span>
                     </h2>
 
-                    <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[#16302E]/60 sm:text-lg">
+                    <p className="mx-auto mt-2 max-w-2xl text-base leading-8 text-[#16302E]/60 sm:text-lg">
                         See what event organizers have to say about managing
                         their events with our platform.
                     </p>
                 </motion.div>
 
                 {/* Testimonial Card */}
-                <div className="mx-auto mt-12 max-w-5xl">
+                <div className="mx-auto mt-8 max-w-5xl">
                     <div className="relative overflow-hidden rounded-[36px] border border-[#007A78]/10 bg-white p-6 shadow-2xl shadow-[#007A78]/10 sm:p-10 lg:p-14">
 
                         {/* Decorative Green Area */}
                         <div className="absolute right-0 top-0 h-full w-[35%] bg-gradient-to-b from-[#007A78]/10 to-transparent" />
 
-                        <div className="relative grid gap-10 lg:grid-cols-[0.8fr_2fr] lg:items-center">
+                        <div className="relative grid gap-6 lg:grid-cols-[0.8fr_2fr] lg:items-center">
 
                             {/* Profile Side */}
                             <motion.div
