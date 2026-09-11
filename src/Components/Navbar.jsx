@@ -84,7 +84,7 @@ const Navbar = () => {
           duration: 0.45,
           ease: "easeInOut",
         }}
-        className={`pointer-events-auto flex flex-col items-center justify-between md:flex-row
+        className={`pointer-events-auto flex flex-col items-center justify-start md:flex-row md:justify-between
           transition-all duration-500 ease-in-out md:rounded-lg
           ${isScrolled
             ? `
@@ -93,7 +93,7 @@ const Navbar = () => {
                 backdrop-blur-xl
                 shadow-lg shadow-black/10
                 border border-white/20
-                px-6 py-4
+                px-6 py-2
               `
             : `
                 w-full max-w-7xl
@@ -102,9 +102,7 @@ const Navbar = () => {
               : "bg-transparent"
             }
           border border-transparent
-          px-5 py-4
-          md:px-8 md:py-5
-              `
+          px-4 py-1 md:px-8`
           }
         `}
       >
@@ -114,17 +112,13 @@ const Navbar = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="group mb-3 flex cursor-pointer items-center gap-2 select-none md:mb-0"
+          className="group flex cursor-pointer items-center select-none"
         >
           <img
             src={logo}
             alt="OutSold Logo"
-            className="h-9 w-9 object-contain"
+            className="h-16 w-20 md:h-20 md:w-28 object-contain"
           />
-
-          <span className="text-3xl font-bold tracking-tight text-white">
-            Out<span className="text-[#48D1CC]">Sold</span>
-          </span>
         </motion.button>
 
         {/* Navigation Links */}

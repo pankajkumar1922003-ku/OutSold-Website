@@ -35,7 +35,6 @@ const Hero = () => {
                     className="h-full w-full object-cover"
                 >
                     <source src="/HeroVid.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
                 </video>
             </motion.div>
 
@@ -52,18 +51,7 @@ const Hero = () => {
             <div className="absolute -right-32 bottom-1/4 h-96 w-96 rounded-full bg-purple-500/20 blur-[150px]" />
 
             {/* Main Content */}
-            <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pt-2 text-center sm:px-8 lg:px-10">
-
-                {/* Badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: 25 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, delay: 0.3 }}
-                    className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-white/90 backdrop-blur-md sm:text-sm"
-                >
-                    <Sparkles size={16} className="text-[#48D1CC]" />
-                    All-in-One Event Management
-                </motion.div>
+            <div className="relative z-10 mx-auto w-full max-w-6xl -translate-y-8 px-5 text-center sm:px-8 lg:px-10 md:-translate-y-1">
 
                 {/* Main Heading */}
                 <div className="overflow-hidden">
@@ -100,6 +88,17 @@ const Hero = () => {
                     </motion.h1>
                 </div>
 
+                {/* Badge */}
+                <motion.div
+                    initial={{ opacity: 0, y: 25 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.3 }}
+                    className="mb-2 mt-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-white/90 backdrop-blur-md sm:text-sm"
+                >
+                    <Sparkles size={16} className="text-[#48D1CC]" />
+                    All-in-One Event Management
+                </motion.div>
+
                 {/* Description */}
                 <motion.p
                     initial={{ opacity: 0, y: 30 }}
@@ -107,9 +106,7 @@ const Hero = () => {
                     transition={{ duration: 0.7, delay: 0.9 }}
                     className="mx-auto mt-2 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg md:text-xl"
                 >
-                    Plan, create, manage attendees, sell tickets, track payments,
-                    and measure success — everything your event needs in one
-                    powerful platform.
+                    Plan, manage, and grow your events — all in one powerful platform.
                 </motion.p>
 
                 {/* CTA Buttons */}
@@ -123,7 +120,7 @@ const Hero = () => {
                     <a
                         href="https://app.outsold.in/login"
                         target="_blank"
-                        className="group flex w-full items-center justify-center gap-3 rounded-full bg-[#007A78] px-7 py-4 text-base font-semibold text-white shadow-xl shadow-[#007A78]/30 transition duration-300 hover:scale-105 hover:bg-[#00918E] sm:w-auto"
+                        className="group flex w-full items-center justify-center gap-3 rounded-md bg-[#007A78] px-7 py-4 text-base font-semibold text-white shadow-xl shadow-[#007A78]/30 transition duration-300 hover:scale-105 hover:bg-[#00918E] sm:w-auto"
                     >
                         Start Your Journey
 
@@ -144,7 +141,7 @@ const Hero = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.5 }}
-                className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 text-white/60 transition hover:text-white"
+                className="absolute sm:bottom-8 bottom-24 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 text-white/60 transition hover:text-white"
             >
                 <span className="text-[10px] font-semibold uppercase tracking-[0.3em] sm:text-xs">
                     Begin the Journey
