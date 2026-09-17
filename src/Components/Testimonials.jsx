@@ -1,246 +1,281 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
     Quote,
-    Star,
-    ChevronLeft,
-    ChevronRight,
     Sparkles,
-    Building2,
+    Users,
+    MessageCircle,
+    ArrowRight,
 } from "lucide-react";
 
-const testimonials = [
-    {
-        id: 1,
-        name: "Rahul Sharma",
-        role: "Event Organizer",
-        company: "Pulse Events",
-        image: "https://i.pravatar.cc/300?img=12",
-        review:
-            "This platform completely changed how we manage our events. From ticket sales to attendee management, everything is finally available in one place.",
-    },
-    {
-        id: 2,
-        name: "Priya Mehta",
-        role: "Founder",
-        company: "The Experience Co.",
-        image: "https://i.pravatar.cc/300?img=47",
-        review:
-            "Managing registrations and tracking ticket sales used to require multiple tools. Now our entire event workflow is much simpler and more organized.",
-    },
-    {
-        id: 3,
-        name: "Arjun Malhotra",
-        role: "Event Manager",
-        company: "NextGen Experiences",
-        image: "https://i.pravatar.cc/300?img=33",
-        review:
-            "The analytics and attendee management features give us complete visibility over our events. It saves our team a significant amount of time.",
-    },
-];
-
 const Testimonials = () => {
-    const [activeIndex, setActiveIndex] = useState(0);
-
-    const nextTestimonial = () => {
-        setActiveIndex((prev) =>
-            prev === testimonials.length - 1 ? 0 : prev + 1
-        );
-    };
-
-    const previousTestimonial = () => {
-        setActiveIndex((prev) =>
-            prev === 0 ? testimonials.length - 1 : prev - 1
-        );
-    };
-
-    const activeTestimonial = testimonials[activeIndex];
-
     return (
         <section
             id="testimonials"
-            className="relative overflow-hidden bg-[#F7FAF9] py-14"
+            className="relative overflow-hidden bg-[#F7FAF9] py-16 sm:py-24"
         >
-            {/* Background Decorations */}
-            <div className="absolute -left-40 top-1/3 h-[450px] w-[450px] rounded-full bg-[#007A78]/10 blur-[150px]" />
+            {/* ================= BACKGROUND DECORATIONS ================= */}
 
-            <div className="absolute -right-40 bottom-0 h-[400px] w-[400px] rounded-full bg-[#20B2AA]/10 blur-[150px]" />
+            <div className="pointer-events-none absolute -left-40 top-1/3 h-[450px] w-[450px] rounded-full bg-[#007A78]/10 blur-[150px]" />
 
-            <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+            <div className="pointer-events-none absolute -right-40 bottom-0 h-[400px] w-[400px] rounded-full bg-[#20B2AA]/10 blur-[150px]" />
 
-                {/* Heading */}
+            {/* Subtle Grid */}
+            <div
+                className="pointer-events-none absolute inset-0 opacity-[0.025]"
+                style={{
+                    backgroundImage:
+                        "linear-gradient(rgba(0,122,120,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(0,122,120,0.8) 1px, transparent 1px)",
+                    backgroundSize: "60px 60px",
+                }}
+            />
+
+            <div className="relative z-10 mx-auto flex min-h-[520px] max-w-7xl items-center justify-center px-5 sm:px-8 lg:px-10">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 35 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.7 }}
-                    className="mx-auto max-w-3xl text-center"
+                    transition={{
+                        duration: 0.8,
+                        ease: "easeOut",
+                    }}
+                    className="mx-auto w-full max-w-3xl text-center"
                 >
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#007A78]/15 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#007A78] shadow-sm">
+                    {/* ================= BADGE ================= */}
+
+                    <motion.div
+                        initial={{
+                            opacity: 0,
+                            scale: 0.9,
+                        }}
+                        whileInView={{
+                            opacity: 1,
+                            scale: 1,
+                        }}
+                        viewport={{ once: true }}
+                        transition={{
+                            delay: 0.15,
+                            duration: 0.6,
+                        }}
+                        className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#007A78]/15 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#007A78] shadow-sm sm:px-5 sm:py-2.5"
+                    >
                         <Sparkles size={15} />
                         Loved By Organizers
-                    </div>
+                    </motion.div>
 
-                    <h2 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-[#16302E] sm:text-5xl lg:text-6xl">
-                        Built For Events.
+                    {/* ================= ICON ================= */}
 
-                        <span className="block text-[#007A78]">
-                            Loved By People.
+                    <motion.div
+                        initial={{
+                            opacity: 0,
+                            scale: 0.7,
+                        }}
+                        whileInView={{
+                            opacity: 1,
+                            scale: 1,
+                        }}
+                        viewport={{ once: true }}
+                        transition={{
+                            delay: 0.3,
+                            duration: 0.7,
+                            type: "spring",
+                            stiffness: 120,
+                        }}
+                        className="relative mx-auto mb-8 flex h-20 w-20 items-center justify-center sm:h-24 sm:w-24"
+                    >
+                        {/* Glow */}
+                        <div className="absolute inset-0 rounded-[28px] bg-[#007A78]/15 blur-2xl" />
+
+                        {/* Main Icon */}
+                        <div className="relative flex h-full w-full items-center justify-center rounded-[26px] border border-[#007A78]/15 bg-white shadow-xl shadow-[#007A78]/10">
+                            <Quote
+                                size={38}
+                                strokeWidth={1.5}
+                                className="text-[#007A78] sm:h-11 sm:w-11"
+                            />
+                        </div>
+
+                        {/* Floating Dot */}
+                        <motion.span
+                            animate={{
+                                scale: [1, 1.25, 1],
+                                opacity: [0.45, 1, 0.45],
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                            }}
+                            className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-[#20B2AA] shadow-lg shadow-[#20B2AA]/40"
+                        />
+                    </motion.div>
+
+                    {/* ================= HEADING ================= */}
+
+                    <motion.h2
+                        initial={{
+                            opacity: 0,
+                            y: 20,
+                        }}
+                        whileInView={{
+                            opacity: 1,
+                            y: 0,
+                        }}
+                        viewport={{ once: true }}
+                        transition={{
+                            delay: 0.4,
+                            duration: 0.7,
+                        }}
+                        className="text-4xl font-black leading-tight tracking-tight text-[#16302E] sm:text-5xl md:text-6xl"
+                    >
+                        Our Stories Are
+                        <span className="mt-2 block bg-gradient-to-r from-[#007A78] via-[#00918E] to-[#20B2AA] bg-clip-text text-transparent">
+                            Coming Soon.
                         </span>
-                    </h2>
+                    </motion.h2>
 
-                    <p className="mx-auto mt-2 max-w-2xl text-base leading-8 text-[#16302E]/60 sm:text-lg">
-                        See what event organizers have to say about managing
-                        their events with our platform.
-                    </p>
-                </motion.div>
+                    {/* ================= DESCRIPTION ================= */}
 
-                {/* Testimonial Card */}
-                <div className="mx-auto mt-8 max-w-5xl">
-                    <div className="relative overflow-hidden rounded-[36px] border border-[#007A78]/10 bg-white p-6 shadow-2xl shadow-[#007A78]/10 sm:p-10 lg:p-14">
+                    <motion.p
+                        initial={{
+                            opacity: 0,
+                            y: 20,
+                        }}
+                        whileInView={{
+                            opacity: 1,
+                            y: 0,
+                        }}
+                        viewport={{ once: true }}
+                        transition={{
+                            delay: 0.55,
+                            duration: 0.7,
+                        }}
+                        className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#16302E]/55 sm:text-base sm:leading-8 md:text-lg"
+                    >
+                        We&apos;re building something people will love.
+                        Testimonials from event organizers and attendees will
+                        be here soon.
+                    </motion.p>
 
-                        {/* Decorative Green Area */}
-                        <div className="absolute right-0 top-0 h-full w-[35%] bg-gradient-to-b from-[#007A78]/10 to-transparent" />
+                    {/* ================= FEATURE CARDS ================= */}
 
-                        <div className="relative grid gap-6 lg:grid-cols-[0.8fr_2fr] lg:items-center">
+                    <motion.div
+                        initial={{
+                            opacity: 0,
+                            y: 25,
+                        }}
+                        whileInView={{
+                            opacity: 1,
+                            y: 0,
+                        }}
+                        viewport={{ once: true }}
+                        transition={{
+                            delay: 0.7,
+                            duration: 0.7,
+                        }}
+                        className="mx-auto mt-10 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2"
+                    >
+                        {/* Card 1 */}
+                        <div className="group flex items-center gap-4 rounded-2xl border border-[#007A78]/10 bg-white p-4 text-left shadow-lg shadow-[#007A78]/5 transition duration-300 hover:-translate-y-1 hover:border-[#007A78]/20 hover:shadow-xl">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#007A78]/10 text-[#007A78] transition duration-300 group-hover:scale-110 group-hover:bg-[#007A78] group-hover:text-white">
+                                <Users size={20} />
+                            </div>
 
-                            {/* Profile Side */}
-                            <motion.div
-                                key={`profile-${activeTestimonial.id}`}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.4 }}
-                                className="flex flex-col items-center text-center lg:items-start lg:text-left"
-                            >
-                                <div className="relative">
-                                    <div className="absolute -inset-3 rounded-full bg-[#007A78]/10 blur-xl" />
-
-                                    <img
-                                        src={activeTestimonial.image}
-                                        alt={activeTestimonial.name}
-                                        className="relative h-28 w-28 rounded-full border-4 border-white object-cover shadow-xl sm:h-32 sm:w-32"
-                                    />
-                                </div>
-
-                                <h3 className="mt-6 text-xl font-bold text-[#16302E]">
-                                    {activeTestimonial.name}
-                                </h3>
-
-                                <p className="mt-1 text-sm font-medium text-[#007A78]">
-                                    {activeTestimonial.role}
+                            <div>
+                                <p className="text-sm font-semibold text-[#16302E]">
+                                    Real Experiences
                                 </p>
 
-                                <div className="mt-3 flex items-center gap-2 text-sm text-[#16302E]/50">
-                                    <Building2 size={15} />
-                                    {activeTestimonial.company}
-                                </div>
-
-                                {/* Stars */}
-                                <div className="mt-5 flex gap-1">
-                                    {[...Array(5)].map((_, index) => (
-                                        <Star
-                                            key={index}
-                                            size={18}
-                                            fill="#F5B301"
-                                            className="text-[#F5B301]"
-                                        />
-                                    ))}
-                                </div>
-                            </motion.div>
-
-                            {/* Review */}
-                            <div className="relative">
-
-                                {/* Quote Icon */}
-                                <Quote
-                                    size={65}
-                                    className="absolute -top-5 -left-2 text-[#007A78]/10 sm:-top-8"
-                                />
-
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={activeTestimonial.id}
-                                        initial={{
-                                            opacity: 0,
-                                            x: 30,
-                                        }}
-                                        animate={{
-                                            opacity: 1,
-                                            x: 0,
-                                        }}
-                                        exit={{
-                                            opacity: 0,
-                                            x: -30,
-                                        }}
-                                        transition={{
-                                            duration: 0.35,
-                                        }}
-                                    >
-                                        <p className="relative text-xl font-medium leading-relaxed text-[#16302E] sm:text-2xl lg:text-3xl">
-                                            “{activeTestimonial.review}”
-                                        </p>
-                                    </motion.div>
-                                </AnimatePresence>
-
-                                {/* Navigation */}
-                                <div className="mt-10 flex items-center justify-between">
-
-                                    {/* Dots */}
-                                    <div className="flex gap-2">
-                                        {testimonials.map((_, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() =>
-                                                    setActiveIndex(index)
-                                                }
-                                                className={`h-2.5 rounded-full transition-all duration-300 ${
-                                                    activeIndex === index
-                                                        ? "w-8 bg-[#007A78]"
-                                                        : "w-2.5 bg-[#007A78]/15 hover:bg-[#007A78]/30"
-                                                }`}
-                                                aria-label={`Go to testimonial ${
-                                                    index + 1
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-
-                                    {/* Arrows */}
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={previousTestimonial}
-                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#007A78]/15 text-[#007A78] transition hover:bg-[#007A78] hover:text-white"
-                                            aria-label="Previous testimonial"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
-
-                                        <button
-                                            onClick={nextTestimonial}
-                                            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#007A78] text-white shadow-lg shadow-[#007A78]/20 transition hover:bg-[#00918E]"
-                                            aria-label="Next testimonial"
-                                        >
-                                            <ChevronRight size={20} />
-                                        </button>
-                                    </div>
-                                </div>
+                                <p className="mt-1 text-xs text-[#16302E]/45">
+                                    Stories from our growing community
+                                </p>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Trust Points */}
-                <motion.div
-                    initial={{ opacity: 0, y: 25 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7 }}
-                    className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 text-sm font-medium text-[#16302E]/50"
-                >
-                    <span>✓ Easy to use</span>
-                    <span>✓ Built for organizers</span>
-                    <span>✓ Powerful event tools</span>
-                    <span>✓ Everything in one place</span>
+                        {/* Card 2 */}
+                        <div className="group flex items-center gap-4 rounded-2xl border border-[#007A78]/10 bg-white p-4 text-left shadow-lg shadow-[#007A78]/5 transition duration-300 hover:-translate-y-1 hover:border-[#007A78]/20 hover:shadow-xl">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#007A78]/10 text-[#007A78] transition duration-300 group-hover:scale-110 group-hover:bg-[#007A78] group-hover:text-white">
+                                <MessageCircle size={20} />
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-semibold text-[#16302E]">
+                                    Your Voice Matters
+                                </p>
+
+                                <p className="mt-1 text-xs text-[#16302E]/45">
+                                    More stories will be shared soon
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* ================= STAY TUNED ================= */}
+
+                    <motion.div
+                        initial={{
+                            opacity: 0,
+                            scaleX: 0,
+                        }}
+                        whileInView={{
+                            opacity: 1,
+                            scaleX: 1,
+                        }}
+                        viewport={{ once: true }}
+                        transition={{
+                            delay: 0.9,
+                            duration: 0.8,
+                        }}
+                        className="mx-auto mt-10 flex max-w-xs items-center gap-3"
+                    >
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#007A78]/25" />
+
+                        <span className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.25em] text-[#007A78]/60">
+                            Stay Tuned
+                        </span>
+
+                        <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#007A78]/25" />
+                    </motion.div>
+
+                    {/* ================= DOT ANIMATION ================= */}
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 1.05 }}
+                        className="mt-6 flex justify-center gap-2"
+                    >
+                        {[0, 1, 2].map((dot) => (
+                            <motion.span
+                                key={dot}
+                                animate={{
+                                    y: [0, -5, 0],
+                                    opacity: [0.3, 1, 0.3],
+                                }}
+                                transition={{
+                                    duration: 1.2,
+                                    repeat: Infinity,
+                                    delay: dot * 0.18,
+                                }}
+                                className="h-1.5 w-1.5 rounded-full bg-[#007A78]"
+                            />
+                        ))}
+                    </motion.div>
+
+                    {/* Bottom Text */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 1.2 }}
+                        className="mt-7 flex items-center justify-center gap-2 text-xs text-[#16302E]/35"
+                    >
+                        <span>Great stories are on the way</span>
+
+                        <ArrowRight
+                            size={14}
+                            className="text-[#007A78]"
+                        />
+                    </motion.div>
                 </motion.div>
             </div>
         </section>
@@ -248,4 +283,3 @@ const Testimonials = () => {
 };
 
 export default Testimonials;
-
