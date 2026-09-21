@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "sellar-events-9923f"
+  },
+  "targets": {
+    "sellar-events-9923f": {
+      "hosting": {
+        "website": [
+          "outsold-website"
+        ]
+      }
+    }
+  }
+}

@@ -95,10 +95,10 @@ const EventDiscovery = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.45, duration: 0.7 }}
-                        className="text-4xl font-black tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+                        className="text-4xl font-black leading-[1.15] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
                     >
                         Events Are
-                        <span className="mt-2 block bg-gradient-to-r from-white via-[#48D1CC] to-[#20B2AA] bg-clip-text text-transparent">
+                        <span className="mt-2 block bg-gradient-to-r from-white via-[#48D1CC] to-[#20B2AA] bg-clip-text pb-2 text-transparent">
                             Coming Soon.
                         </span>
                     </motion.h1>
