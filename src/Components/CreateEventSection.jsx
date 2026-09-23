@@ -3,50 +3,73 @@ import {
     ArrowRight,
     BarChart3,
     CalendarDays,
-    CircleDollarSign,
+    CheckCircle2,
+    Sparkles,
     Ticket,
     Users,
-    WalletCards,
-    TrendingUp,
-    CheckCircle2,
 } from "lucide-react";
+import { useLayoutEffect } from "react";
 
 const organizerFeatures = [
     {
+        icon: CalendarDays,
+        title: "Create Events",
+        description: "Build and launch your event in minutes.",
+    },
+    {
         icon: Ticket,
-        title: "Sell Tickets Online",
+        title: "Sell Tickets",
+        description: "Manage ticket sales from one place.",
     },
     {
         icon: Users,
         title: "Manage Attendees",
-    },
-    {
-        icon: BarChart3,
-        title: "Track Performance",
-    },
-    {
-        icon: WalletCards,
-        title: "Manage Payments",
+        description: "Keep your audience and bookings organized.",
     },
 ];
 
 const CreateEventSection = () => {
+    useLayoutEffect(() => {
+        window.history.scrollRestoration = "manual";
+
+        document.documentElement.style.scrollBehavior = "auto";
+        document.body.style.scrollBehavior = "auto";
+
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+
+        return () => {
+            document.documentElement.style.scrollBehavior = "";
+            document.body.style.scrollBehavior = "";
+        };
+    }, []);
+
     return (
         <section
             id="createEvents"
-            className="relative overflow-hidden bg-[#EEF1F3] py-14 text-[#102B2A] sm:py-20"
+            className="relative overflow-hidden bg-[#FFFBEA] py-16 text-[#142522] sm:py-24 lg:py-28"
         >
-            {/* Soft Background Effects */}
-            <div className="absolute -left-40 top-1/3 h-[420px] w-[420px] rounded-full bg-[#007A78]/10 blur-[160px]" />
+            {/* Background Glow */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -left-52 top-10 h-[520px] w-[520px] rounded-full bg-[#FEDF24]/25 blur-[150px]" />
 
-            <div className="absolute -right-40 bottom-0 h-[420px] w-[420px] rounded-full bg-slate-400/10 blur-[160px]" />
+                <div className="absolute -right-52 top-[20%] h-[600px] w-[600px] rounded-full bg-[#44807F]/15 blur-[160px]" />
 
-            <div className="absolute left-1/2 top-0 h-px w-[85%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#007A78]/20 to-transparent" />
+                <div className="absolute bottom-[-250px] left-[25%] h-[500px] w-[500px] rounded-full bg-[#FEDF24]/20 blur-[150px]" />
+
+                <div className="absolute left-[50%] top-[35%] h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-white/80 blur-[120px]" />
+            </div>
+
+            {/* Top Glow Line */}
+            <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[80%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#44807F]/40 to-transparent" />
 
             <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
-                <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-20">
-                    
-                    {/* LEFT CONTENT */}
+                <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
+
+                    {/* =========================
+                        DESKTOP IMAGE
+                    ========================== */}
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -55,48 +78,213 @@ const CreateEventSection = () => {
                             duration: 0.8,
                             ease: [0.22, 1, 0.36, 1],
                         }}
+                        className="relative order-2 hidden md:block lg:order-1 md:-mt-16"
+                    >
+                        <img
+                            src="/Dashboard.png"
+                            alt="OutSold Organizer Dashboard"
+                            className="mx-auto h-auto w-[60%] object-contain"
+                        />
+
+                        {/* Floating Revenue Card */}
+                        <motion.div
+                            animate={{ y: [0, -7, 0] }}
+                            transition={{
+                                duration: 4,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                            }}
+                            className="absolute -right-8 -top-10 rounded-2xl border border-[#44807F]/10 bg-white/95 px-4 py-3 shadow-[0_20px_50px_rgba(68,128,127,0.12)] backdrop-blur-xl sm:block md:right-20"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FEDF24]/20">
+                                    <BarChart3
+                                        size={18}
+                                        className="text-[#44807F]"
+                                    />
+                                </div>
+
+                                <div>
+                                    <p className="text-[10px] text-[#142522]/45">
+                                        Event Revenue
+                                    </p>
+
+                                    <p className="mt-0.5 text-sm font-bold text-[#142522]">
+                                        +24.8%
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Floating Ticket Card */}
+                        <motion.div
+                            animate={{ y: [0, 7, 0] }}
+                            transition={{
+                                duration: 4.5,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                            }}
+                            className="absolute -bottom-5 -left-3 rounded-2xl border border-[#44807F]/10 bg-white/95 px-4 py-3 shadow-[0_20px_50px_rgba(68,128,127,0.12)] backdrop-blur-xl sm:block lg:left-10"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#44807F]/10">
+                                    <Ticket
+                                        size={18}
+                                        className="text-[#44807F]"
+                                    />
+                                </div>
+
+                                <div>
+                                    <p className="text-[10px] text-[#142522]/45">
+                                        Tickets Sold
+                                    </p>
+
+                                    <p className="mt-0.5 text-sm font-bold text-[#142522]">
+                                        1,284
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+
+                    {/* =========================
+                        CONTENT
+                    ========================== */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{
+                            duration: 0.8,
+                            delay: 0.1,
+                            ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className="order-1 lg:order-2"
                     >
                         {/* Badge */}
-                        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#007A78]/15 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#007A78] shadow-sm">
-                            <TrendingUp size={15} />
-                            Built for Organizers
+                        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#44807F]/15 bg-white/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#44807F] shadow-sm backdrop-blur-md sm:text-xs">
+                            <Sparkles size={14} />
+                            Built for Event Organizers
                         </div>
 
                         {/* Heading */}
-                        <h2 className="max-w-xl text-4xl font-bold leading-tight tracking-tight text-[#1D2B2B] sm:text-5xl lg:text-6xl">
-                            Create.
-                            
-                            <span className="text-[#1D2B2B]/40">
-                                {" "}Manage.
+                        <h2 className="max-w-2xl text-4xl font-black leading-[1.08] tracking-[-0.045em] text-[#142522] sm:text-5xl md:text-6xl">
+                            Your Event.
+
+                            <span className="block text-[#142522]/35">
+                                Your Audience.
                             </span>
 
-                            <span className="mt-2 block bg-gradient-to-r from-[#006E6B] via-[#008985] to-[#1AA39E] bg-clip-text text-transparent">
-                                Sell Out Your Event.
+                            <span className="mt-2 block bg-gradient-to-r from-[#FEDF24] via-[#b8c957] to-[#44807F] bg-clip-text text-transparent">
+                                Your Growth.
                             </span>
                         </h2>
 
+                        {/* =========================
+                            MOBILE IMAGE
+                            ========================== */}
+                        {/* MOBILE IMAGE + FLOATING CARDS */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{
+                                duration: 0.6,
+                                ease: [0.22, 1, 0.36, 1],
+                            }}
+                            className="relative mt-4 md:hidden"
+                        >
+                            <img
+                                src="/Dashboard.png"
+                                alt="OutSold Organizer Dashboard"
+                                className="mx-auto h-auto w-full object-contain"
+                            />
+
+                            {/* Mobile Revenue Card */}
+                            <motion.div
+                                animate={{ y: [0, -5, 0] }}
+                                transition={{
+                                    duration: 4,
+                                    repeat: Infinity,
+                                    ease: "easeInOut",
+                                }}
+                                className="absolute right-0 top-2 rounded-xl border border-[#44807F]/10 bg-white/95 px-3 py-2 shadow-[0_12px_30px_rgba(68,128,127,0.12)] backdrop-blur-xl"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FEDF24]/20">
+                                        <BarChart3
+                                            size={15}
+                                            className="text-[#44807F]"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[8px] text-[#142522]/45">
+                                            Event Revenue
+                                        </p>
+
+                                        <p className="text-xs font-bold text-[#142522]">
+                                            +24.8%
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Mobile Ticket Card */}
+                            <motion.div
+                                animate={{ y: [0, 5, 0] }}
+                                transition={{
+                                    duration: 4.5,
+                                    repeat: Infinity,
+                                    ease: "easeInOut",
+                                }}
+                                className="absolute bottom-2 left-0 rounded-xl border border-[#44807F]/10 bg-white/95 px-3 py-2 shadow-[0_12px_30px_rgba(68,128,127,0.12)] backdrop-blur-xl"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#44807F]/10">
+                                        <Ticket
+                                            size={15}
+                                            className="text-[#44807F]"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[8px] text-[#142522]/45">
+                                            Tickets Sold
+                                        </p>
+
+                                        <p className="text-xs font-bold text-[#142522]">
+                                            1,284
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+
                         {/* Description */}
-                        <p className="mt-6 max-w-xl text-base leading-8 text-[#1D2B2B]/65 sm:text-lg">
-                            From creating your event to selling the last ticket,
-                            manage everything from one powerful dashboard built
-                            for modern event organizers.
+                        <p className="mt-6 max-w-xl text-sm leading-7 text-[#142522]/60 sm:text-base sm:leading-8">
+                            Everything you need to create, manage and grow
+                            successful events — all from one powerful
+                            organizer dashboard.
                         </p>
 
                         {/* Benefits */}
-                        <div className="mt-7 space-y-4">
+                        <div className="mt-7 space-y-3.5">
                             {[
-                                "Create unlimited event listings",
-                                "Manage tickets and attendees",
-                                "Track revenue and performance",
+                                "Create and publish events effortlessly",
+                                "Manage tickets, bookings and attendees",
+                                "Track sales and event performance",
                             ].map((item) => (
                                 <div
                                     key={item}
-                                    className="flex items-center gap-3 text-sm text-[#1D2B2B]/75 sm:text-base"
+                                    className="flex items-center gap-3 text-sm text-[#142522]/75 sm:text-base"
                                 >
-                                    <CheckCircle2
-                                        size={19}
-                                        className="shrink-0 text-[#007A78]"
-                                    />
+                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#44807F]/10">
+                                        <CheckCircle2
+                                            size={15}
+                                            className="text-[#44807F]"
+                                        />
+                                    </span>
 
                                     {item}
                                 </div>
@@ -104,320 +292,100 @@ const CreateEventSection = () => {
                         </div>
 
                         {/* CTA */}
-                        <motion.a
-                            href="https://app.outsold.in/login"
-                            target="_blank"
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="group mt-9 inline-flex items-center gap-3 rounded-full bg-[#007A78] px-7 py-4 text-base font-semibold text-white shadow-xl shadow-[#007A78]/20 transition hover:bg-[#006966]"
-                        >
-                            Create Your Event
+                        <div className="mt-8 flex flex-wrap items-center gap-4">
+                            <motion.a
+                                href="https://app.outsold.in/login"
+                                target="_blank"
+                                rel="noreferrer"
+                                whileHover={{ y: -3 }}
+                                whileTap={{ scale: 0.97 }}
+                                className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-[#FEDF24] via-[#dce982] to-[#44807F] px-6 py-3.5 text-sm font-black text-[#142522] shadow-[0_15px_40px_rgba(68,128,127,0.18)] transition sm:px-7 sm:py-4"
+                            >
+                                Create Your Event
 
-                            <ArrowRight
-                                size={19}
-                                className="transition-transform duration-300 group-hover:translate-x-1"
-                            />
-                        </motion.a>
-                    </motion.div>
-
-                    {/* RIGHT SIDE DASHBOARD */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 60, scale: 0.95 }}
-                        whileInView={{ opacity: 1, x: 0, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{
-                            duration: 0.9,
-                            delay: 0.15,
-                            ease: [0.22, 1, 0.36, 1],
-                        }}
-                        className="relative"
-                    >
-                        {/* Main Dashboard */}
-                        <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-400/15 sm:p-6">
-                            
-                            {/* Dashboard Header */}
-                            <div className="flex items-center justify-between border-b border-slate-200 pb-5">
-                                <div>
-                                    <p className="text-xs uppercase tracking-[0.15em] text-[#1D2B2B]/40">
-                                        Organizer Dashboard
-                                    </p>
-
-                                    <h3 className="mt-1 text-lg font-semibold text-[#1D2B2B] sm:text-xl">
-                                        Summer Music Festival
-                                    </h3>
-                                </div>
-
-                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#007A78]/10 text-[#007A78]">
-                                    <CalendarDays size={21} />
-                                </div>
-                            </div>
-
-                            {/* Statistics */}
-                            <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4">
-                                <motion.div
-                                    whileHover={{ y: -4 }}
-                                    className="rounded-2xl border border-slate-200 bg-[#F7F8F9] p-4 transition"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-[#1D2B2B]/50">
-                                            Revenue
-                                        </span>
-
-                                        <CircleDollarSign
-                                            size={18}
-                                            className="text-[#007A78]"
-                                        />
-                                    </div>
-
-                                    <h4 className="mt-3 text-2xl font-bold text-[#1D2B2B] sm:text-3xl">
-                                        ₹2.48L
-                                    </h4>
-
-                                    <p className="mt-2 text-xs font-medium text-[#007A78]">
-                                        +18.2% this week
-                                    </p>
-                                </motion.div>
-
-                                <motion.div
-                                    whileHover={{ y: -4 }}
-                                    className="rounded-2xl border border-slate-200 bg-[#F7F8F9] p-4 transition"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-[#1D2B2B]/50">
-                                            Tickets Sold
-                                        </span>
-
-                                        <Ticket
-                                            size={18}
-                                            className="text-[#007A78]"
-                                        />
-                                    </div>
-
-                                    <h4 className="mt-3 text-2xl font-bold text-[#1D2B2B] sm:text-3xl">
-                                        1,284
-                                    </h4>
-
-                                    <p className="mt-2 text-xs text-[#1D2B2B]/45">
-                                        of 2,000 tickets
-                                    </p>
-                                </motion.div>
-
-                                <motion.div
-                                    whileHover={{ y: -4 }}
-                                    className="rounded-2xl border border-slate-200 bg-[#F7F8F9] p-4 transition"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-[#1D2B2B]/50">
-                                            Attendees
-                                        </span>
-
-                                        <Users
-                                            size={18}
-                                            className="text-[#007A78]"
-                                        />
-                                    </div>
-
-                                    <h4 className="mt-3 text-2xl font-bold text-[#1D2B2B] sm:text-3xl">
-                                        1,126
-                                    </h4>
-
-                                    <p className="mt-2 text-xs text-[#1D2B2B]/45">
-                                        87.6% confirmed
-                                    </p>
-                                </motion.div>
-
-                                <motion.div
-                                    whileHover={{ y: -4 }}
-                                    className="rounded-2xl border border-slate-200 bg-[#F7F8F9] p-4 transition"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-[#1D2B2B]/50">
-                                            Conversion
-                                        </span>
-
-                                        <TrendingUp
-                                            size={18}
-                                            className="text-[#007A78]"
-                                        />
-                                    </div>
-
-                                    <h4 className="mt-3 text-2xl font-bold text-[#1D2B2B] sm:text-3xl">
-                                        64.2%
-                                    </h4>
-
-                                    <p className="mt-2 text-xs font-medium text-[#007A78]">
-                                        +7.4% growth
-                                    </p>
-                                </motion.div>
-                            </div>
-
-                            {/* Sales Chart */}
-                            <div className="mt-5 rounded-2xl border border-slate-200 bg-[#F7F8F9] p-5">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-semibold text-[#1D2B2B]">
-                                            Ticket Sales
-                                        </p>
-
-                                        <p className="mt-1 text-xs text-[#1D2B2B]/45">
-                                            Last 7 days
-                                        </p>
-                                    </div>
-
-                                    <span className="rounded-full bg-[#007A78]/10 px-3 py-1 text-xs font-medium text-[#007A78]">
-                                        Live
-                                    </span>
-                                </div>
-
-                                <div className="mt-6 flex h-32 items-end gap-2 sm:gap-3">
-                                    {[36, 52, 46, 70, 58, 84, 100].map(
-                                        (height, index) => (
-                                            <motion.div
-                                                key={index}
-                                                initial={{ height: 0 }}
-                                                whileInView={{
-                                                    height: `${height}%`,
-                                                }}
-                                                viewport={{ once: true }}
-                                                transition={{
-                                                    duration: 0.7,
-                                                    delay: 0.3 + index * 0.08,
-                                                }}
-                                                className="relative flex-1 overflow-hidden rounded-t-lg bg-gradient-to-t from-[#006E6B] to-[#48D1CC]"
-                                            />
-                                        )
-                                    )}
-                                </div>
-
-                                <div className="mt-3 flex justify-between text-[10px] text-[#1D2B2B]/40">
-                                    <span>Mon</span>
-                                    <span>Tue</span>
-                                    <span>Wed</span>
-                                    <span>Thu</span>
-                                    <span>Fri</span>
-                                    <span>Sat</span>
-                                    <span>Sun</span>
-                                </div>
-                            </div>
-
-                            {/* Recent Sale */}
-                            <div className="mt-5 flex items-center justify-between rounded-2xl border border-[#007A78]/10 bg-[#007A78]/5 p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#007A78]/10">
-                                        <Ticket
-                                            size={18}
-                                            className="text-[#007A78]"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <p className="text-sm font-medium text-[#1D2B2B]">
-                                            New Ticket Sale
-                                        </p>
-
-                                        <p className="text-xs text-[#1D2B2B]/45">
-                                            VIP Pass • 2 tickets
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <span className="text-sm font-semibold text-[#007A78]">
-                                    +₹3,998
+                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/10">
+                                    <ArrowRight
+                                        size={16}
+                                        className="transition-transform duration-300 group-hover:translate-x-1"
+                                    />
                                 </span>
-                            </div>
+                            </motion.a>
+
+                            <span className="text-xs text-[#142522]/40 sm:text-sm">
+                                Start creating in minutes
+                            </span>
                         </div>
 
-                        {/* Floating Revenue Card */}
-                        <motion.div
-                            animate={{ y: [0, -8, 0] }}
-                            transition={{
-                                duration: 4,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                            }}
-                            className="absolute -right-3 -top-6 hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-400/15 sm:block lg:-right-8"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#007A78]/10">
-                                    <WalletCards
-                                        size={18}
-                                        className="text-[#007A78]"
-                                    />
-                                </div>
+                        {/* Mini Stats */}
+                        <div className="mt-10 grid max-w-lg grid-cols-3 border-t border-[#44807F]/15 pt-6">
+                            <div>
+                                <p className="text-xl font-black text-[#142522] sm:text-2xl">
+                                    1K+
+                                </p>
 
-                                <div>
-                                    <p className="text-xs text-[#1D2B2B]/45">
-                                        Today's Revenue
-                                    </p>
-
-                                    <p className="mt-1 font-bold text-[#1D2B2B]">
-                                        ₹34,850
-                                    </p>
-                                </div>
+                                <p className="mt-1 text-[10px] text-[#142522]/40 sm:text-xs">
+                                    Events Created
+                                </p>
                             </div>
-                        </motion.div>
 
-                        {/* Floating Attendee Card */}
-                        <motion.div
-                            animate={{ y: [0, 8, 0] }}
-                            transition={{
-                                duration: 4.5,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                            }}
-                            className="absolute -bottom-7 -left-3 hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-400/15 sm:block lg:-left-8"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#007A78]/10">
-                                    <Users
-                                        size={18}
-                                        className="text-[#007A78]"
-                                    />
-                                </div>
+                            <div className="border-l border-[#44807F]/15 pl-4 sm:pl-6">
+                                <p className="text-xl font-black text-[#142522] sm:text-2xl">
+                                    50K+
+                                </p>
 
-                                <div>
-                                    <p className="text-xs text-[#1D2B2B]/45">
-                                        New Attendees
-                                    </p>
-
-                                    <p className="mt-1 font-bold text-[#1D2B2B]">
-                                        +128 this week
-                                    </p>
-                                </div>
+                                <p className="mt-1 text-[10px] text-[#142522]/40 sm:text-xs">
+                                    Tickets Sold
+                                </p>
                             </div>
-                        </motion.div>
+
+                            <div className="border-l border-[#44807F]/15 pl-4 sm:pl-6">
+                                <p className="text-xl font-black text-[#142522] sm:text-2xl">
+                                    24/7
+                                </p>
+
+                                <p className="mt-1 text-[10px] text-[#142522]/40 sm:text-xs">
+                                    Event Control
+                                </p>
+                            </div>
+                        </div>
                     </motion.div>
                 </div>
 
-                {/* FEATURES */}
-                <div className="mt-10 md:mt-14 grid gap-2 md:gap-5 grid-cols-2 md:grid-cols-4">
+                {/* =========================
+                    BOTTOM FEATURE CARDS
+                ========================== */}
+                <div className="mt-16 grid gap-3 sm:mt-20 sm:grid-cols-3 sm:gap-4">
                     {organizerFeatures.map((feature, index) => {
                         const Icon = feature.icon;
 
                         return (
                             <motion.div
                                 key={feature.title}
-                                initial={{ opacity: 0, y: 30 }}
+                                initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{
-                                    duration: 0.6,
+                                    duration: 0.5,
                                     delay: index * 0.1,
                                 }}
-                                whileHover={{ y: -7 }}
-                                className="group rounded-lg border border-slate-200 bg-white p-6 shadow-lg shadow-slate-400/10 transition hover:border-[#007A78]/20 hover:shadow-xl"
+                                whileHover={{ y: -5 }}
+                                className="group rounded-2xl border border-[#44807F]/10 bg-white/65 p-4 shadow-[0_15px_40px_rgba(68,128,127,0.06)] backdrop-blur-md transition hover:border-[#44807F]/25 hover:bg-white sm:p-5"
                             >
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#007A78]/10 text-[#007A78] transition duration-300 group-hover:bg-[#007A78] group-hover:text-white">
-                                    <Icon size={22} />
+                                <div className="flex items-start gap-4">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FEDF24]/25 to-[#44807F]/15 text-[#44807F] transition group-hover:from-[#FEDF24] group-hover:to-[#44807F] group-hover:text-[#142522]">
+                                        <Icon size={20} />
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-sm font-bold text-[#142522] sm:text-base">
+                                            {feature.title}
+                                        </h3>
+
+                                        <p className="mt-1 text-xs leading-5 text-[#142522]/45">
+                                            {feature.description}
+                                        </p>
+                                    </div>
                                 </div>
-
-                                <h3 className="mt-5 text-lg font-semibold text-[#1D2B2B]">
-                                    {feature.title}
-                                </h3>
-
-                                <p className="mt-3 text-sm leading-6 text-[#1D2B2B]/55">
-                                    {feature.description}
-                                </p>
                             </motion.div>
                         );
                     })}
@@ -428,4 +396,3 @@ const CreateEventSection = () => {
 };
 
 export default CreateEventSection;
-
