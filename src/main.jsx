@@ -6,7 +6,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import PrivacyPolicy from './Pages/PrivacyPolicy.jsx'
 import TermsConditions from './Pages/Terms-Cond.jsx'
 import Layout from './Layout/Layout.jsx'
-
+import ExploreLayout from './Layout/ExploreLayout.jsx'
+import EventsPage from './Components/All Events.jsx'
+import LocationOnboarding from './Components/LocationOnboarding.jsx'
 
 const router = createBrowserRouter([
   {
@@ -16,6 +18,14 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <App />
+      },
+      {
+        path:"/explore",
+        element:<ExploreLayout/>
+      },
+      {
+        path:"/all-events",
+        element:<EventsPage/>
       },
       {
         path: "/privacy-policy",
@@ -31,6 +41,7 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    <LocationOnboarding/>
     <RouterProvider router={router} />
   </StrictMode>,
 )
