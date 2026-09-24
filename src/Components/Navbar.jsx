@@ -6,6 +6,8 @@ import {
   UserRound,
 } from "lucide-react";
 import logo from "/Outsold Logo.png";
+import LoginModal from "../auth/LoginModal";
+import { useAuth } from "../context/AuthContext";
 
 const navLinks = [
   { name: "Home", id: "home" },
@@ -17,11 +19,20 @@ const STORAGE_KEY = "outsold_user_profile";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [selectedLocation, setSelectedLocation] =
-    useState("Select location");
-
+  const [selectedLocation, setSelectedLocation] = useState("Select location");
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const { isLoggedIn, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleProfileClick = () => {
+    if (isLoggedIn) {
+      navigate("/account");
+      return;
+    }
+
+    setIsLoginOpen(true);
+  };
 
   // ------------------------------------------
   // LOAD SAVED LOCATION
@@ -267,13 +278,19 @@ const Navbar = () => {
 
             <motion.button
               type="button"
-              onClick={() => { }}
+              onClick={handleProfileClick}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.95 }}
-              aria-label="Profile"
-              className="ml-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[#182322] text-[#FEDF24] shadow-[0_8px_22px_rgba(24,35,34,0.12)] transition-all duration-200 hover:bg-[#44807F] hover:text-white"
+              aria-label={isLoggedIn ? "My Account" : "Login"}
+              className="ml-2 flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#182322] text-[#FEDF24] shadow-[0_8px_22px_rgba(24,35,34,0.12)] transition-all duration-200 hover:bg-[#44807F] hover:text-white"
             >
-              <UserRound size={18} strokeWidth={2.2} />
+              {isLoggedIn ? (
+                <span className="text-sm font-black">
+                  {profile?.name?.charAt(0)?.toUpperCase() || "U"}
+                </span>
+              ) : (
+                <UserRound size={18} strokeWidth={2.2} />
+              )}
             </motion.button>
           </div>
         </div>
@@ -337,11 +354,17 @@ const Navbar = () => {
 
             <button
               type="button"
-              onClick={() => { }}
-              aria-label="Profile"
-              className="ml-auto flex h-[40px] w-[40px] shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#182322] text-[#FEDF24] shadow-[0_7px_18px_rgba(24,35,34,0.12)] transition-all duration-200 hover:bg-[#44807F] active:scale-95"
+              onClick={handleProfileClick}
+              aria-label={isLoggedIn ? "My Account" : "Login"}
+              className="ml-auto flex h-[40px] w-[40px] shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#182322] text-[#FEDF24] shadow-[0_7px_18px_rgba(24,35,34,0.12)] transition-all duration-200 hover:bg-[#44807F] active:scale-95"
             >
-              <UserRound size={18} strokeWidth={2.2} />
+              {isLoggedIn ? (
+                <span className="text-sm font-black">
+                  {profile?.name?.charAt(0)?.toUpperCase() || "U"}
+                </span>
+              ) : (
+                <UserRound size={18} strokeWidth={2.2} />
+              )}
             </button>
           </div>
 
@@ -371,6 +394,12 @@ const Navbar = () => {
           </div>
         </div>
       </motion.nav>
+
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+      />
+
     </header>
   );
 };

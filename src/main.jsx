@@ -8,7 +8,8 @@ import TermsConditions from './Pages/Terms-Cond.jsx'
 import Layout from './Layout/Layout.jsx'
 import ExploreLayout from './Layout/ExploreLayout.jsx'
 import EventsPage from './Components/All Events.jsx'
-import LocationOnboarding from './Components/LocationOnboarding.jsx'
+
+import { AuthProvider } from './context/AuthContext.jsx'
 
 const router = createBrowserRouter([
   {
@@ -20,12 +21,12 @@ const router = createBrowserRouter([
         element: <App />
       },
       {
-        path:"/explore",
-        element:<ExploreLayout/>
+        path: "/explore",
+        element: <ExploreLayout />
       },
       {
-        path:"/all-events",
-        element:<EventsPage/>
+        path: "/all-events",
+        element: <EventsPage />
       },
       {
         path: "/privacy-policy",
@@ -41,7 +42,9 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <LocationOnboarding/>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      {/* <LocationOnboarding/> */}
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>,
 )
