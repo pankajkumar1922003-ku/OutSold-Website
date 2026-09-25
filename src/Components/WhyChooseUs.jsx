@@ -17,35 +17,48 @@ const features = [
     {
         icon: Layers3,
         title: "All-in-One Management",
+        description: "Run your entire event from one organized workspace.",
     },
     {
         icon: Users,
         title: "Smart Attendee Management",
+        description: "Keep registrations, attendees and entries organized.",
     },
     {
         icon: BarChart3,
         title: "Real-Time Analytics",
+        description: "See ticket sales and event performance as it happens.",
     },
     {
         icon: Wallet,
-        title: "Built-In Profit & Loss",
+        title: "Profit & Loss Tracking",
+        description:
+            "Understand your revenue, expenses and event profitability.",
     },
     {
         icon: QrCode,
         title: "Flexible UPI Payments",
+        description:
+            "Accept payments with the flexibility your event needs.",
         highlight: true,
     },
     {
         icon: ShieldCheck,
-        title: "Role-Based Team Access",
+        title: "Team Access",
+        description:
+            "Give your team the right access without losing control.",
     },
     {
         icon: Ticket,
         title: "Smart Ticket Control",
+        description:
+            "Create, manage and track your ticketing with ease.",
     },
     {
         icon: FileText,
         title: "Powerful Reports",
+        description:
+            "Get the insights you need after every event.",
     },
 ];
 
@@ -53,16 +66,29 @@ const WhyChooseUs = () => {
     return (
         <section
             id="why-choose-us"
-            className="relative overflow-hidden bg-[#F7FAF9] py-14 sm:py-20"
+            className="relative overflow-hidden bg-[#102725] py-16 text-white"
         >
-            {/* Background Decorative Elements */}
-            <div className="absolute -left-40 top-20 h-[450px] w-[450px] rounded-full bg-[#007A78]/10 blur-[150px]" />
+            {/* ================= BACKGROUND GLOW ================= */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                {/* Yellow glow */}
+                <div className="absolute -left-52 top-10 h-[520px] w-[520px] rounded-full bg-[#FEDF24]/10 blur-[150px]" />
 
-            <div className="absolute -right-40 bottom-0 h-[450px] w-[450px] rounded-full bg-[#20B2AA]/10 blur-[150px]" />
+                {/* Teal glow */}
+                <div className="absolute -right-52 top-[25%] h-[600px] w-[600px] rounded-full bg-[#44807F]/20 blur-[160px]" />
+
+                {/* Bottom yellow glow */}
+                <div className="absolute bottom-[-220px] left-[25%] h-[500px] w-[500px] rounded-full bg-[#FEDF24]/8 blur-[150px]" />
+
+                {/* Center teal glow */}
+                <div className="absolute left-[48%] top-[30%] h-[300px] w-[300px] rounded-full bg-[#44807F]/10 blur-[120px]" />
+            </div>
+
+            {/* ================= TOP ACCENT ================= */}
+            <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[80%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#FEDF24]/70 to-transparent" />
 
             <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
 
-                {/* Heading */}
+                {/* ================= HEADER ================= */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -71,28 +97,29 @@ const WhyChooseUs = () => {
                     className="mx-auto max-w-3xl text-center"
                 >
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#007A78]/15 bg-[#007A78]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#007A78]">
-                        <Sparkles size={15} />
-                        Why Choose Us
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#44807F]/30 bg-white/[0.06] px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FEDF24] shadow-sm backdrop-blur-md sm:text-xs">
+                        <Sparkles size={14} />
+                        Built For Organizers
                     </div>
 
-                    <h2 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-[#16302E] sm:text-5xl lg:text-6xl">
-                        Everything Your Event Needs.
-
-                        <span className="mt-2 block text-[#007A78]">
-                            All In One Platform.
+                    {/* Heading */}
+                    <h2 className="mt-6 text-4xl font-black leading-[1.08] tracking-[-0.045em] text-white sm:text-5xl md:text-6xl">
+                        Everything You Need.
+                        <span className="mt-2 block bg-gradient-to-r from-[#FEDF24] via-[#8caf82] to-[#44807F] bg-clip-text text-transparent">
+                            Nothing You Don't.
                         </span>
                     </h2>
 
-                    <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[#16302E]/60 sm:text-lg">
-                        From your first event idea to the final report, manage
-                        every part of your event journey without switching
-                        between multiple tools.
+                    {/* Paragraph */}
+                    <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-white/60 sm:text-base sm:leading-8 md:text-lg">
+                        From your first ticket sale to the final event report,
+                        OutSold brings your entire event operation together in
+                        one simple, powerful platform.
                     </p>
                 </motion.div>
 
-                {/* Features Grid */}
-                <div className="md:mt-16 mt-10 grid gap-2 md:gap-5 grid-cols-2 md:grid-cols-4">
+                {/* ================= FEATURE GRID ================= */}
+                <div className="mt-12 grid grid-cols-2 gap-3 sm:mt-16 sm:gap-5 lg:grid-cols-4">
                     {features.map((feature, index) => {
                         const Icon = feature.icon;
 
@@ -101,7 +128,7 @@ const WhyChooseUs = () => {
                                 key={feature.title}
                                 initial={{
                                     opacity: 0,
-                                    y: 40,
+                                    y: 30,
                                 }}
                                 whileInView={{
                                     opacity: 1,
@@ -109,83 +136,125 @@ const WhyChooseUs = () => {
                                 }}
                                 viewport={{ once: true }}
                                 transition={{
-                                    duration: 0.6,
-                                    delay: index * 0.08,
+                                    duration: 0.55,
+                                    delay: index * 0.07,
                                 }}
-                                whileHover={{
-                                    y: -8,
-                                }}
-                                className={`group relative overflow-hidden rounded-lg border p-6 transition duration-300 ${
+                                whileHover={{ y: -7 }}
+                                className={`group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 sm:p-6 ${
                                     feature.highlight
-                                        ? "border-[#007A78]/25 bg-[#007A78] shadow-xl shadow-[#007A78]/20"
-                                        : "border-[#007A78]/10 bg-white shadow-lg shadow-[#007A78]/5 hover:border-[#007A78]/25 hover:shadow-xl"
+                                        ? "border-[#44807F]/40 bg-gradient-to-br from-[#44807F] to-[#306866] text-white shadow-xl shadow-black/20"
+                                        : "border-white/10 bg-white/[0.06] text-white shadow-lg shadow-black/10 backdrop-blur-md hover:border-[#44807F]/40 hover:bg-white/[0.10] hover:shadow-xl"
                                 }`}
                             >
-                                {/* Decorative Glow */}
+                                {/* ================= CARD GLOW ================= */}
                                 <div
-                                    className={`absolute -right-10 -top-10 h-32 w-32 rounded-full blur-[60px] ${
+                                    className={`pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full blur-[55px] ${
                                         feature.highlight
-                                            ? "bg-white/10"
-                                            : "bg-[#007A78]/5"
+                                            ? "bg-[#FEDF24]/20"
+                                            : "bg-[#FEDF24]/10"
                                     }`}
                                 />
 
-                                {/* Icon */}
-                                <div
-                                    className={`relative flex h-12 w-12 items-center justify-center rounded-2xl transition duration-300 ${
+                                {/* ================= NUMBER ================= */}
+                                <span
+                                    className={`absolute right-5 top-5 text-[10px] font-black tracking-widest ${
                                         feature.highlight
-                                            ? "bg-white/15 text-white"
-                                            : "bg-[#007A78]/10 text-[#007A78] group-hover:bg-[#007A78] group-hover:text-white"
+                                            ? "text-white/25"
+                                            : "text-white/20"
+                                    }`}
+                                >
+                                    0{index + 1}
+                                </span>
+
+                                {/* ================= ICON ================= */}
+                                <div
+                                    className={`relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 sm:h-14 sm:w-14 ${
+                                        feature.highlight
+                                            ? "bg-white/15 text-[#FEDF24]"
+                                            : "bg-gradient-to-br from-[#FEDF24]/15 to-[#44807F]/15 text-[#FEDF24] group-hover:bg-gradient-to-br group-hover:from-[#FEDF24] group-hover:to-[#44807F] group-hover:text-[#17302E]"
                                     }`}
                                 >
                                     <Icon size={22} />
                                 </div>
 
-                                {/* Content */}
+                                {/* ================= CONTENT ================= */}
                                 <h3
-                                    className={`relative mt-6 text-lg font-semibold ${
+                                    className={`relative mt-5 text-sm font-black leading-5 sm:text-base ${
                                         feature.highlight
                                             ? "text-white"
-                                            : "text-[#16302E]"
+                                            : "text-white"
                                     }`}
                                 >
                                     {feature.title}
                                 </h3>
+
+                                <p
+                                    className={`relative mt-2 text-[11px] leading-5 sm:text-xs sm:leading-6 ${
+                                        feature.highlight
+                                            ? "text-white/65"
+                                            : "text-white/55"
+                                    }`}
+                                >
+                                    {feature.description}
+                                </p>
+
+                                {/* ================= BOTTOM ACCENT ================= */}
+                                <div
+                                    className={`absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-[#FEDF24] to-[#44807F] transition-all duration-500 group-hover:w-full ${
+                                        feature.highlight
+                                            ? "opacity-0"
+                                            : ""
+                                    }`}
+                                />
                             </motion.div>
                         );
                     })}
                 </div>
 
-                {/* Bottom Highlight Section */}
+                {/* ================= BOTTOM CTA ================= */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.7 }}
-                    className="relative mt-10 md:mt-16 overflow-hidden rounded-[32px] border border-[#007A78]/15 bg-white p-8 shadow-xl shadow-[#007A78]/5 sm:p-12"
+                    className="relative mt-12 overflow-hidden rounded-[28px] border border-[#44807F]/25 bg-white/[0.06] shadow-xl shadow-black/20 backdrop-blur-md sm:mt-16 sm:rounded-[36px]"
                 >
-                    {/* Green Side Background */}
-                    <div className="absolute right-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-transparent to-[#007A78]/10" />
+                    {/* ================= CTA BACKGROUND ================= */}
+                    <div className="pointer-events-none absolute inset-0">
+                        <div className="absolute -left-20 -top-32 h-72 w-72 rounded-full bg-[#FEDF24]/10 blur-[100px]" />
 
-                    <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-[#44807F]/20 blur-[100px]" />
 
+                        <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-[#44807F]/[0.08] to-transparent" />
+                    </div>
+
+                    <div className="relative flex flex-col gap-8 p-7 sm:p-10 lg:flex-row lg:items-center lg:justify-between lg:p-12">
+
+                        {/* ================= CTA CONTENT ================= */}
                         <div className="max-w-3xl">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-[#007A78]">
-                                <Sparkles size={17} />
-                                OUR BIGGEST ADVANTAGE
+
+                            {/* Small Label */}
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FEDF24] sm:text-xs">
+                                <span className="h-2 w-2 rounded-full bg-[#FEDF24] shadow-[0_0_10px_rgba(254,223,36,0.6)]" />
+                                One Platform. Complete Control.
                             </div>
 
-                            <h3 className="mt-4 text-2xl font-bold text-[#16302E] sm:text-3xl lg:text-4xl">
-                                Stop Managing Events With Multiple Tools.
+                            {/* CTA Heading */}
+                            <h3 className="mt-4 text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
+                                Stop Juggling Tools.
+                                <span className="block bg-gradient-to-r from-[#FEDF24] to-[#6c9d83] bg-clip-text text-transparent">
+                                    Start Running Better Events.
+                                </span>
                             </h3>
 
-                            <p className="mt-4 leading-7 text-[#16302E]/60">
-                                Event creation, attendees, ticket sales,
-                                payments, expenses, analytics and reports —
-                                everything works together in one seamless
-                                platform.
+                            {/* CTA Description */}
+                            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/55 sm:text-base sm:leading-8">
+                                Create your event, manage your audience, track
+                                your numbers and stay in control — without
+                                jumping between different platforms.
                             </p>
 
+                            {/* Benefits */}
                             <div className="mt-6 grid gap-3 sm:grid-cols-2">
                                 {[
                                     "No mandatory payment gateway",
@@ -195,33 +264,35 @@ const WhyChooseUs = () => {
                                 ].map((item) => (
                                     <div
                                         key={item}
-                                        className="flex items-center gap-3 text-sm text-[#16302E]/70"
+                                        className="flex items-center gap-2.5 text-xs font-medium text-white/65 sm:text-sm"
                                     >
                                         <CheckCircle2
-                                            size={18}
-                                            className="shrink-0 text-[#007A78]"
+                                            size={17}
+                                            className="shrink-0 text-[#FEDF24]"
                                         />
-
                                         {item}
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* CTA */}
+                        {/* ================= CTA BUTTON ================= */}
                         <motion.a
                             href="https://app.outsold.in/login"
                             target="_blank"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="group flex shrink-0 items-center justify-center gap-3 rounded-full bg-[#007A78] px-7 py-4 font-semibold text-white shadow-xl shadow-[#007A78]/20 transition hover:bg-[#00918E]"
+                            rel="noreferrer"
+                            whileHover={{ y: -3 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="group flex shrink-0 items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#FEDF24] via-[#dce982] to-[#44807F] px-6 py-4 text-sm font-black text-[#17302E] shadow-[0_15px_35px_rgba(68,128,127,0.25)] transition sm:px-7"
                         >
                             Get Started
 
-                            <ArrowRight
-                                size={19}
-                                className="transition-transform duration-300 group-hover:translate-x-1"
-                            />
+                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#17302E]/10">
+                                <ArrowRight
+                                    size={16}
+                                    className="transition-transform duration-300 group-hover:translate-x-1"
+                                />
+                            </span>
                         </motion.a>
                     </div>
                 </motion.div>
@@ -231,4 +302,3 @@ const WhyChooseUs = () => {
 };
 
 export default WhyChooseUs;
-
