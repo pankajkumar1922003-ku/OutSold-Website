@@ -29,7 +29,7 @@ const Testimonials = () => {
     return (
         <section
             id="testimonials"
-            className="relative overflow-hidden bg-[#D5E7E4] py-20 text-[#17302E] sm:py-28 lg:py-32"
+            className="relative overflow-hidden bg-[#D5E7E4] py-14 text-[#17302E]"
         >
             {/* ================= BACKGROUND ATMOSPHERE ================= */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">

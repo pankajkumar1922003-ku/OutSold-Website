@@ -19,7 +19,8 @@ const STORAGE_KEY = "outsold_user_profile";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("Select location");
+  const [selectedLocation, setSelectedLocation] =
+    useState("Select location");
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { isLoggedIn, profile } = useAuth();
   const navigate = useNavigate();
@@ -34,9 +35,23 @@ const Navbar = () => {
     setIsLoginOpen(true);
   };
 
-  // ------------------------------------------
-  // LOAD SAVED LOCATION
-  // ------------------------------------------
+  useEffect(() => {
+    const openLogin = () => {
+      setIsLoginOpen(true);
+    };
+
+    window.addEventListener(
+      "openLoginModal",
+      openLogin
+    );
+
+    return () => {
+      window.removeEventListener(
+        "openLoginModal",
+        openLogin
+      );
+    };
+  }, []);
 
   useEffect(() => {
     const loadSavedLocation = () => {
@@ -97,7 +112,6 @@ const Navbar = () => {
   // ------------------------------------------
 
   const openLocationOnboarding = () => {
-    // Dropdown ki jagah onboarding modal open hoga
     window.dispatchEvent(
       new Event("openLocationOnboarding")
     );
@@ -175,17 +189,34 @@ const Navbar = () => {
 
   return (
     <header className="pointer-events-none fixed left-0 top-0 z-50 w-full px-0 pt-0 sm:px-4 sm:pt-1 md:px-6 md:pt-1 lg:px-8">
-      <motion.nav
-        layout
-        transition={{
-          duration: 0.35,
-          ease: "easeInOut",
-        }}
-        className={`pointer-events-auto relative flex w-full max-w-7xl sm:mx-auto rounded-none sm:rounded-2xl border border-[#182322]/10 bg-[#fffdf5]/95 shadow-[0_10px_35px_rgba(24,35,34,0.08)] backdrop-blur-xl transition-all duration-300 ${isScrolled || location.pathname !== "/"
-          ? "px-1 py-1 sm:px-4 sm:py-1 md:px-5"
-          : "px-1 py-1 sm:px-4 sm:py-2 md:px-5"
-          }`}
+
+      {/* IMPORTANT:
+          Normal nav instead of motion.nav.
+          This prevents navbar layout animation during route changes.
+      */}
+      <nav
+        className="
+          pointer-events-auto
+          relative
+          flex
+          w-full
+          max-w-7xl
+          sm:mx-auto
+          rounded-none
+          sm:rounded-2xl
+          border
+          border-[#182322]/10
+          bg-[#fffdf5]/95
+          px-1
+          py-1
+          shadow-[0_10px_35px_rgba(24,35,34,0.08)]
+          backdrop-blur-xl
+          sm:px-4
+          sm:py-2
+          md:px-5
+        "
       >
+
         {/* ====================================================== */}
         {/* DESKTOP */}
         {/* ====================================================== */}
@@ -276,20 +307,29 @@ const Navbar = () => {
               </motion.button>
             ))}
 
+            {/* PROFILE */}
+
             <motion.button
               type="button"
               onClick={handleProfileClick}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.95 }}
-              aria-label={isLoggedIn ? "My Account" : "Login"}
+              aria-label={
+                isLoggedIn ? "My Account" : "Login"
+              }
               className="ml-2 flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#182322] text-[#FEDF24] shadow-[0_8px_22px_rgba(24,35,34,0.12)] transition-all duration-200 hover:bg-[#44807F] hover:text-white"
             >
               {isLoggedIn ? (
                 <span className="text-sm font-black">
-                  {profile?.name?.charAt(0)?.toUpperCase() || "U"}
+                  {profile?.name
+                    ?.charAt(0)
+                    ?.toUpperCase() || "U"}
                 </span>
               ) : (
-                <UserRound size={18} strokeWidth={2.2} />
+                <UserRound
+                  size={18}
+                  strokeWidth={2.2}
+                />
               )}
             </motion.button>
           </div>
@@ -352,28 +392,40 @@ const Navbar = () => {
               />
             </motion.button>
 
+            {/* PROFILE */}
+
             <button
               type="button"
               onClick={handleProfileClick}
-              aria-label={isLoggedIn ? "My Account" : "Login"}
+              aria-label={
+                isLoggedIn ? "My Account" : "Login"
+              }
               className="ml-auto flex h-[40px] w-[40px] shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#182322] text-[#FEDF24] shadow-[0_7px_18px_rgba(24,35,34,0.12)] transition-all duration-200 hover:bg-[#44807F] active:scale-95"
             >
               {isLoggedIn ? (
                 <span className="text-sm font-black">
-                  {profile?.name?.charAt(0)?.toUpperCase() || "U"}
+                  {profile?.name
+                    ?.charAt(0)
+                    ?.toUpperCase() || "U"}
                 </span>
               ) : (
-                <UserRound size={18} strokeWidth={2.2} />
+                <UserRound
+                  size={18}
+                  strokeWidth={2.2}
+                />
               )}
             </button>
           </div>
 
           {/* MOBILE NAV LINKS */}
+
           <div className="flex w-full items-center justify-center gap-1 border-t border-[#182322]/10 pt-0">
             {navLinks.map((link, index) => (
               <motion.button
                 key={link.name}
-                onClick={() => scrollToSection(link.id)}
+                onClick={() =>
+                  scrollToSection(link.id)
+                }
                 initial={{
                   opacity: 0,
                   y: -6,
@@ -393,15 +445,17 @@ const Navbar = () => {
             ))}
           </div>
         </div>
-      </motion.nav>
+      </nav>
+
+      {/* LOGIN MODAL */}
 
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
       />
-
     </header>
   );
 };
 
 export default Navbar;
+

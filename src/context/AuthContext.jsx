@@ -1,5 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signOut,
+  updateProfile,
+} from "firebase/auth";
 import {
   doc,
   getDoc,
@@ -16,7 +20,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isActive = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!isActive) return;
+
       try {
         if (!firebaseUser) {
           setUser(null);
@@ -26,53 +34,117 @@ export const AuthProvider = ({ children }) => {
         }
 
         setUser(firebaseUser);
+        setProfile(null);
+        setLoading(true);
 
-        const userRef = doc(db, "users", firebaseUser.uid);
+        const userRef = doc(
+          db,
+          "outsold_users",
+          firebaseUser.uid
+        );
+
         const userSnap = await getDoc(userRef);
 
+        if (!isActive) return;
+
         if (userSnap.exists()) {
-          setProfile(userSnap.data());
+          const firestoreProfile = userSnap.data();
+
+          setProfile({
+            ...firestoreProfile,
+            uid: firebaseUser.uid,
+            name:
+              firestoreProfile?.name ||
+              firebaseUser.displayName ||
+              "",
+            phone:
+              firestoreProfile?.phone ||
+              firebaseUser.phoneNumber ||
+              "",
+          });
         } else {
           setProfile({
             uid: firebaseUser.uid,
+            name: firebaseUser.displayName || "",
             phone: firebaseUser.phoneNumber || "",
           });
         }
       } catch (error) {
+        if (!isActive) return;
+
         console.error("Auth state error:", error);
+
+        setProfile({
+          uid: firebaseUser?.uid || "",
+          name: firebaseUser?.displayName || "",
+          phone: firebaseUser?.phoneNumber || "",
+        });
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
   }, []);
 
   const saveProfile = async (name) => {
-    if (!user) return;
+    const currentUser = auth.currentUser;
 
-    const userRef = doc(db, "users", user.uid);
+    if (!currentUser) {
+      throw new Error("User is not authenticated.");
+    }
+
+    const cleanName = name?.trim();
+
+    if (!cleanName) {
+      throw new Error("Name is required.");
+    }
+
+    const userRef = doc(
+      db,
+      "outsold_users",
+      currentUser.uid
+    );
+
+    if (currentUser.displayName !== cleanName) {
+      await updateProfile(currentUser, {
+        displayName: cleanName,
+      });
+    }
+
+    const existingSnap = await getDoc(userRef);
 
     const profileData = {
-      uid: user.uid,
-      name: name.trim(),
-      phone: user.phoneNumber || "",
+      uid: currentUser.uid,
+      name: cleanName,
+      phone: currentUser.phoneNumber || "",
       updatedAt: serverTimestamp(),
     };
 
-    await setDoc(
-      userRef,
-      {
-        ...profileData,
-        createdAt: profile?.createdAt || serverTimestamp(),
-      },
-      { merge: true }
-    );
+    if (!existingSnap.exists()) {
+      profileData.createdAt = serverTimestamp();
+    }
+
+    await setDoc(userRef, profileData, {
+      merge: true,
+    });
 
     const updatedProfile = {
-      ...profile,
-      ...profileData,
+      ...(existingSnap.exists() ? existingSnap.data() : {}),
+      uid: currentUser.uid,
+      name: cleanName,
+      phone: currentUser.phoneNumber || "",
     };
+
+    setUser({
+      ...currentUser,
+      displayName: cleanName,
+    });
 
     setProfile(updatedProfile);
 
@@ -81,16 +153,26 @@ export const AuthProvider = ({ children }) => {
       JSON.stringify(updatedProfile)
     );
 
-    window.dispatchEvent(new Event("userProfileChanged"));
+    window.dispatchEvent(
+      new Event("userProfileChanged")
+    );
+
+    return updatedProfile;
   };
 
   const logout = async () => {
     try {
-      await signOut(auth);
       setUser(null);
       setProfile(null);
+      setLoading(false);
+
       localStorage.removeItem("outsold_user_profile");
-      window.dispatchEvent(new Event("userProfileChanged"));
+
+      window.dispatchEvent(
+        new Event("userProfileChanged")
+      );
+
+      await signOut(auth);
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -116,7 +198,9 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
+    throw new Error(
+      "useAuth must be used inside AuthProvider"
+    );
   }
 
   return context;

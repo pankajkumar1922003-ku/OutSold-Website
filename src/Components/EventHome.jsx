@@ -3,7 +3,6 @@ import {
     ArrowRight,
     ArrowUpRight,
     BriefcaseBusiness,
-    Check,
     ChevronLeft,
     ChevronRight,
     Heart,
@@ -230,7 +229,7 @@ const SectionHeader = ({
         <div className="mb-6 flex items-end justify-between gap-4">
             <div className="min-w-0">
                 <h3
-                    className={`text-2xl font-extrabold tracking-[-0.025em] sm:text-3xl ${dark
+                    className={`text-xl font-extrabold tracking-[-0.025em] sm:text-3xl ${dark
                         ? "text-[#fffdf5]"
                         : "text-[#182322]"
                         }`}
@@ -718,12 +717,6 @@ const EventsHome = () => {
         gridEvents,
         interestEvents,
     } = useMemo(() => {
-        /*
-         * FEATURED EVENTS
-         * ----------------
-         * Featured events ALWAYS come from the original events list.
-         * Search, category and date filters do NOT affect them.
-         */
         const featured = events.filter(
             (event) => event.featured
         );
@@ -738,18 +731,15 @@ const EventsHome = () => {
             slides.map((event) => event.id)
         );
 
-        /*
-         * EVENTS YOU'LL LOVE
-         * ------------------
-         * Only this section uses the active filters.
-         * When searching/filtering, filteredEvents changes.
-         */
-        const gridEvents = filteredEvents
-            .filter(
-                (event) =>
-                    !slideIds.has(event.id)
-            )
-            .slice(0, 6);
+        const gridSource = hasActiveFilters
+            ? filteredEvents
+            : filteredEvents.filter(
+                (event) => !slideIds.has(event.id)
+            );
+
+        const gridEvents = hasActiveFilters
+            ? gridSource
+            : gridSource.slice(0, 6);
 
         const gridIds = new Set(
             gridEvents.map(
@@ -757,33 +747,30 @@ const EventsHome = () => {
             )
         );
 
-        /*
-         * YOU MIGHT BE INTO THIS
-         * -----------------------
-         * Also follows the filtered event list.
-         */
         const source = filteredEvents.length
             ? filteredEvents
             : events;
 
-        const interestEvents = [
-            ...source.filter(
-                (event) =>
-                    !slideIds.has(event.id) &&
-                    !gridIds.has(event.id)
-            ),
+        const interestEvents = hasActiveFilters
+            ? []
+            : [
+                ...source.filter(
+                    (event) =>
+                        !slideIds.has(event.id) &&
+                        !gridIds.has(event.id)
+                ),
 
-            ...source.filter(
-                (event) =>
-                    !slideIds.has(event.id) &&
-                    gridIds.has(event.id)
-            ),
+                ...source.filter(
+                    (event) =>
+                        !slideIds.has(event.id) &&
+                        gridIds.has(event.id)
+                ),
 
-            ...source.filter(
-                (event) =>
-                    slideIds.has(event.id)
-            ),
-        ].slice(0, 2);
+                ...source.filter(
+                    (event) =>
+                        slideIds.has(event.id)
+                ),
+            ].slice(0, 2);
 
         return {
             slides,
@@ -793,6 +780,7 @@ const EventsHome = () => {
     }, [
         events,
         filteredEvents,
+        hasActiveFilters,
     ]);
 
     /* -------------------------------- slideshow ------------------------------- */
@@ -928,7 +916,7 @@ const EventsHome = () => {
         <section
             id="home"
             style={FONT_STYLE}
-            className="relative overflow-hidden bg-[#fffdf5] pb-16 pt-28 text-[#182322] sm:pb-24 sm:pt-32"
+            className="relative overflow-hidden bg-[#fffdf5] pt-28 text-[#182322] sm:pt-32"
         >
             <style>
                 {FONT_IMPORT}
@@ -1188,7 +1176,7 @@ const EventsHome = () => {
                 >
 
                     {/* FEATURED SLIDESHOW */}
-                    {!isSearching &&
+                    {!hasActiveFilters &&
                         currentSlide && (
                             <div
                                 className="mt-9 sm:mt-11"
@@ -1613,13 +1601,9 @@ const EventsHome = () => {
                             </div>
                         )}
 
-                    {/* ---------------------------------------------------------------- */}
-                    {/* EVENTS YOU'LL LOVE                                              */}
-                    {/* ---------------------------------------------------------------- */}
-
                     {gridEvents.length >
                         0 && (
-                            <div className="mt-14 sm:mt-20">
+                            <div className="mt-10 sm:mt-20">
                                 <SectionHeader
                                     title={
                                         isSearching
@@ -1732,7 +1716,7 @@ const EventsHome = () => {
             {!isSearching &&
                 interestEvents.length >
                 0 && (
-                    <div className="relative mt-14 w-full bg-[#182322] px-5 py-6 sm:mt-20 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+                    <div className="relative mt-10 w-full bg-[#182322] px-5 py-6 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
                         <div className="mx-auto w-full max-w-7xl">
                             <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                                 <div>

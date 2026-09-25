@@ -12,7 +12,7 @@ const PlatformStatistics = () => {
     return (
         <section
             id="statistics"
-            className="relative overflow-hidden bg-[#FFF9E8] py-20 text-[#17302E] sm:py-28 lg:py-32"
+            className="relative overflow-hidden bg-[#FFF9E8] py-14 text-[#17302E]"
         >
             {/* Background Atmosphere */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">

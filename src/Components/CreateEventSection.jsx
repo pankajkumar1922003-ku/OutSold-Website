@@ -48,7 +48,7 @@ const CreateEventSection = () => {
     return (
         <section
             id="createEvents"
-            className="relative overflow-hidden bg-[#FFFBEA] py-16 text-[#142522] sm:py-24 lg:py-28"
+            className="relative overflow-hidden bg-[#FFFBEA] py-16 text-[#142522]"
         >
             {/* Background Glow */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -64,7 +64,7 @@ const CreateEventSection = () => {
             {/* Top Glow Line */}
             <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[80%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#44807F]/40 to-transparent" />
 
-            <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+            <div className="md:mt-10 mt-16  relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
                 <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
 
                     {/* =========================
@@ -292,7 +292,7 @@ const CreateEventSection = () => {
                         </div>
 
                         {/* CTA */}
-                        <div className="mt-8 flex flex-wrap items-center gap-4">
+                        <div className="mt-6 flex flex-wrap items-center gap-4">
                             <motion.a
                                 href="https://app.outsold.in/login"
                                 target="_blank"
@@ -354,7 +354,7 @@ const CreateEventSection = () => {
                 {/* =========================
                     BOTTOM FEATURE CARDS
                 ========================== */}
-                <div className="mt-16 grid gap-3 sm:mt-20 sm:grid-cols-3 sm:gap-4">
+                <div className="mt-10 grid gap-3 sm:mt-16 sm:grid-cols-3 sm:gap-4">
                     {organizerFeatures.map((feature, index) => {
                         const Icon = feature.icon;
 

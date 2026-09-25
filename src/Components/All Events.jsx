@@ -3,7 +3,6 @@ import {
     ArrowRight,
     ArrowUpRight,
     BriefcaseBusiness,
-    Check,
     CalendarDays,
     ChevronLeft,
     ChevronRight,
@@ -21,16 +20,19 @@ import {
 } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useOutsoldEvents } from "../hooks/useOutsoldEvents";
+import { db } from "../lib/firebase";
+import {
+    collection,
+    onSnapshot,
+    doc,
+    deleteDoc,
+    setDoc,
+} from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
 
-/* -------------------------------------------------------------------------- */
-/* CONFIG                                                                     */
-/* -------------------------------------------------------------------------- */
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1600&q=85";
 
-const FALLBACK_IMAGE =
-    "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1600&q=85";
-
-const FONT_IMPORT =
-    "@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap');";
+const FONT_IMPORT = "@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap');";
 
 const FONT_STYLE = {
     fontFamily:
@@ -42,7 +44,7 @@ const CATEGORIES = [
         key: "music",
         name: "Music",
         icon: Music,
-        bg: "#44807F",
+        bg: "#B8860B",
         text: "#FEDF24",
     },
     {
@@ -233,7 +235,7 @@ const endOfDay = (date) => {
 const TicketNotch = ({ side = "left" }) => (
     <span
         aria-hidden="true"
-        className={`absolute z-20 h-5 w-5 rounded-full bg-[#fffdf5] ${side === "left" ? "-left-2.5" : "-right-2.5"}`}
+        className={`absolute z-20 h-5 w-5 rounded-full bg-[#FFF8DC] ${side === "left" ? "-left-2.5" : "-right-2.5"}`}
     />
 );
 
@@ -254,7 +256,7 @@ const CategoryFilter = ({
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={`group flex shrink-0 items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-all duration-200 ${active ? "border-[#182322] -translate-y-0.5 shadow-[4px_4px_0_#FEDF24]" : "border-[#182322]/10 bg-white hover:-translate-y-0.5 hover:border-[#182322]/25"}`}
+            className={`group flex shrink-0 items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-all duration-200 ${active ? "border-[#182322] -translate-y-0.5 shadow-[4px_4px_0_#FEDF24]" : "border-[#182322]/10 bg-[#FFF3C4] hover:-translate-y-0.5 hover:border-[#182322]/25"}`}
             style={
                 active
                     ? {
@@ -324,7 +326,7 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                 }
             }}
             aria-label={`View ${event?.title || "event"}`}
-            className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#44807F]/15 bg-white outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.10)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]"
+            className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#B8860B]/20 bg-[#FFF3C4] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.12)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]"
         >
             <div className="relative aspect-[16/10] overflow-hidden bg-[#e9ece7]">
                 <img src={getImage(event)} alt={event?.title || "Event"} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" onError={handleImageError} />
@@ -335,7 +337,7 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                 </span>
             </div>
 
-            <div className="relative flex flex-col border-t-2 border-dashed border-[#182322]/15 p-2.5 sm:p-4">
+            <div className="relative flex flex-col border-t-2 border-dashed border-[#B8860B]/25 p-2.5 sm:p-4">
                 <TicketNotch side="left" />
                 <TicketNotch side="right" />
 
@@ -343,7 +345,7 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                     <div className="shrink-0 border-r border-[#182322]/10 pr-2.5 text-center leading-none sm:pr-4">
                         {datePartsFor(event) ? (
                             <>
-                                <p className="text-2xl font-extrabold tabular-nums text-[#44807F] sm:text-3xl">{datePartsFor(event).day}</p>
+                                <p className="text-2xl font-extrabold tabular-nums text-[#B8860B] sm:text-3xl">{datePartsFor(event).day}</p>
                                 <p className="mt-0.5 text-xs font-semibold text-[#182322]/70 sm:text-sm">{datePartsFor(event).month}</p>
                             </>
                         ) : (
@@ -364,7 +366,7 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                             e.stopPropagation();
                             onOpen(event);
                         }}
-                        className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-2 py-2 text-[11px] font-bold text-[#FEDF24] transition duration-200 hover:bg-[#44807F] hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
+                        className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-2 py-2 text-[11px] font-bold text-[#FEDF24] transition duration-200 hover:bg-[#B8860B] hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
                     >
                         <span>Explore</span>
                         <ArrowUpRight size={13} className="shrink-0" />
@@ -448,16 +450,31 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
     const isInterested = interestedEvents.includes(activeEvent?.id);
 
     return (
-        <section className="relative -mx-4 mt-6 overflow-hidden md:rounded-3xl bg-[#182322] sm:-mx-7 lg:-mx-10">
+        <section className="relative -mx-4 mt-6 overflow-hidden bg-[#182322] md:rounded-3xl sm:-mx-7 lg:-mx-10">
             <div className="relative h-[350px] w-full overflow-hidden sm:h-[290px] lg:h-[500px]">
-                <motion.img key={activeEvent?.id} src={getImage(activeEvent)} alt={activeEvent?.title || "Featured event"} onError={handleImageError} initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="absolute inset-0 h-full w-full object-cover" />
+                <motion.img
+                    key={activeEvent?.id}
+                    src={getImage(activeEvent)}
+                    alt={activeEvent?.title || "Featured event"}
+                    onError={handleImageError}
+                    initial={{ opacity: 0, scale: 1.04 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="absolute inset-0 h-full w-full object-cover"
+                />
 
-                <div className="absolute inset-0 bg-gradient-to-r from-[#182322]/95 via-[#182322]/65 to-[#182322]/25" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#182322]/95 via-[#182322]/60 to-[#182322]/20" />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-[#182322]/80 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#182322]/95 via-[#182322]/30 to-transparent" />
 
-                <div className="relative z-10 mx-auto flex h-full max-w-7xl items-center px-4 sm:px-7 lg:px-10">
-                    <motion.div key={`content-${activeEvent?.id}`} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="max-w-xl">
+                <div className="absolute inset-x-0 bottom-0 z-10">
+                    <motion.div
+                        key={`content-${activeEvent?.id}`}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="max-w-2xl px-4 pb-5 sm:px-7 sm:pb-7 lg:px-10 lg:pb-10"
+                    >
                         <div className="mb-2 flex items-center gap-2">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEDF24] px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#182322]">
                                 <CategoryIcon size={12} />
@@ -478,40 +495,75 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                             {activeEvent?.location && (
                                 <span className="flex items-center gap-1.5">
                                     <MapPin size={14} />
-                                    <span className="line-clamp-1 max-w-[220px]">{activeEvent.location}</span>
+                                    <span className="line-clamp-1 max-w-[220px]">
+                                        {activeEvent.location}
+                                    </span>
                                 </span>
                             )}
                         </div>
 
                         <div className="mt-4 flex items-center gap-2.5">
-                            <button type="button" onClick={() => onOpen(activeEvent)} className="flex items-center gap-1.5 rounded-lg bg-[#FEDF24] px-4 py-2.5 text-xs font-black text-[#182322] transition hover:bg-white sm:px-5 sm:py-3 sm:text-sm">
-                                View event
+                            <button
+                                type="button"
+                                onClick={() => onOpen(activeEvent)}
+                                className="flex items-center gap-1.5 rounded-lg bg-[#FEDF24] px-4 py-2.5 text-xs font-black text-[#182322] transition hover:bg-white sm:px-5 sm:py-3 sm:text-sm"
+                            >
+                                Explore
                                 <ArrowUpRight size={15} />
                             </button>
 
-                            <motion.button type="button" onClick={() => onToggle?.(activeEvent?.id)} whileTap={{ scale: 0.96 }} aria-pressed={isInterested} className={`flex items-center gap-1.5 rounded-lg border px-4 py-2.5 text-xs font-black transition sm:px-5 sm:py-3 sm:text-sm ${isInterested ? "border-[#44807F] bg-[#44807F] text-white" : "border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-[#182322]"}`}>
-                                {isInterested ? <Check size={14} strokeWidth={3} /> : <Heart size={14} />}
-                                {isInterested ? "Interested" : "I'm interested"}
+                            <motion.button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggle?.(activeEvent?.id);
+                                }}
+                                whileTap={{ scale: 0.88 }}
+                                aria-label={
+                                    isInterested
+                                        ? "Remove from interested"
+                                        : "Add to interested"
+                                }
+                                aria-pressed={isInterested}
+                                className={`flex h-[38px] w-[42px] shrink-0 items-center justify-center rounded-lg border transition duration-200 sm:h-[46px] sm:w-[48px] ${isInterested
+                                    ? "border-red-500 bg-red-500 text-white"
+                                    : "border-white/30 bg-white/10 text-white backdrop-blur-sm hover:border-red-400 hover:bg-white hover:text-red-500"
+                                    }`}
+                            >
+                                <Heart
+                                    size={18}
+                                    fill={isInterested ? "currentColor" : "none"}
+                                    strokeWidth={2.5}
+                                />
                             </motion.button>
                         </div>
                     </motion.div>
                 </div>
 
-                {/* Featured label - top left */}
                 <div className="absolute left-4 top-4 z-20 sm:left-7 sm:top-5 lg:left-10">
                     <span className="inline-flex items-center rounded-full border border-white/25 bg-[#182322]/70 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-sm">
                         Featured Event
                     </span>
                 </div>
 
-                {/* Featured Events Navigation */}
                 {events.length > 1 && (
                     <div className="pointer-events-none absolute inset-x-0 top-0 z-[200] flex justify-end px-4 pt-4 sm:px-7 sm:pt-5 lg:px-10">
                         <div className="pointer-events-auto flex items-center gap-2">
-                            <button type="button" onClick={previousSlide} aria-label="Previous featured event" className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#182322]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#182322] sm:h-12 sm:w-12">
+                            <button
+                                type="button"
+                                onClick={previousSlide}
+                                aria-label="Previous featured event"
+                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#182322]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#182322] sm:h-12 sm:w-12"
+                            >
                                 <ChevronLeft size={22} strokeWidth={2.7} />
                             </button>
-                            <button type="button" onClick={nextSlide} aria-label="Next featured event" className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#182322]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#182322] sm:h-12 sm:w-12">
+
+                            <button
+                                type="button"
+                                onClick={nextSlide}
+                                aria-label="Next featured event"
+                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#182322]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#182322] sm:h-12 sm:w-12"
+                            >
                                 <ChevronRight size={22} strokeWidth={2.7} />
                             </button>
                         </div>
@@ -521,7 +573,16 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                 {events.length > 1 && (
                     <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 sm:right-7">
                         {events.map((event, index) => (
-                            <button key={event?.id || index} type="button" onClick={() => goToSlide(index)} aria-label={`Show featured event ${index + 1}`} className={`h-1.5 rounded-full transition-all duration-300 ${index === activeIndex ? "w-7 bg-[#FEDF24]" : "w-1.5 bg-white/50 hover:bg-white"}`} />
+                            <button
+                                key={event?.id || index}
+                                type="button"
+                                onClick={() => goToSlide(index)}
+                                aria-label={`Show featured event ${index + 1}`}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${index === activeIndex
+                                    ? "w-7 bg-[#FEDF24]"
+                                    : "w-1.5 bg-white/50 hover:bg-white"
+                                    }`}
+                            />
                         ))}
                     </div>
                 )}
@@ -591,7 +652,7 @@ const CategorySection = ({ category, events, onOpen, onSeeAll, interestedEvents,
 
                 <div className="flex shrink-0 items-center gap-2">
                     {events.length > PREVIEW_PER_CATEGORY && (
-                        <button type="button" onClick={onSeeAll} className="flex items-center gap-1 text-xs font-extrabold text-[#44807F] transition hover:gap-2">
+                        <button type="button" onClick={onSeeAll} className="flex items-center gap-1 text-xs font-extrabold text-[#B8860B] transition hover:gap-2">
                             See all
                             <ArrowRight size={14} />
                         </button>
@@ -616,11 +677,11 @@ const CategorySection = ({ category, events, onOpen, onSeeAll, interestedEvents,
             <div className="relative px-0 sm:px-14">
                 {events.length > 1 && (
                     <>
-                        <button type="button" onClick={() => scroll("left")} aria-label={`Previous ${category.name} events`} className="absolute left-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-white text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:h-11 sm:w-11">
+                        <button type="button" onClick={() => scroll("left")} aria-label={`Previous ${category.name} events`} className="absolute left-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFF3C4] text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:h-11 sm:w-11">
                             <ChevronLeft size={18} strokeWidth={2.5} />
                         </button>
 
-                        <button type="button" onClick={() => scroll("right")} aria-label={`Next ${category.name} events`} className="absolute right-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-white text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:h-11 sm:w-11">
+                        <button type="button" onClick={() => scroll("right")} aria-label={`Next ${category.name} events`} className="absolute right-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFF3C4] text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:h-11 sm:w-11">
                             <ChevronRight size={18} strokeWidth={2.5} />
                         </button>
                     </>
@@ -652,23 +713,15 @@ const CategorySection = ({ category, events, onOpen, onSeeAll, interestedEvents,
 /* -------------------------------------------------------------------------- */
 
 const EventsPage = () => {
-    const [searchTerm, setSearchTerm] =
-        useState("");
-
-    const [activeCategory, setActiveCategory] =
-        useState("all");
-
-    const [dateFilter, setDateFilter] =
-        useState("all");
-
+    const [searchTerm, setSearchTerm] = useState("");
+    const [activeCategory, setActiveCategory] = useState("all");
+    const [dateFilter, setDateFilter] = useState("all");
     const [customFromDate, setCustomFromDate] = useState("");
     const [customToDate, setCustomToDate] = useState("");
     const [showCategories, setShowCategories] = useState(false);
-
+    const { events: fetchedEvents = [] } = useOutsoldEvents();
     const [interestedEvents, setInterestedEvents] = useState([]);
-
-    const { events: fetchedEvents = [] } =
-        useOutsoldEvents();
+    const { user } = useAuth();
 
     const events = useMemo(() => {
         if (!Array.isArray(fetchedEvents)) {
@@ -681,9 +734,6 @@ const EventsPage = () => {
                 typeof event === "object"
         );
 
-        // Remove duplicate records coming from the event source.
-        // Prefer the event id; if an id is missing, use a stable
-        // combination of title + category + date + location.
         const seen = new Set();
 
         return validEvents.filter((event) => {
@@ -715,9 +765,39 @@ const EventsPage = () => {
         });
     }, [fetchedEvents]);
 
-    /* ---------------------------------------------------------------------- */
-    /* Scroll reset                                                           */
-    /* ---------------------------------------------------------------------- */
+    useEffect(() => {
+        if (!user?.uid) {
+            setInterestedEvents([]);
+            return;
+        }
+
+        const wishlistRef = collection(
+            db,
+            "outsold_users",
+            user.uid,
+            "wishlist"
+        );
+
+        const unsubscribe = onSnapshot(
+            wishlistRef,
+            (snapshot) => {
+                setInterestedEvents(
+                    snapshot.docs.map(
+                        (wishlistDoc) =>
+                            wishlistDoc.id
+                    )
+                );
+            },
+            (error) => {
+                console.error(
+                    "Wishlist listener error:",
+                    error
+                );
+            }
+        );
+
+        return () => unsubscribe();
+    }, [user?.uid]);
 
     useLayoutEffect(() => {
         window.history.scrollRestoration =
@@ -745,10 +825,6 @@ const EventsPage = () => {
         };
     }, []);
 
-    /* ---------------------------------------------------------------------- */
-    /* OPEN EVENT                                                              */
-    /* ---------------------------------------------------------------------- */
-
     const openEvent = (event) => {
         const baseUrl = event?.subdomain
             ? `https://${event.subdomain}.outsold.in`
@@ -775,17 +851,58 @@ const EventsPage = () => {
             `${baseUrl}/e/${slug || "event"}--${eventId}`;
     };
 
-    const toggleInterested = (eventId) => {
-        setInterestedEvents((current) =>
-            current.includes(eventId)
-                ? current.filter((id) => id !== eventId)
-                : [...current, eventId]
-        );
-    };
+    const toggleInterested = async (eventId) => {
+        if (!user?.uid) {
+            window.dispatchEvent(
+                new Event("openLoginModal")
+            );
+            return;
+        }
 
-    /* ---------------------------------------------------------------------- */
-    /* CATEGORY COUNTS                                                        */
-    /* ---------------------------------------------------------------------- */
+        const event = events.find(
+            (item) => item.id === eventId
+        );
+
+        if (!event) return;
+
+        const wishlistRef = doc(
+            db,
+            "outsold_users",
+            user.uid,
+            "wishlist",
+            eventId
+        );
+
+        const alreadyInterested = interestedEvents.includes(eventId);
+
+        try {
+            if (alreadyInterested) {
+                await deleteDoc(wishlistRef);
+            } else {
+                await setDoc(wishlistRef, {
+                    id: event.id,
+                    title: event.title || "",
+                    image: event.image || "",
+                    category: event.category || "",
+                    date: event.date || "",
+                    endDate: event.endDate || "",
+                    time: event.time || "",
+                    location: event.location || "",
+                    venue: event.venue || "",
+                    price: event.price || "",
+                    slug: event.slug || null,
+                    subdomain: event.subdomain || null,
+                    companyId: event.companyId || null,
+                    createdAt: new Date(),
+                });
+            }
+        } catch (error) {
+            console.error(
+                "Wishlist update error:",
+                error
+            );
+        }
+    };
 
     const categoryList = useMemo(() => {
         const counts = {};
@@ -1132,19 +1249,19 @@ const EventsPage = () => {
     return (
         <main
             style={FONT_STYLE}
-            className="relative min-h-screen overflow-hidden bg-[#fffdf5] text-[#182322]"
+            className="relative min-h-screen overflow-hidden bg-[#f9f9f9] text-[#182322]"
         >
             <style>{FONT_IMPORT}</style>
 
             {/* Decorative blobs */}
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute right-[-150px] top-[180px] h-[350px] w-[350px] rounded-full bg-[#FEDF24]/15 blur-3xl"
+                className="pointer-events-none absolute right-[-150px] top-[180px] h-[350px] w-[350px] rounded-full bg-[#FEDF24]/10 blur-3xl"
             />
 
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute left-[-180px] top-[850px] h-[350px] w-[350px] rounded-full bg-[#44807F]/10 blur-3xl"
+                className="pointer-events-none absolute left-[-180px] top-[850px] h-[350px] w-[350px] rounded-full bg-[#B8860B]/8 blur-3xl"
             />
 
             <div className="relative z-10 mx-auto max-w-7xl px-4 pb-24 pt-1 sm:px-7 sm:pt-16 lg:px-10">
@@ -1174,12 +1291,12 @@ const EventsPage = () => {
                 <header className="mb-8">
                     <div className="flex mt-4 flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#182322]/10 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#44807F]">
+                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#182322]/10 bg-[#FFF3C4] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#B8860B]">
                                 <Ticket size={13} />
                                 All events
                             </div>
 
-                            <h1 className="rounded-2xl bg-[#44807F] px-5 py-3 text-4xl font-extrabold leading-[0.98] tracking-[-0.045em] text-black sm:px-7 sm:py-4 sm:text-6xl">
+                            <h1 className="rounded-2xl px-5 py-3 text-4xl font-extrabold leading-[0.98] tracking-[-0.045em] text-black sm:px-7 sm:py-4 sm:text-6xl">
                                 Explore
                                 <span className="ml-2 relative inline-block">
                                     events.
@@ -1201,11 +1318,11 @@ const EventsPage = () => {
                 {/* FILTER AREA                                                         */}
                 {/* ================================================================== */}
 
-                <section className="overflow-hidden rounded-[24px] border border-[#182322]/10 bg-white shadow-[0_12px_35px_rgba(24,35,34,0.06)]">
+                <section className="overflow-hidden rounded-[24px] border border-[#B8860B]/25 bg-[#fffdf6] shadow-[0_12px_35px_rgba(184,134,11,0.10)]">
                     <div className="p-3 sm:p-4">
                         {/* Search */}
-                        <div className="group flex items-center rounded-2xl border border-[#182322]/10 bg-[#fffdf5] px-3 py-1.5 transition focus-within:border-[#44807F] focus-within:ring-4 focus-within:ring-[#44807F]/10">
-                            <Search size={18} className="shrink-0 text-[#44807F]" />
+                        <div className="group flex items-center rounded-2xl border border-[#B8860B]/20 bg-[#FFF8DC] px-3 py-1.5 transition focus-within:border-[#B8860B] focus-within:ring-4 focus-within:ring-[#B8860B]/10">
+                            <Search size={18} className="shrink-0 text-[#B8860B]" />
 
                             <input
                                 value={searchTerm}
@@ -1244,7 +1361,7 @@ const EventsPage = () => {
                                         }}
                                         className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold transition ${active
                                             ? "border-[#182322] bg-[#182322] text-white shadow-sm"
-                                            : "border-[#182322]/10 bg-[#fffdf5] text-[#182322]/55 hover:border-[#44807F]/40 hover:text-[#44807F]"
+                                            : "border-[#B8860B]/20 bg-[#FFF8DC] text-[#182322]/55 hover:border-[#B8860B]/50 hover:text-[#B8860B]"
                                             }`}
                                     >
                                         {option.label}
@@ -1255,8 +1372,8 @@ const EventsPage = () => {
                             {/* From */}
                             <label
                                 className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 transition ${customFromDate || customToDate
-                                    ? "border-[#44807F] bg-[#44807F]/10"
-                                    : "border-[#182322]/10 bg-[#fffdf5]"
+                                    ? "border-[#B8860B] bg-[#B8860B]/10"
+                                    : "border-[#B8860B]/20 bg-[#FFF8DC]"
                                     }`}
                             >
                                 <span className="text-[9px] font-black uppercase tracking-wide text-[#182322]/45">
@@ -1270,7 +1387,7 @@ const EventsPage = () => {
                                         setCustomFromDate(e.target.value);
                                         setDateFilter("all");
                                     }}
-                                    className="w-[40px] bg-transparent text-[10px] font-bold text-[#182322] outline-none"
+                                    className="w-[40px] md:w-25 bg-transparent text-[10px] font-bold text-[#182322] outline-none"
                                     aria-label="From date"
                                 />
                             </label>
@@ -1278,8 +1395,8 @@ const EventsPage = () => {
                             {/* To */}
                             <label
                                 className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 transition ${customFromDate || customToDate
-                                    ? "border-[#44807F] bg-[#44807F]/10"
-                                    : "border-[#182322]/10 bg-[#fffdf5]"
+                                    ? "border-[#B8860B] bg-[#B8860B]/10"
+                                    : "border-[#B8860B]/20 bg-[#FFF8DC]"
                                     }`}
                             >
                                 <span className="text-[9px] font-black uppercase tracking-wide text-[#182322]/45">
@@ -1294,21 +1411,21 @@ const EventsPage = () => {
                                         setCustomToDate(e.target.value);
                                         setDateFilter("all");
                                     }}
-                                    className="w-[40px] bg-transparent text-[10px] font-bold text-[#182322] outline-none"
+                                    className="w-[40px] md:w-25 bg-transparent text-[10px] font-bold text-[#182322] outline-none"
                                     aria-label="To date"
                                 />
                             </label>
                         </div>
 
                         {/* Bottom controls */}
-                        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#182322]/6 pt-3">
+                        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#B8860B]/15 pt-3">
                             <button
                                 type="button"
                                 onClick={() => setShowCategories((current) => !current)}
                                 aria-expanded={showCategories}
                                 className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-black transition ${showCategories || activeCategory !== "all"
-                                    ? "border-[#44807F] bg-[#44807F]/10 text-[#44807F]"
-                                    : "border-[#182322]/10 bg-[#fffdf5] text-[#182322]/70 hover:border-[#44807F]/40 hover:text-[#44807F]"
+                                    ? "border-[#B8860B] bg-[#B8860B]/10 text-[#B8860B]"
+                                    : "border-[#B8860B]/20 bg-[#FFF8DC] text-[#182322]/70 hover:border-[#B8860B]/50 hover:text-[#B8860B]"
                                     }`}
                             >
                                 <LayoutGrid size={14} />
@@ -1330,7 +1447,7 @@ const EventsPage = () => {
                                 <button
                                     type="button"
                                     onClick={resetFilters}
-                                    className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-black text-[#44807F] transition hover:bg-[#44807F]/10"
+                                    className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-black text-[#B8860B] transition hover:bg-[#B8860B]/10"
                                 >
                                     <X size={12} />
                                     Clear all
@@ -1340,7 +1457,7 @@ const EventsPage = () => {
 
                         {/* Categories */}
                         {showCategories && (
-                            <div className="mt-3 border-t border-[#182322]/6 pt-3">
+                            <div className="mt-3 border-t border-[#B8860B]/15 pt-3">
                                 <div className={`flex gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-x-visible ${hideScrollbar}`}>
                                     {/* ALL */}
                                     <button
@@ -1349,13 +1466,13 @@ const EventsPage = () => {
                                         aria-pressed={activeCategory === "all"}
                                         className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 transition-all ${activeCategory === "all"
                                             ? "border-[#182322] bg-[#182322] text-white shadow-[3px_3px_0_#FEDF24]"
-                                            : "border-[#182322]/10 bg-[#fffdf5] text-[#182322]/60 hover:border-[#44807F]/30"
+                                            : "border-[#B8860B]/20 bg-[#FFF8DC] text-[#182322]/60 hover:border-[#B8860B]/40"
                                             }`}
                                     >
                                         <span
                                             className={`flex h-8 w-8 items-center justify-center rounded-lg ${activeCategory === "all"
                                                 ? "bg-[#FEDF24] text-[#182322]"
-                                                : "bg-[#44807F]/10 text-[#44807F]"
+                                                : "bg-[#B8860B]/10 text-[#B8860B]"
                                                 }`}
                                         >
                                             <LayoutGrid size={16} />
@@ -1413,7 +1530,7 @@ const EventsPage = () => {
 
                             {activeCategory !==
                                 "all" && (
-                                    <span className="rounded-full bg-[#44807F] px-3 py-1 text-xs font-bold text-white">
+                                    <span className="rounded-full bg-[#B8860B] px-3 py-1 text-xs font-bold text-white">
                                         {
                                             getCategoryConfig(
                                                 activeCategory
@@ -1428,7 +1545,7 @@ const EventsPage = () => {
                             onClick={
                                 resetFilters
                             }
-                            className="text-xs font-extrabold text-[#44807F]"
+                            className="text-xs font-extrabold text-[#B8860B]"
                         >
                             Reset filters
                         </button>
@@ -1463,7 +1580,7 @@ const EventsPage = () => {
 
                 {filteredEvents.length ===
                     0 && (
-                        <div className="mt-12 flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-[#182322]/15 bg-white/70 px-6 text-center">
+                        <div className="mt-12 flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-[#B8860B]/25 bg-[#FFF3C4]/70 px-6 text-center">
                             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#FEDF24]">
                                 <Ticket
                                     size={36}
@@ -1488,7 +1605,7 @@ const EventsPage = () => {
                                     onClick={
                                         resetFilters
                                     }
-                                    className="mt-6 rounded-full bg-[#182322] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#44807F]"
+                                    className="mt-6 rounded-full bg-[#182322] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#B8860B]"
                                 >
                                     Show all events
                                 </button>
