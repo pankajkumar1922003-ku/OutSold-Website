@@ -118,11 +118,9 @@ const LoginModal = ({ isOpen, onClose }) => {
 
   const verifyOtp = async (otp) => {
     if (!confirmationResult) return;
-
     const result = await confirmationResult.confirm(otp);
-
-    await saveProfile(name);
-
+    const cleanName = name.trim();
+    await saveProfile(cleanName);
     return result;
   };
 
@@ -163,12 +161,11 @@ const LoginModal = ({ isOpen, onClose }) => {
             {step === "details" ? (
               <>
                 <div className="mb-7">
-                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#182322] shadow-[0_10px_25px_rgba(24,35,34,0.16)]">
-                    <span className="text-xl font-black text-[#FEDF24]">
-                      O
-                    </span>
-                  </div>
-
+                    <img
+                      src="/Outsold Logo.png"
+                      alt="OutSold"
+                      className="h-20 w-20 object-contain"
+                    />
                   <h2 className="text-2xl font-black tracking-tight text-[#182322]">
                     Welcome to OutSold
                   </h2>
@@ -258,7 +255,7 @@ const LoginModal = ({ isOpen, onClose }) => {
               />
             )}
 
-            <div id="recaptcha-container" className="hidden"/>
+            <div id="recaptcha-container" className="hidden" />
           </div>
         </motion.div>
       </motion.div>

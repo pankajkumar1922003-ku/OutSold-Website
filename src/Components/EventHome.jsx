@@ -22,10 +22,15 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOutsoldEvents } from "../hooks/useOutsoldEvents";
-
-/* -------------------------------------------------------------------------- */
-/*  Config                                                                    */
-/* -------------------------------------------------------------------------- */
+import { db } from "../lib/firebase";
+import {
+    collection,
+    onSnapshot,
+    doc,
+    deleteDoc,
+    setDoc,
+} from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
 
 const STORAGE_KEY = "outsold_user_profile";
 const SLIDE_INTERVAL = 5000;
@@ -192,31 +197,79 @@ const DateBlock = ({
     event,
     className = "",
 }) => {
-    const parts = getDateParts(event);
+    const start = toDate(getEventStartDate(event));
+    const end = toDate(getEventEndDate(event));
 
-    return (
-        <div
-            className={`min-w-[3rem] text-center leading-none ${className}`}
-        >
-            {parts ? (
-                <>
-                    <p className="text-3xl font-extrabold tabular-nums text-[#44807F]">
-                        {parts.day}
-                    </p>
-
-                    <p className="mt-1 text-sm font-semibold text-[#182322]/70">
-                        {parts.month}
-                    </p>
-                </>
-            ) : (
+    if (!start) {
+        return (
+            <div
+                className={`min-w-[1rem] text-center leading-none ${className}`}
+            >
                 <p className="text-sm font-bold text-[#182322]/60">
                     Date TBA
                 </p>
-            )}
+            </div>
+        );
+    }
+
+    const startDay = start.toLocaleDateString("en-IN", {
+        day: "2-digit",
+    });
+
+    const startMonth = start.toLocaleDateString("en-IN", {
+        month: "short",
+    });
+
+    const isSameDay =
+        !end || start.toDateString() === end.toDateString();
+
+    const endDay = end?.toLocaleDateString("en-IN", {
+        day: "2-digit",
+    });
+
+    const endMonth = end?.toLocaleDateString("en-IN", {
+        month: "short",
+    });
+
+    return (
+        <div
+            className={`shrink-0 border-r border-[#182322]/10 pr-2.5 text-center leading-none sm:pr-4 ${className}`}
+        >
+            <div className="flex items-center gap-1">
+                {/* START DATE */}
+                <div className="min-w-[20px]">
+                    <p className="text-md font-extrabold tabular-nums text-[#44807F] sm:text-3xl">
+                        {startDay}
+                    </p>
+
+                    <p className="mt-0.5 text-xs font-semibold text-[#182322]/70 sm:text-sm">
+                        {startMonth}
+                    </p>
+                </div>
+
+                {/* ARROW */}
+                {!isSameDay && (
+                    <span className="text-base font-extrabold text-[#182322] sm:text-lg">
+                        →
+                    </span>
+                )}
+
+                {/* END DATE */}
+                {!isSameDay && (
+                    <div className="min-w-[20px]">
+                        <p className="text-md font-extrabold tabular-nums text-[#44807F] sm:text-3xl">
+                            {endDay}
+                        </p>
+
+                        <p className="mt-0.5 text-xs font-semibold text-[#182322]/70 sm:text-sm">
+                            {endMonth}
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
-
 const SectionHeader = ({
     title,
     note,
@@ -229,20 +282,14 @@ const SectionHeader = ({
         <div className="mb-6 flex items-end justify-between gap-4">
             <div className="min-w-0">
                 <h3
-                    className={`text-xl font-extrabold tracking-[-0.025em] sm:text-3xl ${dark
-                        ? "text-[#fffdf5]"
-                        : "text-[#182322]"
-                        }`}
+                    className={`text-xl font-extrabold tracking-[-0.025em] sm:text-3xl ${dark ? "text-[#fffdf5]" : "text-[#182322]"}`}
                 >
                     {title}
                 </h3>
 
                 {note && (
                     <p
-                        className={`mt-1 text-sm ${dark
-                            ? "text-[#fffdf5]/60"
-                            : "text-[#182322]/55"
-                            }`}
+                        className={`mt-1 text-sm ${dark ? "text-[#fffdf5]/60" : "text-[#182322]/55"}`}
                     >
                         {note}
                     </p>
@@ -279,7 +326,7 @@ const EventTicket = ({
             }
             aria-label={`View ${event.title || "event"
                 }`}
-            className={`group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-2xl bg-[#fcf3cc] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.10)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]`}
+            className={`group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-md bg-[#fcf3cc] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.10)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]`}
         >
             {/* IMAGE */}
             <div className="relative aspect-[16/10] overflow-hidden bg-[#e9ece7]">
@@ -323,12 +370,8 @@ const EventTicket = ({
                 />
 
                 {/* DATE + TITLE */}
-                <div className="flex items-start gap-2.5 sm:gap-4">
-                    <DateBlock
-                        event={event}
-                        className="shrink-0 border-r border-[#182322]/10 pr-2.5 sm:pr-4 [&>p:first-child]:text-2xl sm:[&>p:first-child]:text-3xl [&>p:nth-child(2)]:mt-0.5 [&>p:nth-child(2)]:text-xs sm:[&>p:nth-child(2)]:text-sm"
-                    />
-
+                <div className="flex items-start gap-1 sm:gap-4">
+                    <DateBlock event={event} />
                     <div className="min-w-0 flex-1">
                         <h4 className="line-clamp-2 text-sm font-bold leading-snug tracking-[-0.01em] text-[#182322] sm:text-lg">
                             {event.title ||
@@ -378,10 +421,7 @@ const EventTicket = ({
                         aria-pressed={
                             interested
                         }
-                        className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interested
-                            ? "border-red-500 bg-red-500 text-white"
-                            : "border-[#182322]/20 bg-white text-[#182322] hover:border-red-400 hover:text-red-500"
-                            }`}
+                        className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interested ? "border-red-500 bg-red-500 text-white" : "border-[#182322]/20 bg-white text-[#182322] hover:border-red-400 hover:text-red-500"}`}
                     >
                         <Heart
                             size={16}
@@ -406,24 +446,15 @@ const EventTicket = ({
 /* -------------------------------------------------------------------------- */
 
 const EventsHome = () => {
-    const navigate =
-        useNavigate();
+    const navigate = useNavigate();
 
-    const reduceMotion =
-        useReducedMotion();
+    const reduceMotion = useReducedMotion();
 
-    const [userName, setUserName] =
-        useState("");
+    const [userName, setUserName] = useState("");
 
-    const [
-        selectedCategory,
-        setSelectedCategory,
-    ] = useState("All");
+    const [selectedCategory, setSelectedCategory] = useState("All");
 
-    const [
-        selectedDate,
-        setSelectedDate,
-    ] = useState("All Dates");
+    const [selectedDate, setSelectedDate] = useState("All Dates");
 
     const [
         searchTerm,
@@ -448,6 +479,8 @@ const EventsHome = () => {
         setInterestedEvents,
     ] = useState([]);
 
+    const { user } = useAuth();
+
     const {
         events: fetchedEvents = [],
     } = useOutsoldEvents();
@@ -467,40 +500,59 @@ const EventsHome = () => {
         [fetchedEvents]
     );
 
+    useEffect(() => {
+        if (!user?.uid) {
+            setInterestedEvents([]);
+            return;
+        }
+
+        const wishlistRef = collection(
+            db,
+            "outsold_users",
+            user.uid,
+            "wishlist"
+        );
+
+        const unsubscribe = onSnapshot(
+            wishlistRef,
+            (snapshot) => {
+                setInterestedEvents(
+                    snapshot.docs.map(
+                        (wishlistDoc) => wishlistDoc.id
+                    )
+                );
+            },
+            (error) => {
+                console.error(
+                    "Wishlist listener error:",
+                    error
+                );
+            }
+        );
+
+        return () => unsubscribe();
+    }, [user?.uid]);
+
     /* ---------------------------- user name --------------------------- */
 
     useEffect(() => {
-        const readUserProfile =
-            () => {
-                try {
-                    const savedProfile =
-                        localStorage.getItem(
-                            STORAGE_KEY
-                        );
+        const readUserProfile = () => {
+            try {
+                const savedProfile = localStorage.getItem(STORAGE_KEY);
 
-                    if (!savedProfile) {
-                        setUserName("");
-                        return;
-                    }
-
-                    const profile =
-                        JSON.parse(
-                            savedProfile
-                        );
-
-                    setUserName(
-                        profile?.name?.trim() ||
-                        ""
-                    );
-                } catch (error) {
-                    console.error(
-                        "User profile read error:",
-                        error
-                    );
-
+                if (!savedProfile) {
                     setUserName("");
+                    return;
                 }
-            };
+
+                const profile = JSON.parse(savedProfile);
+
+                setUserName(profile?.name?.trim() || "");
+            } catch (error) {
+                console.error("User profile read error:", error);
+                setUserName("");
+            }
+        };
 
         readUserProfile();
 
@@ -509,11 +561,22 @@ const EventsHome = () => {
             readUserProfile
         );
 
-        return () =>
+        window.addEventListener(
+            "userProfileChanged",
+            readUserProfile
+        );
+
+        return () => {
             window.removeEventListener(
                 "locationChanged",
                 readUserProfile
             );
+
+            window.removeEventListener(
+                "userProfileChanged",
+                readUserProfile
+            );
+        };
     }, []);
 
     /* ------------------------------- filtering ------------------------------- */
@@ -770,7 +833,7 @@ const EventsHome = () => {
                     (event) =>
                         slideIds.has(event.id)
                 ),
-            ].slice(0, 2);
+            ].slice(0, 4);
 
         return {
             slides,
@@ -877,24 +940,57 @@ const EventsHome = () => {
             }--${eventId}`;
     };
 
-    const toggleInterested = (
-        eventId
-    ) => {
-        setInterestedEvents(
-            (current) =>
-                current.includes(
-                    eventId
-                )
-                    ? current.filter(
-                        (id) =>
-                            id !==
-                            eventId
-                    )
-                    : [
-                        ...current,
-                        eventId,
-                    ]
+    const toggleInterested = async (eventId) => {
+        if (!user?.uid) {
+            window.dispatchEvent(
+                new Event("openLoginModal")
+            );
+            return;
+        }
+
+        const event = events.find(
+            (item) => item.id === eventId
         );
+
+        if (!event) return;
+
+        const wishlistRef = doc(
+            db,
+            "outsold_users",
+            user.uid,
+            "wishlist",
+            eventId
+        );
+
+        const alreadyInterested = interestedEvents.includes(eventId);
+
+        try {
+            if (alreadyInterested) {
+                await deleteDoc(wishlistRef);
+            } else {
+                await setDoc(wishlistRef, {
+                    id: event.id,
+                    title: event.title || "",
+                    image: event.image || "",
+                    category: event.category || "",
+                    date: event.date || "",
+                    endDate: event.endDate || "",
+                    time: event.time || "",
+                    location: event.location || "",
+                    venue: event.venue || "",
+                    price: event.price || "",
+                    slug: event.slug || null,
+                    subdomain: event.subdomain || null,
+                    companyId: event.companyId || null,
+                    createdAt: new Date(),
+                });
+            }
+        } catch (error) {
+            console.error(
+                "Wishlist update error:",
+                error
+            );
+        }
     };
 
     const clearFilters =
@@ -1022,12 +1118,7 @@ const EventsHome = () => {
                             aria-expanded={
                                 showFilters
                             }
-                            className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-colors ${showFilters ||
-                                selectedCategory !==
-                                "All"
-                                ? "bg-[#44807F] text-white"
-                                : "bg-[#182322] text-white hover:bg-[#44807F]"
-                                }`}
+                            className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-colors ${showFilters || selectedCategory !== "All" ? "bg-[#44807F] text-white" : "bg-[#182322] text-white hover:bg-[#44807F]"}`}
                         >
                             <SlidersHorizontal
                                 size={
@@ -1087,10 +1178,7 @@ const EventsHome = () => {
                                                     aria-pressed={
                                                         selected
                                                     }
-                                                    className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${selected
-                                                        ? "border-[#182322] bg-[#182322] text-white"
-                                                        : "border-[#182322]/15 bg-white text-[#182322]/75 hover:border-[#182322]/40"
-                                                        }`}
+                                                    className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${selected ? "border-[#182322] bg-[#182322] text-white" : "border-[#182322]/15 bg-white text-[#182322]/75 hover:border-[#182322]/40"}`}
                                                 >
                                                     <Icon
                                                         size={
@@ -1138,10 +1226,7 @@ const EventsHome = () => {
                                         aria-pressed={
                                             selected
                                         }
-                                        className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${selected
-                                            ? "bg-[#182322] text-white"
-                                            : "text-[#182322]/60 hover:bg-[#182322]/5 hover:text-[#182322]"
-                                            }`}
+                                        className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${selected ? "bg-[#182322] text-white" : "text-[#182322]/60 hover:bg-[#182322]/5 hover:text-[#182322]"}`}
                                     >
                                         {
                                             date
@@ -1199,7 +1284,7 @@ const EventsHome = () => {
                                     )
                                 }
                             >
-                                <div className="relative grid min-h-[280px] grid-cols-[55%_45%] border-none overflow-hidden rounded-3xl bg-[#182322] shadow-[0_24px_60px_rgba(24,35,34,0.14)] sm:min-h-[420px] lg:min-h-[500px] lg:grid-cols-[minmax(0,1fr)_400px]">
+                                <div className="relative grid min-h-[170px] grid-cols-[55%_45%] overflow-hidden rounded-md bg-[#182322] shadow-[0_24px_60px_rgba(24,35,34,0.14)] sm:min-h-[420px] lg:min-h-[500px] lg:grid-cols-[minmax(0,1fr)_400px]">
 
                                     {/* IMAGE */}
                                     <div
@@ -1208,7 +1293,7 @@ const EventsHome = () => {
                                                 currentSlide
                                             )
                                         }
-                                        className="relative h-full min-h-[280px] cursor-pointer overflow-hidden sm:min-h-[420px] lg:h-auto"
+                                        className="relative h-full min-h-[170px] cursor-pointer overflow-hidden sm:min-h-[420px] lg:h-auto"
                                     >
                                         <AnimatePresence
                                             initial={
@@ -1283,7 +1368,7 @@ const EventsHome = () => {
 
                                         <Notch
                                             tone="page"
-                                            className="-right-2.5 -top-2.5 lg:left-[-10px] lg:right-auto lg:top-auto lg:-bottom-2.5"
+                                            className="hidden lg:block lg:left-[-10px] lg:right-auto lg:top-auto lg:-bottom-2.5"
                                         />
 
                                         {/* CONTROLS */}
@@ -1414,35 +1499,7 @@ const EventsHome = () => {
                                                         "An unforgettable experience"}
                                                 </h2>
 
-                                                {currentSlide.location && (
-                                                    <p className="mt-2 flex items-start gap-1.5 text-[10px] font-medium leading-snug sm:mt-3 sm:gap-2 sm:text-sm">
-                                                        <MapPin
-                                                            size={
-                                                                13
-                                                            }
-                                                            className="mt-0.5 shrink-0 sm:h-4 sm:w-4"
-                                                        />
-
-                                                        <span className="min-w-0 break-words whitespace-normal">
-                                                            {
-                                                                currentSlide.location
-                                                            }
-                                                        </span>
-                                                    </p>
-                                                )}
-
                                                 <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pt-7">
-                                                    <div>
-                                                        <p className="text-[9px] font-medium text-[#182322]/65 sm:text-xs">
-                                                            Starting
-                                                            from
-                                                        </p>
-
-                                                        <p className="text-sm font-extrabold sm:text-xl">
-                                                            {currentSlide.price ||
-                                                                "Free"}
-                                                        </p>
-                                                    </div>
 
                                                     <div className="flex items-center gap-2 sm:gap-2.5">
                                                         {/* EXPLORE BUTTON */}
@@ -1452,7 +1509,7 @@ const EventsHome = () => {
                                                                 e.stopPropagation();
                                                                 openEvent(currentSlide);
                                                             }}
-                                                            className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-3 py-2 text-[11px] font-bold text-[#FEDF24] transition duration-200 hover:bg-[#44807F] hover:text-white sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-sm"
+                                                            className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-3 py-2 text-[11px] font-bold text-[#FEDF24] transition duration-200 hover:bg-[#44807F] hover:text-white sm:gap-1.5 sm:px-6 sm:py-2.5 sm:text-sm lg:px-10"
                                                         >
                                                             <span>
                                                                 Explore
@@ -1482,10 +1539,7 @@ const EventsHome = () => {
                                                             aria-pressed={interestedEvents.includes(
                                                                 currentSlide.id
                                                             )}
-                                                            className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interestedEvents.includes(currentSlide.id)
-                                                                ? "border-red-500 bg-red-500 text-white"
-                                                                : "border-[#182322] bg-transparent text-[#182322] hover:border-red-400 hover:text-red-500"
-                                                                }`}
+                                                            className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interestedEvents.includes(currentSlide.id) ? "border-red-500 bg-red-500 text-white" : "border-[#182322] bg-transparent text-[#182322] hover:border-red-400 hover:text-red-500"}`}
                                                         >
                                                             <Heart
                                                                 size={16}
@@ -1536,10 +1590,7 @@ const EventsHome = () => {
                                                             aria-current={
                                                                 active
                                                             }
-                                                            className={`relative flex min-w-[200px] flex-1 items-center gap-3 overflow-hidden rounded-2xl border p-2.5 text-left transition-colors ${active
-                                                                ? "border-[#182322] bg-white"
-                                                                : "border-[#182322]/10 bg-white/50 hover:bg-white"
-                                                                }`}
+                                                            className={`relative flex min-w-[200px] flex-1 items-center gap-3 overflow-hidden rounded-md border p-2.5 text-left transition-colors ${active ? "border-[#182322] bg-white" : "border-[#182322]/10 bg-white/50 hover:bg-white"}`}
                                                         >
                                                             <img
                                                                 src={getImage(
@@ -1710,67 +1761,151 @@ const EventsHome = () => {
             </div>
 
             {/* ------------------------------------------------------------------ */}
-            {/* YOU MIGHT BE INTO THIS                                            */}
+            {/* ORGANIZER RECOMMENDATIONS                                          */}
             {/* ------------------------------------------------------------------ */}
 
             {!isSearching &&
-                interestEvents.length >
-                0 && (
-                    <div className="relative mt-10 w-full bg-[#182322] px-5 py-6 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-                        <div className="mx-auto w-full max-w-7xl">
-                            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                                <div>
-                                    <h3 className="text-2xl font-extrabold tracking-[-0.025em] text-[#fffdf5] sm:text-3xl">
-                                        You might be into this
-                                    </h3>
+                interestEvents.length > 0 && (
+                    <section
+                        className="relative mt-8 w-full overflow-hidden border-y border-[#44807F]/20 bg-[#081412] px-5 py-7 text-[#F4F1E4] sm:mt-10 sm:px-8 sm:py-9 lg:px-10 lg:py-10"
+                    >
+                        {/* BACKGROUND GLOW */}
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute -left-32 top-0 h-80 w-80 rounded-full bg-[#087F73]/20 blur-[100px]"
+                        />
 
-                                    <p className="mt-1 text-sm text-[#fffdf5]/60">
-                                        Tap the heart to save the ones you like.
-                                    </p>
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-[#0B5F57]/20 blur-[110px]"
+                        />
+
+                        {/* SUBTLE CENTER GLOW */}
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#44807F]/[0.06] blur-[90px]"
+                        />
+
+                        <div className="relative z-10 mx-auto w-full max-w-7xl">
+
+                            {/* ================================================== */}
+                            {/* HEADING */}
+                            {/* ================================================== */}
+
+                            <div className="mb-5 max-w-3xl sm:mb-6">
+
+                                {/* LABEL */}
+                                <div
+                                    className="mb-2.5 inline-flex items-center gap-2 rounded-full border border-[#44807F]/30 bg-[#44807F]/10 px-3 py-1 backdrop-blur-xl"
+                                >
+                                    <Sparkles
+                                        size={13}
+                                        className="text-[#76D8C9]"
+                                    />
+
+                                    <span
+                                        className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9DE7D8] sm:text-[11px]"
+                                    >
+                                        Picked for your vibe
+                                    </span>
                                 </div>
 
-                                <span className="w-fit rounded-full bg-[#FEDF24] px-3 py-1 text-xs font-bold text-[#182322] sm:hidden">
-                                    Worth experiencing
-                                </span>
+                                {/* MAIN HEADING */}
+                                <h3
+                                    className="max-w-2xl text-[26px] font-extrabold leading-[1.05] tracking-[-0.04em] text-[#F4F1E4] sm:text-3xl lg:text-4xl"
+                                >
+                                    Like these events?
+                                    <span className="block text-[#72D6C6]">
+                                        Let organizers know.
+                                    </span>
+                                </h3>
+
+                                {/* DESCRIPTION */}
+                                <p
+                                    className="mt-2.5 max-w-2xl text-xs leading-[1.55] text-[#C5D9D4]/65 sm:text-sm sm:leading-[1.6]"
+                                >
+                                    Show your interest in events you love.
+                                    Organizers can get a better idea of what
+                                    their audience enjoys and may reach out to
+                                    you when similar experiences are coming up.
+                                </p>
                             </div>
 
-                            {/* KEEPING THIS SECTION AT 2 CARDS */}
-                            <div className="grid grid-cols-2 gap-1 sm:gap-5 lg:grid-cols-2">
+                            {/* ================================================== */}
+                            {/* EVENT CARDS */}
+                            {/* ================================================== */}
+
+                            <div
+                                className={`flex gap-2.5 overflow-x-auto pb-2 snap-x snap-mandatory ${hideScrollbar} sm:grid sm:grid-cols-4 sm:gap-3.5 sm:overflow-visible sm:pb-0`}
+                            >
                                 {interestEvents.map(
-                                    (
-                                        event,
-                                        index
-                                    ) => (
-                                        <EventTicket
-                                            key={`interest-${event.id ||
-                                                index
-                                                }`}
-                                            event={
-                                                event
-                                            }
-                                            onOpen={
-                                                openEvent
-                                            }
-                                            interested={interestedEvents.includes(
-                                                event.id
-                                            )}
-                                            onToggle={
-                                                toggleInterested
-                                            }
-                                        />
+                                    (event, index) => (
+                                        <div
+                                            key={`interest-${event.id || index}`}
+                                            className="w-[63%] shrink-0 snap-start sm:w-full"
+                                        >
+                                            {/* GLASS CARD WRAPPER */}
+                                            <div
+                                                className="h-full overflow-hidden rounded-md border border-[#75D8C8]/15 bg-[#10221F]/80 p-1 shadow-[0_16px_40px_rgba(0,0,0,0.30)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#75D8C8]/30 hover:bg-[#132925]"
+                                            >
+                                                <EventTicket
+                                                    event={event}
+                                                    onOpen={openEvent}
+                                                    interested={interestedEvents.includes(
+                                                        event.id
+                                                    )}
+                                                    onToggle={
+                                                        toggleInterested
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
                                     )
                                 )}
                             </div>
-                        </div>
-                    </div>
-                )}
 
+                            {/* ================================================== */}
+                            {/* BOTTOM INFO */}
+                            {/* ================================================== */}
+
+                            <div
+                                className="mt-4 flex flex-col gap-2 rounded-md border border-[#75D8C8]/10 bg-[#0D211E]/70 px-3 py-2.5 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-3"
+                            >
+                                <div className="flex items-center gap-3">
+
+                                    <div
+                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#75D8C8]/20 bg-[#75D8C8]/10 text-[#75D8C8]"
+                                    >
+                                        <Heart
+                                            size={14}
+                                            fill="currentColor"
+                                        />
+                                    </div>
+
+                                    <p
+                                        className="text-xs leading-relaxed text-[#C5D9D4]/60 sm:text-sm"
+                                    >
+                                        Your interests help organizers
+                                        discover the audience for their events.
+                                    </p>
+                                </div>
+
+                                <span
+                                    className="hidden shrink-0 text-xs font-bold text-[#75D8C8] sm:block"
+                                >
+                                    Keep exploring →
+                                </span>
+                            </div>
+
+                        </div>
+                    </section>
+                )}
             {/* EMPTY STATE */}
             {filteredEvents.length ===
                 0 && (
                     <div className="mx-auto mt-12 max-w-7xl px-5 sm:px-8 lg:px-10">
                         <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#182322]/20 bg-white/60 px-6 text-center">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FEDF24] text-[#182322]">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-md bg-[#FEDF24] text-[#182322]">
                                 <Ticket
                                     size={
                                         30
