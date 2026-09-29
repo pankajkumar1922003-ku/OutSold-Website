@@ -2,20 +2,25 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  CalendarDays,
   Heart,
   Loader2,
   LogOut,
-  MapPin,
   Phone,
   User,
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  History,
 } from "lucide-react";
+
 import {
   collection,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
+  where,
+  getDoc,
 } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
@@ -24,32 +29,19 @@ import { useAuth } from "../context/AuthContext";
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80";
 
-const formatDate = (value) => {
-  if (!value) return "Date TBA";
-
-  const date = value?.toDate
-    ? value.toDate()
-    : new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
-
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
+/* -------------------------------------------------------
+   Event Card
+   Same card structure as Wishlist
+------------------------------------------------------- */
 const EventCard = ({ event, onOpen }) => {
   return (
     <motion.article
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
-      className="group overflow-hidden rounded-2xl border border-[#182322]/10 bg-[#FFF3C4] shadow-[0_10px_30px_rgba(24,35,34,0.06)]"
+      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-[#B8860B]/20 bg-[#FFF3C4] shadow-[0_10px_30px_rgba(24,35,34,0.06)]"
     >
-      <div className="relative aspect-16/10 overflow-hidden bg-[#182322]/10">
+      {/* IMAGE */}
+      <div className="relative aspect-16/10 overflow-hidden bg-[#e9ece7]">
         <img
           src={event?.image || FALLBACK_IMAGE}
           alt={event?.title || "Event"}
@@ -59,60 +51,30 @@ const EventCard = ({ event, onOpen }) => {
             e.currentTarget.src = FALLBACK_IMAGE;
           }}
         />
-
-        <span className="absolute left-3 top-3 rounded-full bg-[#FEDF24] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#182322] shadow-sm">
-          {event?.category || "Event"}
-        </span>
       </div>
 
-      <div className="relative border-t-2 border-dashed border-[#182322]/15 p-4">
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 text-lg font-extrabold leading-snug text-[#182322]">
-              {event?.title || "Untitled Event"}
-            </h3>
-          </div>
-        </div>
-
-        <div className="mt-3 space-y-2 text-xs font-semibold text-[#182322]/55">
-          <div className="flex items-center gap-2">
-            <CalendarDays
-              size={14}
-              className="shrink-0 text-[#44807F]"
-            />
-
-            <span>
-              {formatDate(event?.date)}
-            </span>
-          </div>
-
-          {event?.location && (
-            <div className="flex items-center gap-2">
-              <MapPin
-                size={14}
-                className="shrink-0 text-[#44807F]"
-              />
-
-              <span className="line-clamp-1">
-                {event.location}
-              </span>
-            </div>
-          )}
-        </div>
+      {/* CONTENT */}
+      <div className="relative flex flex-1 flex-col border-t-2 border-dashed border-[#B8860B]/25 p-3 sm:p-4">
+        <h3 className="line-clamp-2 text-sm font-extrabold leading-snug text-[#182322] sm:text-lg">
+          {event?.title || "Untitled Event"}
+        </h3>
 
         <button
           type="button"
           onClick={() => onOpen(event)}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#182322] px-4 py-3 text-sm font-black text-[#FEDF24] transition hover:bg-[#44807F] hover:text-white"
+          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#182322] px-3 py-2.5 text-xs font-black text-[#FEDF24] transition hover:bg-[#B8860B] hover:text-white sm:mt-4 sm:text-sm"
         >
           Explore
-          <ArrowUpRight size={16} />
+          <ArrowUpRight size={15} />
         </button>
       </div>
     </motion.article>
   );
 };
 
+/* -------------------------------------------------------
+   Empty Wishlist
+------------------------------------------------------- */
 const EmptyWishlist = () => {
   return (
     <div className="rounded-3xl border border-dashed border-[#182322]/15 bg-white/70 px-6 py-14 text-center">
@@ -131,6 +93,113 @@ const EmptyWishlist = () => {
   );
 };
 
+/* -------------------------------------------------------
+   Empty My Booked Events
+------------------------------------------------------- */
+const EmptyBookedEvents = () => {
+  return (
+    <div className="rounded-3xl border border-dashed border-[#182322]/15 bg-white/70 px-6 py-14 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#44807F]/10 text-[#44807F]">
+        <History size={28} />
+      </div>
+
+      <h3 className="mt-5 text-xl font-black text-[#182322]">
+        No booked events
+      </h3>
+
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#182322]/50">
+        Events you have booked will appear here.
+      </p>
+    </div>
+  );
+};
+
+/* -------------------------------------------------------
+   Reusable Event Rail
+------------------------------------------------------- */
+const EventRail = ({ events, railId, label }) => {
+  return (
+    <div className="relative px-0 sm:px-14">
+      {/* DESKTOP LEFT BUTTON */}
+      {events.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById(railId)?.scrollBy({
+                left: -350,
+                behavior: "smooth",
+              });
+            }}
+            aria-label={`Previous ${label}`}
+            className="absolute left-0 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFF3C4] text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:flex"
+          >
+            <ChevronLeft size={19} strokeWidth={2.5} />
+          </button>
+
+          {/* DESKTOP RIGHT BUTTON */}
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById(railId)?.scrollBy({
+                left: 350,
+                behavior: "smooth",
+              });
+            }}
+            aria-label={`Next ${label}`}
+            className="absolute right-0 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFF3C4] text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:flex"
+          >
+            <ChevronRight size={19} strokeWidth={2.5} />
+          </button>
+        </>
+      )}
+
+      {/* HORIZONTAL RAIL */}
+      <div
+        id={railId}
+        className="flex gap-3 overflow-x-auto pb-3 sm:gap-4"
+        style={{
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          scrollSnapType: "x mandatory",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        {events.map((event) => (
+          <div
+            key={`${event.companyId}-${event.id}`}
+            className="w-[68%] min-w-[68%] shrink-0 snap-start sm:w-[43%] sm:min-w-[43%] md:w-[31.5%] md:min-w-[31.5%] lg:w-[23.5%] lg:min-w-[23.5%]"
+          >
+            <EventCard
+              event={event}
+              onOpen={(selectedEvent) => {
+                const baseUrl = selectedEvent?.subdomain
+                  ? `https://${selectedEvent.subdomain}.outsold.in`
+                  : "https://app.outsold.in";
+
+                const title = String(selectedEvent?.title || "event");
+                const eventId = String(selectedEvent?.id || "");
+
+                const slug = title
+                  .toLowerCase()
+                  .trim()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-+|-+$/g, "");
+
+                window.location.href = `${baseUrl}/e/${slug || "event"
+                  }--${eventId}`;
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* =======================================================
+   ACCOUNT PAGE
+======================================================= */
 const AccountPage = () => {
   const navigate = useNavigate();
 
@@ -142,10 +211,16 @@ const AccountPage = () => {
   } = useAuth();
 
   const [wishlist, setWishlist] = useState([]);
-  const [wishlistLoading, setWishlistLoading] =
-    useState(true);
+  const [wishlistLoading, setWishlistLoading] = useState(true);
+
+  const [bookedEvents, setBookedEvents] = useState([]);
+  const [bookedEventsLoading, setBookedEventsLoading] = useState(true);
+
   const [loggingOut, setLoggingOut] = useState(false);
 
+  /* =====================================================
+     WISHLIST
+  ===================================================== */
   useEffect(() => {
     if (authLoading) return;
 
@@ -172,21 +247,16 @@ const AccountPage = () => {
     const unsubscribe = onSnapshot(
       wishlistQuery,
       (snapshot) => {
-        const wishlistEvents =
-          snapshot.docs.map((wishlistDoc) => ({
-            id: wishlistDoc.id,
-            ...wishlistDoc.data(),
-          }));
+        const wishlistEvents = snapshot.docs.map((wishlistDoc) => ({
+          id: wishlistDoc.id,
+          ...wishlistDoc.data(),
+        }));
 
         setWishlist(wishlistEvents);
         setWishlistLoading(false);
       },
       (error) => {
-        console.error(
-          "Wishlist fetch error:",
-          error
-        );
-
+        ;
         setWishlistLoading(false);
       }
     );
@@ -194,41 +264,244 @@ const AccountPage = () => {
     return () => unsubscribe();
   }, [user?.uid, authLoading]);
 
+  /* =====================================================
+   MY BOOKED EVENTS
+===================================================== */
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      setBookedEvents([]);
+      setBookedEventsLoading(false);
+      return;
+    }
+
+    const normalizePhone = (value) => {
+      if (!value) return "";
+
+      const digits = String(value).replace(/\D/g, "");
+
+      return digits.slice(-10);
+    };
+
+    const profilePhone = normalizePhone(profile?.phone);
+    const authPhone = normalizePhone(user?.phoneNumber);
+
+    const possiblePhones = [
+      profilePhone,
+      authPhone,
+    ].filter(Boolean);
+
+    if (possiblePhones.length === 0) {
+      setBookedEvents([]);
+      setBookedEventsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchBookedEvents = async () => {
+      try {
+        setBookedEventsLoading(true);
+
+        ;
+        ;
+        ;
+        ;
+
+        // Get all events from:
+        // companies/CMP-3158/events
+        const eventsRef = collection(
+          db,
+          "companies",
+          "CMP-3158",
+          "events"
+        );
+
+        const eventsSnapshot = await getDocs(eventsRef);
+
+        ;
+
+        ;
+
+        if (cancelled) return;
+
+        const uniqueEvents = new Map();
+
+        await Promise.all(
+          eventsSnapshot.docs.map(async (eventDoc) => {
+            try {
+              const eventId = eventDoc.id;
+
+              // Get attendees from:
+              // companies/CMP-3158/events/{eventId}/attendees
+              const attendeesRef = collection(
+                db,
+                "companies",
+                "CMP-3158",
+                "events",
+                eventId,
+                "attendees"
+              );
+
+              const attendeesSnapshot = await getDocs(
+                attendeesRef
+              );
+
+              ;
+
+              const attendees = attendeesSnapshot.docs.map(
+                (attendeeDoc) => {
+                  const attendeeData = attendeeDoc.data();
+
+                  return {
+                    id: attendeeDoc.id,
+                    phone: attendeeData.phone,
+                    normalizedPhone: normalizePhone(
+                      attendeeData.phone
+                    ),
+                  };
+                }
+              );
+
+              ;
+
+              if (attendeesSnapshot.empty) {
+                return;
+              }
+
+              // Check every attendee's phone after normalization
+              const matchedAttendee = attendeesSnapshot.docs.find(
+                (attendeeDoc) => {
+                  const attendeeData = attendeeDoc.data();
+
+                  const attendeePhone = normalizePhone(
+                    attendeeData.phone
+                  );
+
+                  const matched =
+                    attendeePhone &&
+                    possiblePhones.includes(attendeePhone);
+
+                  ;
+
+                  if (matched) {
+                    ;
+                  }
+
+                  return matched;
+                }
+              );
+
+              if (!matchedAttendee) {
+                return;
+              }
+
+              const eventData = eventDoc.data();
+
+              const event = {
+                id: eventId,
+                companyId: "CMP-3158",
+                title: eventData.title || "Untitled Event",
+                category: eventData.category || "",
+                description: eventData.description || "",
+                date: eventData.date || "",
+                endDate: eventData.endDate || "",
+                time: eventData.time || "",
+                venue: eventData.venue || "",
+                isOnline: eventData.isOnline || false,
+                image:
+                  eventData.coverImageUrls?.[0] ||
+                  eventData.coverImageUrl ||
+                  eventData.coverImageDesktop ||
+                  FALLBACK_IMAGE,
+                images:
+                  eventData.coverImageUrls ||
+                  (eventData.coverImageUrl
+                    ? [eventData.coverImageUrl]
+                    : []),
+                subdomain: eventData.subdomain || "",
+                status: eventData.status || "",
+                isPrivate: eventData.isPrivate || false,
+                registrationMode:
+                  eventData.registrationMode || "tickets",
+                rsvpLink: eventData.rsvpLink || "",
+                rsvpButtonLabel:
+                  eventData.rsvpButtonLabel || "RSVP Now",
+                tiers: eventData.tiers || [],
+              };
+
+              uniqueEvents.set(
+                `CMP-3158_${eventId}`,
+                event
+              );
+            } catch (error) {
+              ;
+            }
+          })
+        );
+
+        if (cancelled) return;
+
+        const events = Array.from(
+          uniqueEvents.values()
+        ).sort((a, b) => {
+          const dateA = new Date(a.date || 0).getTime();
+          const dateB = new Date(b.date || 0).getTime();
+
+          return dateB - dateA;
+        });
+
+        ;
+
+        setBookedEvents(events);
+      } catch (error) {
+        ;
+
+        if (!cancelled) {
+          setBookedEvents([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setBookedEventsLoading(false);
+        }
+      }
+    };
+
+    fetchBookedEvents();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    user?.uid,
+    user?.phoneNumber,
+    profile?.phone,
+    authLoading,
+  ]);
+
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
+
       await logout();
-      navigate("/", { replace: true });
+
+      navigate("/", {
+        replace: true,
+      });
     } catch (error) {
-      console.error("Logout error:", error);
+      ;
     } finally {
       setLoggingOut(false);
     }
   };
 
-  const openEvent = (event) => {
-    const baseUrl = event?.subdomain
-      ? `https://${event.subdomain}.outsold.in`
-      : "https://app.outsold.in";
-
-    const title = String(
-      event?.title || "event"
-    );
-
-    const eventId = String(
-      event?.id || ""
-    );
-
-    const slug = title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-    window.location.href =
-      `${baseUrl}/e/${slug || "event"}--${eventId}`;
-  };
-
+  /* =====================================================
+     AUTH LOADING
+  ===================================================== */
   if (authLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#fffdf5]">
@@ -240,6 +513,9 @@ const AccountPage = () => {
     );
   }
 
+  /* =====================================================
+     NOT LOGGED IN
+  ===================================================== */
   if (!user) {
     return (
       <main className="min-h-screen bg-[#fffdf5] px-5 pb-20 pt-28 text-[#182322] sm:px-8 sm:pt-32">
@@ -260,31 +536,34 @@ const AccountPage = () => {
     );
   }
 
-  const displayName = profile?.name || user?.displayName || "User";
+  const displayName =
+    profile?.name ||
+    user?.displayName ||
+    "User";
 
   const displayPhone =
     profile?.phone ||
     user?.phoneNumber ||
     "Mobile number unavailable";
 
+  /* =====================================================
+     UI
+  ===================================================== */
   return (
     <main className="min-h-screen bg-[#fffdf5] px-5 pb-20 pt-28 text-[#182322] sm:px-8 sm:pt-32">
       <div className="mx-auto max-w-7xl">
-
-        {/* ACCOUNT HEADER */}
+        {/* =================================================
+            ACCOUNT HEADER
+        ================================================= */}
         <section className="relative overflow-hidden rounded-[30px] bg-[#182322] p-6 shadow-[0_20px_60px_rgba(24,35,34,0.15)] sm:p-8 lg:p-10">
           <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#FEDF24]/20 blur-3xl" />
-
           <div className="absolute -bottom-24 -left-20 h-48 w-48 rounded-full bg-[#44807F]/20 blur-3xl" />
 
           <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-
             {/* USER INFO */}
             <div className="flex min-w-0 items-center gap-4 sm:gap-5">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#FEDF24] text-2xl font-black text-[#182322] sm:h-20 sm:w-20 sm:text-3xl">
-                {displayName
-                  .charAt(0)
-                  .toUpperCase()}
+                {displayName.charAt(0).toUpperCase()}
               </div>
 
               <div className="min-w-0">
@@ -299,9 +578,7 @@ const AccountPage = () => {
                 <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-white/55">
                   <Phone size={15} />
 
-                  <span>
-                    {displayPhone}
-                  </span>
+                  <span>{displayPhone}</span>
                 </div>
               </div>
             </div>
@@ -322,14 +599,53 @@ const AccountPage = () => {
                 <LogOut size={17} />
               )}
 
-              {loggingOut
-                ? "Logging out..."
-                : "Logout"}
+              {loggingOut ? "Logging out..." : "Logout"}
             </button>
           </div>
         </section>
 
-        {/* WISHLIST */}
+        {/* =================================================
+            MY BOOKED EVENTS
+        ================================================= */}
+        <section className="mt-12">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight sm:text-3xl">
+                My Booked Events
+
+                <History
+                  size={24}
+                  className="text-[#44807F]"
+                />
+              </h2>
+
+              <p className="mt-1 text-sm text-[#182322]/50">
+                Events you have booked
+              </p>
+            </div>
+          </div>
+
+          {bookedEventsLoading ? (
+            <div className="flex justify-center py-16">
+              <Loader2
+                size={30}
+                className="animate-spin text-[#44807F]"
+              />
+            </div>
+          ) : bookedEvents.length === 0 ? (
+            <EmptyBookedEvents />
+          ) : (
+            <EventRail
+              events={bookedEvents}
+              railId="booked-events-rail"
+              label="booked events"
+            />
+          )}
+        </section>
+
+        {/* =================================================
+            WISHLIST
+        ================================================= */}
         <section className="mt-10">
           <div className="mb-6 flex items-end justify-between gap-4">
             <div>
@@ -346,10 +662,6 @@ const AccountPage = () => {
                 Events you are interested in
               </p>
             </div>
-
-            <span className="rounded-full bg-[#FEDF24] px-3 py-1 text-xs font-black text-[#182322]">
-              {wishlist.length}
-            </span>
           </div>
 
           {wishlistLoading ? (
@@ -362,15 +674,11 @@ const AccountPage = () => {
           ) : wishlist.length === 0 ? (
             <EmptyWishlist />
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {wishlist.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onOpen={openEvent}
-                />
-              ))}
-            </div>
+            <EventRail
+              events={wishlist}
+              railId="wishlist-events-rail"
+              label="wishlist events"
+            />
           )}
         </section>
       </div>

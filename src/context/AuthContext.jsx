@@ -134,8 +134,22 @@ export const AuthProvider = ({ children }) => {
       merge: true,
     });
 
+    const existingLocalProfile = (() => {
+      try {
+        return JSON.parse(
+          localStorage.getItem("outsold_user_profile") || "{}"
+        );
+      } catch {
+        return {};
+      }
+    })();
+
     const updatedProfile = {
+      ...existingLocalProfile,
+
+      // Firestore profile data
       ...(existingSnap.exists() ? existingSnap.data() : {}),
+
       uid: currentUser.uid,
       name: cleanName,
       phone: currentUser.phoneNumber || "",
@@ -154,7 +168,9 @@ export const AuthProvider = ({ children }) => {
     );
 
     window.dispatchEvent(
-      new Event("userProfileChanged")
+      new CustomEvent("userProfileChanged", {
+        detail: updatedProfile,
+      })
     );
 
     return updatedProfile;

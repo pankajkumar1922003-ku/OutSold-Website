@@ -10,8 +10,8 @@ import LoginModal from "../auth/LoginModal";
 import { useAuth } from "../context/AuthContext";
 
 const navLinks = [
+  { name: "Discover Events", route: "/all-events" },
   { name: "Home", id: "home" },
-  { name: "Discover Events", id: "events" },
   { name: "List Your Events", id: "organizerCTA" },
 ];
 
@@ -19,8 +19,7 @@ const STORAGE_KEY = "outsold_user_profile";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [selectedLocation, setSelectedLocation] =
-    useState("Select location");
+  const [selectedLocation, setSelectedLocation] = useState("Select location");
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { isLoggedIn, profile } = useAuth();
   const navigate = useNavigate();
@@ -255,9 +254,9 @@ const Navbar = () => {
             <button
               type="button"
               onClick={openLocationOnboarding}
-              className="group flex min-w-[150px] cursor-pointer items-center gap-2.5 rounded-xl border border-[#44807F]/20 bg-white px-3.5 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#44807F]/50 hover:shadow-[0_8px_20px_rgba(68,128,127,0.10)]"
+              className="group flex min-w-[150px] cursor-pointer items-center gap-2.5 rounded-md border border-[#44807F]/20 bg-white px-3.5 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#44807F]/50 hover:shadow-[0_8px_20px_rgba(68,128,127,0.10)]"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#44807F]/10 transition-colors group-hover:bg-[#FEDF24]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#44807F]/10 transition-colors group-hover:bg-[#FEDF24]">
                 <MapPin
                   size={16}
                   className="text-[#44807F]"
@@ -284,9 +283,13 @@ const Navbar = () => {
             {navLinks.map((link, index) => (
               <motion.button
                 key={link.name}
-                onClick={() =>
-                  scrollToSection(link.id)
-                }
+                onClick={() => {
+                  if (link.route) {
+                    navigate(link.route);
+                  } else {
+                    scrollToSection(link.id);
+                  }
+                }}
                 initial={{
                   opacity: 0,
                   y: -10,
@@ -299,7 +302,7 @@ const Navbar = () => {
                   duration: 0.45,
                   delay: 0.1 + index * 0.07,
                 }}
-                className="group relative cursor-pointer rounded-xl px-3.5 py-2.5 text-sm font-bold text-[#182322]/60 transition-all duration-200 hover:bg-[#44807F]/10 hover:text-[#182322] lg:px-4"
+                className="group relative cursor-pointer rounded-md px-3.5 py-2.5 text-sm font-bold text-[#182322]/60 transition-all duration-200 hover:bg-[#44807F]/10 hover:text-[#182322] lg:px-4"
               >
                 {link.name}
 
@@ -351,7 +354,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={openLocationOnboarding}
-                className="flex h-[40px] max-w-[102px] cursor-pointer items-center gap-1.5 rounded-xl border border-[#44807F]/20 bg-white px-2 text-[#44807F] shadow-sm transition-all duration-200 hover:border-[#44807F]/40 active:scale-95"
+                className="flex h-[40px] max-w-[102px] cursor-pointer items-center gap-1.5 rounded-md border border-[#44807F]/20 bg-white px-2 text-[#44807F] shadow-sm transition-all duration-200 hover:border-[#44807F]/40 active:scale-95"
                 aria-label="Change location"
               >
                 <MapPin
@@ -423,9 +426,13 @@ const Navbar = () => {
             {navLinks.map((link, index) => (
               <motion.button
                 key={link.name}
-                onClick={() =>
-                  scrollToSection(link.id)
-                }
+                onClick={() => {
+                  if (link.route) {
+                    navigate(link.route);
+                  } else {
+                    scrollToSection(link.id);
+                  }
+                }}
                 initial={{
                   opacity: 0,
                   y: -6,
@@ -438,7 +445,7 @@ const Navbar = () => {
                   duration: 0.4,
                   delay: 0.1 + index * 0.06,
                 }}
-                className="flex h-[30px] cursor-pointer items-center justify-center rounded-lg px-2 text-[10.5px] font-bold text-[#182322]/55 transition-all duration-200 hover:bg-[#44807F]/10 hover:text-[#182322] active:scale-95 min-[380px]:text-[11px]"
+                className="flex h-[30px] cursor-pointer items-center justify-center rounded-md px-2 text-[10.5px] font-bold text-[#182322]/55 transition-all duration-200 hover:bg-[#44807F]/10 hover:text-[#182322] active:scale-95 min-[380px]:text-[11px]"
               >
                 {link.name}
               </motion.button>

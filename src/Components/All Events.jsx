@@ -256,7 +256,7 @@ const CategoryFilter = ({
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={`group flex shrink-0 items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-all duration-200 ${active ? "border-[#182322] -translate-y-0.5 shadow-[4px_4px_0_#FEDF24]" : "border-[#182322]/10 bg-[#FFF3C4] hover:-translate-y-0.5 hover:border-[#182322]/25"}`}
+            className={`group flex shrink-0 items-center gap-3 rounded-md border-2 px-4 py-3 text-left transition-all duration-200 ${active ? "border-[#182322] -translate-y-0.5 shadow-[4px_4px_0_#FEDF24]" : "border-[#182322]/10 bg-[#FFFDF5] hover:-translate-y-0.5 hover:border-[#182322]/25"}`}
             style={
                 active
                     ? {
@@ -288,7 +288,7 @@ const CategoryFilter = ({
                 </span>
 
                 <span
-                    className={`block text-[11px] font-semibold ${active ? "opacity-80" : "text-[#182322]/45"}`}
+                    className={`block text-[11px] font-semibold ${active ? "opacity-80" : "text-[#3A3326]/45"}`}
                 >
                     {count}{" "}
                     {count === 1
@@ -326,12 +326,12 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                 }
             }}
             aria-label={`View ${event?.title || "event"}`}
-            className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#B8860B]/20 bg-[#FFF3C4] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.12)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]"
+            className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-md border border-[#E8D9AE] bg-[#FFFDF5] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.12)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]"
         >
             <div className="relative aspect-[16/10] overflow-hidden bg-[#e9ece7]">
                 <img src={getImage(event)} alt={event?.title || "Event"} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" onError={handleImageError} />
 
-                <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-bold text-[#182322] shadow-sm sm:left-3 sm:top-3 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs">
+                <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-bold text-[#3A3326] shadow-sm sm:left-3 sm:top-3 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs">
                     <CategoryIcon size={11} className={style.text || ""} />
                     {event?.category || "Event"}
                 </span>
@@ -343,18 +343,74 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
 
                 <div className="flex items-start gap-2.5 sm:gap-4">
                     <div className="shrink-0 border-r border-[#182322]/10 pr-2.5 text-center leading-none sm:pr-4">
-                        {datePartsFor(event) ? (
-                            <>
-                                <p className="text-2xl font-extrabold tabular-nums text-[#B8860B] sm:text-3xl">{datePartsFor(event).day}</p>
-                                <p className="mt-0.5 text-xs font-semibold text-[#182322]/70 sm:text-sm">{datePartsFor(event).month}</p>
-                            </>
-                        ) : (
-                            <p className="text-sm font-bold text-[#182322]/60">Date TBA</p>
-                        )}
+                        {(() => {
+                            const start = toDate(getStartDate(event));
+                            const end = toDate(getEndDate(event));
+
+                            if (!start) {
+                                return (
+                                    <p className="text-sm font-bold text-[#3A3326]/60">
+                                        Date TBA
+                                    </p>
+                                );
+                            }
+
+                            const startDay = start.toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                            });
+
+                            const startMonth = start.toLocaleDateString("en-IN", {
+                                month: "short",
+                            });
+
+                            const isSameDay =
+                                !end || start.toDateString() === end.toDateString();
+
+                            const endDay = end?.toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                            });
+
+                            const endMonth = end?.toLocaleDateString("en-IN", {
+                                month: "short",
+                            });
+
+                            return (
+                                <div className="flex items-center gap-1">
+                                    {/* Start Date */}
+                                    <div className="min-w-[30px]">
+                                        <p className="text-xl font-extrabold tabular-nums text-[#C18B2C] sm:text-xl">
+                                            {startDay}
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] font-semibold text-[#3A3326]/70 sm:text-xs">
+                                            {startMonth}
+                                        </p>
+                                    </div>
+
+                                    {/* Arrow */}
+                                    {!isSameDay && (
+                                        <span className="text-base font-extrabold text-black sm:text-lg">
+                                            →
+                                        </span>
+                                    )}
+
+                                    {/* End Date */}
+                                    {!isSameDay && (
+                                        <div className="min-w-[30px]">
+                                            <p className="text-xl font-extrabold tabular-nums text-[#C18B2C] sm:text-xl">
+                                                {endDay}
+                                            </p>
+                                            <p className="mt-0.5 text-[10px] font-semibold text-[#3A3326]/70 sm:text-xs">
+                                                {endMonth}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <div className="min-w-0 flex-1">
-                        <h4 className="line-clamp-2 text-sm font-bold leading-snug tracking-[-0.01em] text-[#182322] sm:text-lg">{event?.title || "Untitled Event"}</h4>
+                        <h4 className="line-clamp-2 text-sm font-bold leading-snug tracking-[-0.01em] text-wrap text-[#3A3326] sm:text-lg">{event?.title || "Untitled Event"}</h4>
                     </div>
                 </div>
 
@@ -366,7 +422,7 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                             e.stopPropagation();
                             onOpen(event);
                         }}
-                        className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-2 py-2 text-[11px] font-bold text-[#FEDF24] transition duration-200 hover:bg-[#B8860B] hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
+                        className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#D9A441] px-2 py-2 text-[11px] font-bold text-[#3A3326] transition duration-200 hover:bg-[#B8860B] hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
                     >
                         <span>Explore</span>
                         <ArrowUpRight size={13} className="shrink-0" />
@@ -388,7 +444,7 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                         aria-pressed={interested}
                         className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interested
                             ? "border-red-500 bg-red-500 text-white"
-                            : "border-[#182322]/20 bg-white text-[#182322] hover:border-red-400 hover:text-red-500"
+                            : "border-[#182322]/20 bg-white text-[#3A3326] hover:border-red-400 hover:text-red-500"
                             }`}
                     >
                         <Heart
@@ -450,7 +506,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
     const isInterested = interestedEvents.includes(activeEvent?.id);
 
     return (
-        <section className="relative -mx-4 mt-6 overflow-hidden bg-[#182322] md:rounded-3xl sm:-mx-7 lg:-mx-10">
+        <section className="relative -mx-4 mt-6 overflow-hidden bg-[#D9A441] md:rounded-md sm:-mx-7 lg:-mx-10">
             <div className="relative h-[350px] w-full overflow-hidden sm:h-[290px] lg:h-[500px]">
                 <motion.img
                     key={activeEvent?.id}
@@ -476,7 +532,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                         className="max-w-2xl px-4 pb-5 sm:px-7 sm:pb-7 lg:px-10 lg:pb-10"
                     >
                         <div className="mb-2 flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEDF24] px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#182322]">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEDF24] px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#3A3326]">
                                 <CategoryIcon size={12} />
                                 {activeEvent?.category || "Event"}
                             </span>
@@ -506,7 +562,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                             <button
                                 type="button"
                                 onClick={() => onOpen(activeEvent)}
-                                className="flex items-center gap-1.5 rounded-lg bg-[#FEDF24] px-4 py-2.5 text-xs font-black text-[#182322] transition hover:bg-white sm:px-5 sm:py-3 sm:text-sm"
+                                className="flex items-center gap-1.5 rounded-md bg-[#FEDF24] px-4 py-2.5 text-xs font-black text-[#3A3326] transition hover:bg-white sm:px-5 sm:py-3 sm:text-sm"
                             >
                                 Explore
                                 <ArrowUpRight size={15} />
@@ -541,7 +597,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                 </div>
 
                 <div className="absolute left-4 top-4 z-20 sm:left-7 sm:top-5 lg:left-10">
-                    <span className="inline-flex items-center rounded-full border border-white/25 bg-[#182322]/70 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-sm">
+                    <span className="inline-flex items-center rounded-full border border-white/25 bg-[#D9A441]/70 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-sm">
                         Featured Event
                     </span>
                 </div>
@@ -553,7 +609,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                 type="button"
                                 onClick={previousSlide}
                                 aria-label="Previous featured event"
-                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#182322]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#182322] sm:h-12 sm:w-12"
+                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#D9A441]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#3A3326] sm:h-12 sm:w-12"
                             >
                                 <ChevronLeft size={22} strokeWidth={2.7} />
                             </button>
@@ -562,7 +618,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                 type="button"
                                 onClick={nextSlide}
                                 aria-label="Next featured event"
-                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#182322]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#182322] sm:h-12 sm:w-12"
+                                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/50 bg-[#D9A441]/90 text-white shadow-xl backdrop-blur-md transition hover:bg-[#FEDF24] hover:text-[#3A3326] sm:h-12 sm:w-12"
                             >
                                 <ChevronRight size={22} strokeWidth={2.7} />
                             </button>
@@ -616,12 +672,12 @@ const CategorySection = ({ category, events, onOpen, onSeeAll, interestedEvents,
     const Icon = category.icon || Ticket;
 
     return (
-        <section className="mt-12 sm:mt-16">
+        <section className="mt-8 sm:mt-12">
             {/* Category heading */}
             <div className="mb-4 flex items-center justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
                     <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md"
                         style={{
                             backgroundColor:
                                 category.bg,
@@ -638,12 +694,12 @@ const CategorySection = ({ category, events, onOpen, onSeeAll, interestedEvents,
                                 {category.name}
                             </h2>
 
-                            <span className="rounded-full bg-[#182322]/5 px-2 py-0.5 text-[10px] font-black text-[#182322]/45">
+                            <span className="rounded-full bg-[#D9A441]/5 px-2 py-0.5 text-[10px] font-black text-[#3A3326]/45">
                                 {events.length}
                             </span>
                         </div>
 
-                        <p className="hidden text-xs text-[#182322]/45 sm:block">
+                        <p className="hidden text-xs text-[#3A3326]/45 sm:block">
                             More {category.name.toLowerCase()} events
                             to explore
                         </p>
@@ -652,7 +708,7 @@ const CategorySection = ({ category, events, onOpen, onSeeAll, interestedEvents,
 
                 <div className="flex shrink-0 items-center gap-2">
                     {events.length > PREVIEW_PER_CATEGORY && (
-                        <button type="button" onClick={onSeeAll} className="flex items-center gap-1 text-xs font-extrabold text-[#B8860B] transition hover:gap-2">
+                        <button type="button" onClick={onSeeAll} className="flex items-center gap-1 text-xs font-extrabold text-[#C18B2C] transition hover:gap-2">
                             See all
                             <ArrowRight size={14} />
                         </button>
@@ -670,18 +726,18 @@ const CategorySection = ({ category, events, onOpen, onSeeAll, interestedEvents,
                     }}
                 />
 
-                <span className="h-px flex-1 bg-[#182322]/8" />
+                <span className="h-px flex-1 bg-[#D9A441]/8" />
             </div>
 
             {/* Cards + navigation */}
             <div className="relative px-0 sm:px-14">
                 {events.length > 1 && (
                     <>
-                        <button type="button" onClick={() => scroll("left")} aria-label={`Previous ${category.name} events`} className="absolute left-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFF3C4] text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:h-11 sm:w-11">
+                        <button type="button" onClick={() => scroll("left")} aria-label={`Previous ${category.name} events`} className="absolute left-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFFDF5] text-[#3A3326] shadow-lg transition hover:border-[#182322] hover:bg-[#D9A441] hover:text-[#3A3326] sm:h-11 sm:w-11">
                             <ChevronLeft size={18} strokeWidth={2.5} />
                         </button>
 
-                        <button type="button" onClick={() => scroll("right")} aria-label={`Next ${category.name} events`} className="absolute right-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFF3C4] text-[#182322] shadow-lg transition hover:border-[#182322] hover:bg-[#182322] hover:text-[#FEDF24] sm:h-11 sm:w-11">
+                        <button type="button" onClick={() => scroll("right")} aria-label={`Next ${category.name} events`} className="absolute right-0 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 sm:flex items-center justify-center rounded-full border-2 border-[#182322]/15 bg-[#FFFDF5] text-[#3A3326] shadow-lg transition hover:border-[#182322] hover:bg-[#D9A441] hover:text-[#3A3326] sm:h-11 sm:w-11">
                             <ChevronRight size={18} strokeWidth={2.5} />
                         </button>
                     </>
@@ -1249,7 +1305,7 @@ const EventsPage = () => {
     return (
         <main
             style={FONT_STYLE}
-            className="relative min-h-screen overflow-hidden bg-[#f9f9f9] text-[#182322]"
+            className="relative min-h-screen overflow-hidden bg-[#FFF9E8] text-[#3A3326]"
         >
             <style>{FONT_IMPORT}</style>
 
@@ -1269,19 +1325,14 @@ const EventsPage = () => {
                 {/* FEATURED                                                             */}
                 {/* ================================================================== */}
 
-                {!searchTerm.trim() &&
-                    activeCategory === "all" &&
-                    dateFilter === "all" &&
-                    !customFromDate &&
-                    !customToDate &&
-                    featuredEvents.length > 0 && (
-                        <FeaturedEvents
-                            events={featuredEvents}
-                            onOpen={openEvent}
-                            interestedEvents={interestedEvents}
-                            onToggle={toggleInterested}
-                        />
-                    )}
+                {featuredEvents.length > 0 && (
+                    <FeaturedEvents
+                        events={featuredEvents}
+                        onOpen={openEvent}
+                        interestedEvents={interestedEvents}
+                        onToggle={toggleInterested}
+                    />
+                )}
 
 
                 {/* ================================================================== */}
@@ -1291,25 +1342,13 @@ const EventsPage = () => {
                 <header className="mb-8">
                     <div className="flex mt-4 flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#182322]/10 bg-[#FFF3C4] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#B8860B]">
-                                <Ticket size={13} />
-                                All events
-                            </div>
-
-                            <h1 className="rounded-2xl px-5 py-3 text-4xl font-extrabold leading-[0.98] tracking-[-0.045em] text-black sm:px-7 sm:py-4 sm:text-6xl">
+                            <h1 className="rounded-md text-4xl font-extrabold leading-[0.98] tracking-[-0.045em] text-black sm:text-6xl">
                                 Explore
                                 <span className="ml-2 relative inline-block">
                                     events.
                                     <span className="absolute bottom-[-4px] left-0 h-2 w-full -rotate-1 rounded-full bg-[#FEDF24]" />
                                 </span>
                             </h1>
-
-                            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#182322]/55 sm:text-base">
-                                Everything happening
-                                in one place. Find a
-                                ticket, pick a date,
-                                and make plans.
-                            </p>
                         </div>
                     </div>
                 </header>
@@ -1321,15 +1360,15 @@ const EventsPage = () => {
                 <section className="overflow-hidden rounded-[24px] border border-[#B8860B]/25 bg-[#fffdf6] shadow-[0_12px_35px_rgba(184,134,11,0.10)]">
                     <div className="p-3 sm:p-4">
                         {/* Search */}
-                        <div className="group flex items-center rounded-2xl border border-[#B8860B]/20 bg-[#FFF8DC] px-3 py-1.5 transition focus-within:border-[#B8860B] focus-within:ring-4 focus-within:ring-[#B8860B]/10">
-                            <Search size={18} className="shrink-0 text-[#B8860B]" />
+                        <div className="group flex items-center rounded-md border border-[#E8D9AE] bg-[#FFF8DC] px-3 py-1.5 transition focus-within:border-[#B8860B] focus-within:ring-4 focus-within:ring-[#B8860B]/10">
+                            <Search size={18} className="shrink-0 text-[#C18B2C]" />
 
                             <input
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Search by event name, category or venue..."
                                 aria-label="Search events by name, category or venue"
-                                className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm font-semibold text-[#182322] outline-none placeholder:text-[#182322]/35"
+                                className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm font-semibold text-[#3A3326] outline-none placeholder:text-[#3A3326]/35"
                             />
 
                             {searchTerm && (
@@ -1337,7 +1376,7 @@ const EventsPage = () => {
                                     type="button"
                                     onClick={() => setSearchTerm("")}
                                     aria-label="Clear search"
-                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#182322]/40 transition hover:bg-[#182322]/5 hover:text-[#182322]"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#3A3326]/40 transition hover:bg-[#D9A441]/5 hover:text-[#3A3326]"
                                 >
                                     <X size={15} />
                                 </button>
@@ -1345,76 +1384,101 @@ const EventsPage = () => {
                         </div>
 
                         {/* Quick date filters + custom range */}
-                        <div className="mt-3 flex items-center gap-2 flex-wrap overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <div className="mt-3 flex flex-col gap-2">
 
-                            {DATE_FILTERS.map((option) => {
-                                const active = !customFromDate && !customToDate && dateFilter === option.key;
+                            {/* From + To */}
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
 
-                                return (
-                                    <button
-                                        key={option.key}
-                                        type="button"
-                                        onClick={() => {
-                                            setDateFilter(option.key);
-                                            setCustomFromDate("");
-                                            setCustomToDate("");
-                                        }}
-                                        className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold transition ${active
-                                            ? "border-[#182322] bg-[#182322] text-white shadow-sm"
-                                            : "border-[#B8860B]/20 bg-[#FFF8DC] text-[#182322]/55 hover:border-[#B8860B]/50 hover:text-[#B8860B]"
+                                {/* From */}
+                                <label
+                                    className={`relative flex h-8 min-w-0 items-center rounded-md border px-3 transition sm:min-w-[150px] ${customFromDate
+                                        ? "border-[#B8860B] bg-[#B8860B]/10"
+                                        : "border-[#E8D9AE] bg-[#FFF8DC]"
+                                        }`}
+                                >
+                                    <span
+                                        className={`pointer-events-none absolute left-3 transition-all ${customFromDate
+                                            ? "-top-2 bg-[#fffdf6] px-1.5 text-[9px] font-black uppercase tracking-wide text-[#C18B2C]"
+                                            : "top-1/2 -translate-y-1/2 text-xs font-bold text-[#3A3326]/45"
                                             }`}
                                     >
-                                        {option.label}
-                                    </button>
-                                );
-                            })}
+                                        From
+                                    </span>
 
-                            {/* From */}
-                            <label
-                                className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 transition ${customFromDate || customToDate
-                                    ? "border-[#B8860B] bg-[#B8860B]/10"
-                                    : "border-[#B8860B]/20 bg-[#FFF8DC]"
-                                    }`}
-                            >
-                                <span className="text-[9px] font-black uppercase tracking-wide text-[#182322]/45">
-                                    From
-                                </span>
+                                    <input
+                                        type="date"
+                                        value={customFromDate}
+                                        onChange={(e) => {
+                                            setCustomFromDate(e.target.value);
+                                            setDateFilter("all");
+                                        }}
+                                        className={`w-full min-w-0 bg-transparent text-xs font-bold text-[#3A3326] outline-none ${customFromDate ? "pt-1" : "text-transparent"
+                                            }`}
+                                        aria-label="From date"
+                                    />
+                                </label>
 
-                                <input
-                                    type="date"
-                                    value={customFromDate}
-                                    onChange={(e) => {
-                                        setCustomFromDate(e.target.value);
-                                        setDateFilter("all");
-                                    }}
-                                    className="w-[40px] md:w-25 bg-transparent text-[10px] font-bold text-[#182322] outline-none"
-                                    aria-label="From date"
-                                />
-                            </label>
+                                {/* To */}
+                                <label
+                                    className={`relative flex h-8 min-w-0 items-center rounded-md border px-3 transition sm:min-w-[150px] ${customToDate
+                                        ? "border-[#B8860B] bg-[#B8860B]/10"
+                                        : "border-[#E8D9AE] bg-[#FFF8DC]"
+                                        }`}
+                                >
+                                    <span
+                                        className={`pointer-events-none absolute left-3 transition-all ${customToDate
+                                            ? "-top-2 bg-[#fffdf6] px-1.5 text-[9px] font-black uppercase tracking-wide text-[#C18B2C]"
+                                            : "top-1/2 -translate-y-1/2 text-xs font-bold text-[#3A3326]/45"
+                                            }`}
+                                    >
+                                        To
+                                    </span>
 
-                            {/* To */}
-                            <label
-                                className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 transition ${customFromDate || customToDate
-                                    ? "border-[#B8860B] bg-[#B8860B]/10"
-                                    : "border-[#B8860B]/20 bg-[#FFF8DC]"
-                                    }`}
-                            >
-                                <span className="text-[9px] font-black uppercase tracking-wide text-[#182322]/45">
-                                    To
-                                </span>
+                                    <input
+                                        type="date"
+                                        value={customToDate}
+                                        min={customFromDate || undefined}
+                                        onChange={(e) => {
+                                            setCustomToDate(e.target.value);
+                                            setDateFilter("all");
+                                        }}
+                                        className={`w-full min-w-0 bg-transparent text-xs font-bold text-[#3A3326] outline-none ${customToDate ? "pt-1" : "text-transparent"
+                                            }`}
+                                        aria-label="To date"
+                                    />
+                                </label>
 
-                                <input
-                                    type="date"
-                                    value={customToDate}
-                                    min={customFromDate || undefined}
-                                    onChange={(e) => {
-                                        setCustomToDate(e.target.value);
-                                        setDateFilter("all");
-                                    }}
-                                    className="w-[40px] md:w-25 bg-transparent text-[10px] font-bold text-[#182322] outline-none"
-                                    aria-label="To date"
-                                />
-                            </label>
+                            </div>
+
+                            {/* Quick date filters */}
+                            <div className="flex items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap">
+
+                                {DATE_FILTERS.map((option) => {
+                                    const active =
+                                        !customFromDate &&
+                                        !customToDate &&
+                                        dateFilter === option.key;
+
+                                    return (
+                                        <button
+                                            key={option.key}
+                                            type="button"
+                                            onClick={() => {
+                                                setDateFilter(option.key);
+                                                setCustomFromDate("");
+                                                setCustomToDate("");
+                                            }}
+                                            className={`shrink-0 rounded-md border px-3 py-1.5 text-[11px] font-bold transition ${active
+                                                ? "border-[#182322] bg-[#D9A441] text-white shadow-sm"
+                                                : "border-[#E8D9AE] bg-[#FFF8DC] text-[#3A3326]/55 hover:border-[#B8860B]/50 hover:text-[#C18B2C]"
+                                                }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    );
+                                })}
+
+                            </div>
                         </div>
 
                         {/* Bottom controls */}
@@ -1423,16 +1487,16 @@ const EventsPage = () => {
                                 type="button"
                                 onClick={() => setShowCategories((current) => !current)}
                                 aria-expanded={showCategories}
-                                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-black transition ${showCategories || activeCategory !== "all"
-                                    ? "border-[#B8860B] bg-[#B8860B]/10 text-[#B8860B]"
-                                    : "border-[#B8860B]/20 bg-[#FFF8DC] text-[#182322]/70 hover:border-[#B8860B]/50 hover:text-[#B8860B]"
+                                className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-[11px] font-black transition ${showCategories || activeCategory !== "all"
+                                    ? "border-[#B8860B] bg-[#B8860B]/10 text-[#C18B2C]"
+                                    : "border-[#E8D9AE] bg-[#FFF8DC] text-[#3A3326]/70 hover:border-[#B8860B]/50 hover:text-[#C18B2C]"
                                     }`}
                             >
                                 <LayoutGrid size={14} />
 
                                 <span>Categories</span>
 
-                                <span className="rounded-full bg-[#182322]/5 px-1.5 py-0.5 text-[9px] font-black">
+                                <span className="rounded-full bg-[#D9A441]/5 px-1.5 py-0.5 text-[9px] font-black">
                                     {categoryList.length}
                                 </span>
 
@@ -1447,7 +1511,7 @@ const EventsPage = () => {
                                 <button
                                     type="button"
                                     onClick={resetFilters}
-                                    className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-black text-[#B8860B] transition hover:bg-[#B8860B]/10"
+                                    className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-black text-[#C18B2C] transition hover:bg-[#B8860B]/10"
                                 >
                                     <X size={12} />
                                     Clear all
@@ -1465,14 +1529,14 @@ const EventsPage = () => {
                                         onClick={() => setActiveCategory("all")}
                                         aria-pressed={activeCategory === "all"}
                                         className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 transition-all ${activeCategory === "all"
-                                            ? "border-[#182322] bg-[#182322] text-white shadow-[3px_3px_0_#FEDF24]"
-                                            : "border-[#B8860B]/20 bg-[#FFF8DC] text-[#182322]/60 hover:border-[#B8860B]/40"
+                                            ? "border-[#182322] bg-[#D9A441] text-white shadow-[3px_3px_0_#FEDF24]"
+                                            : "border-[#E8D9AE] bg-[#FFF8DC] text-[#3A3326]/60 hover:border-[#B8860B]/40"
                                             }`}
                                     >
                                         <span
                                             className={`flex h-8 w-8 items-center justify-center rounded-lg ${activeCategory === "all"
-                                                ? "bg-[#FEDF24] text-[#182322]"
-                                                : "bg-[#B8860B]/10 text-[#B8860B]"
+                                                ? "bg-[#FEDF24] text-[#3A3326]"
+                                                : "bg-[#B8860B]/10 text-[#C18B2C]"
                                                 }`}
                                         >
                                             <LayoutGrid size={16} />
@@ -1517,7 +1581,7 @@ const EventsPage = () => {
                 {filtersActive && (
                     <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-bold text-[#182322]/45">
+                            <span className="text-sm font-bold text-[#3A3326]/45">
                                 Showing
                             </span>
 
@@ -1545,7 +1609,7 @@ const EventsPage = () => {
                             onClick={
                                 resetFilters
                             }
-                            className="text-xs font-extrabold text-[#B8860B]"
+                            className="text-xs font-extrabold text-[#C18B2C]"
                         >
                             Reset filters
                         </button>
@@ -1580,7 +1644,7 @@ const EventsPage = () => {
 
                 {filteredEvents.length ===
                     0 && (
-                        <div className="mt-12 flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-[#B8860B]/25 bg-[#FFF3C4]/70 px-6 text-center">
+                        <div className="mt-12 flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-[#B8860B]/25 bg-[#FFFDF5]/70 px-6 text-center">
                             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#FEDF24]">
                                 <Ticket
                                     size={36}
@@ -1591,7 +1655,7 @@ const EventsPage = () => {
                                 No events found
                             </h2>
 
-                            <p className="mt-2 max-w-md text-sm leading-relaxed text-[#182322]/55">
+                            <p className="mt-2 max-w-md text-sm leading-relaxed text-[#3A3326]/55">
                                 Try changing your
                                 search, category,
                                 or date filter to
@@ -1605,7 +1669,7 @@ const EventsPage = () => {
                                     onClick={
                                         resetFilters
                                     }
-                                    className="mt-6 rounded-full bg-[#182322] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#B8860B]"
+                                    className="mt-6 rounded-full bg-[#D9A441] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#B8860B]"
                                 >
                                     Show all events
                                 </button>

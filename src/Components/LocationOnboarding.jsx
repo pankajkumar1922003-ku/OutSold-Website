@@ -11,10 +11,6 @@ import {
 
 const STORAGE_KEY = "outsold_user_profile";
 
-/* -------------------------------------------------------
-   Helpers
-------------------------------------------------------- */
-
 const extractCityName = (item) => {
     const a = item?.address || {};
 
@@ -22,14 +18,9 @@ const extractCityName = (item) => {
         a.city ||
         a.town ||
         a.municipality ||
-        a.village ||
-        a.suburb ||
-        a.city_district ||
-        item?.display_name?.split(",")?.[0] ||
         ""
     );
 };
-
 const getSavedProfile = () => {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -48,52 +39,23 @@ const getSavedProfile = () => {
     }
 };
 
-/* -------------------------------------------------------
-   Component
-------------------------------------------------------- */
-
 const LocationOnboarding = () => {
     const [isOpen, setIsOpen] = useState(false);
-
     const [locationInput, setLocationInput] = useState("");
     const [coordinates, setCoordinates] = useState(null);
-
     const [locationSource, setLocationSource] = useState(null);
     const [selectedSuggestion, setSelectedSuggestion] = useState(null);
-
     const [suggestions, setSuggestions] = useState([]);
-
     const [isDetecting, setIsDetecting] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-
     const [locationError, setLocationError] = useState("");
     const [permissionIssue, setPermissionIssue] = useState(false);
-
     const [saving, setSaving] = useState(false);
-
-    /* -------------------------------------------------------
-       Refs
-    ------------------------------------------------------- */
-
     const detectReqId = useRef(0);
     const searchReqId = useRef(0);
     const searchTimer = useRef(null);
-
-    /*
-      Prevent automatic GPS detection from starting again
-      after manual location input.
-    */
     const autoDetectTriedRef = useRef(false);
-
-    /*
-      Tracks whether user manually edited the location
-      during the current popup session.
-    */
     const manualEditRef = useRef(false);
-
-    /*
-      Tracks latest saved location.
-    */
     const latestSavedLocationRef = useRef("");
 
     /* -------------------------------------------------------
@@ -123,10 +85,10 @@ const LocationOnboarding = () => {
         setSelectedSuggestion(
             savedLocation
                 ? {
-                      display_name: savedLocation,
-                      lat: profile?.coordinates?.latitude,
-                      lon: profile?.coordinates?.longitude,
-                  }
+                    display_name: savedLocation,
+                    lat: profile?.coordinates?.latitude,
+                    lon: profile?.coordinates?.longitude,
+                }
                 : null
         );
 
@@ -134,10 +96,6 @@ const LocationOnboarding = () => {
 
         return !!profile?.completed;
     };
-
-    /* -------------------------------------------------------
-       Initial mount
-    ------------------------------------------------------- */
 
     useEffect(() => {
         const profile = getSavedProfile();
@@ -152,10 +110,10 @@ const LocationOnboarding = () => {
             setSelectedSuggestion(
                 savedLocation
                     ? {
-                          display_name: savedLocation,
-                          lat: profile?.coordinates?.latitude,
-                          lon: profile?.coordinates?.longitude,
-                      }
+                        display_name: savedLocation,
+                        lat: profile?.coordinates?.latitude,
+                        lon: profile?.coordinates?.longitude,
+                    }
                     : null
             );
 
@@ -192,10 +150,6 @@ const LocationOnboarding = () => {
             setIsSearching(false);
             setSaving(false);
 
-            /*
-              Navbar opening should NOT automatically replace
-              saved location with GPS.
-            */
             autoDetectTriedRef.current = true;
             manualEditRef.current = false;
 
@@ -459,15 +413,12 @@ const LocationOnboarding = () => {
        Search suggestions
     ------------------------------------------------------- */
 
-    const searchLocations = async (
-        query,
-        reqId
-    ) => {
+    const searchLocations = async (query, reqId) => {
         try {
             setIsSearching(true);
 
             const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&countrycodes=in&q=${encodeURIComponent(
+                `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&countrycodes=in&featuretype=city&q=${encodeURIComponent(
                     query
                 )}`,
                 {
@@ -487,16 +438,68 @@ const LocationOnboarding = () => {
                 return;
             }
 
+            const normalizedQuery = query.trim().toLowerCase();
+
             const validResults = Array.isArray(data)
-                ? data.filter(
-                      (item) =>
-                          item?.lat &&
-                          item?.lon &&
-                          item?.display_name
-                  )
+                ? data.filter((item) => {
+                    if (!item?.lat || !item?.lon) {
+                        return false;
+                    }
+
+                    const city = extractCityName(item)
+                        .trim()
+                        .toLowerCase();
+
+                    if (!city) {
+                        return false;
+                    }
+
+                    // Only actual city/town/municipality results
+                    const placeType = String(
+                        item?.type || ""
+                    ).toLowerCase();
+
+                    const addressType = String(
+                        item?.addresstype || ""
+                    ).toLowerCase();
+
+                    const isCity =
+                        placeType === "city" ||
+                        placeType === "town" ||
+                        addressType === "city" ||
+                        addressType === "town";
+
+                    if (!isCity) {
+                        return false;
+                    }
+
+                    // Query must actually match the city name
+                    return (
+                        city.includes(normalizedQuery) ||
+                        normalizedQuery.includes(city)
+                    );
+                })
                 : [];
 
-            setSuggestions(validResults);
+            // Remove duplicate city names
+            const uniqueCities = validResults.filter(
+                (item, index, array) => {
+                    const city = extractCityName(item)
+                        .trim()
+                        .toLowerCase();
+
+                    return (
+                        array.findIndex(
+                            (other) =>
+                                extractCityName(other)
+                                    .trim()
+                                    .toLowerCase() === city
+                        ) === index
+                    );
+                }
+            );
+
+            setSuggestions(uniqueCities);
         } catch {
             if (reqId !== searchReqId.current) {
                 return;
@@ -509,7 +512,6 @@ const LocationOnboarding = () => {
             }
         }
     };
-
     /* -------------------------------------------------------
        Manual typing
     ------------------------------------------------------- */
@@ -620,46 +622,6 @@ const LocationOnboarding = () => {
         detectLocation();
     };
 
-    /* -------------------------------------------------------
-       Scroll to events
-    ------------------------------------------------------- */
-
-    const scrollToEventsHome = () => {
-        let attempts = 0;
-
-        const maxAttempts = 30;
-
-        const tryScroll = () => {
-            const eventsHome =
-                document.getElementById(
-                    "eventsHome"
-                );
-
-            if (eventsHome) {
-                eventsHome.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                });
-
-                return;
-            }
-
-            attempts += 1;
-
-            if (attempts < maxAttempts) {
-                setTimeout(
-                    tryScroll,
-                    100
-                );
-            }
-        };
-
-        tryScroll();
-    };
-
-    /* -------------------------------------------------------
-       Save + continue
-    ------------------------------------------------------- */
 
     const handleContinue = async () => {
         const trimmed = locationInput.trim();
@@ -668,52 +630,92 @@ const LocationOnboarding = () => {
             setLocationError(
                 "Please select your city or detect your location."
             );
+            return;
+        }
 
+        /*
+         * Manual location must come from a valid suggestion.
+         * GPS-detected location already has selectedSuggestion.
+         */
+        if (
+            locationSource === "manual" &&
+            !selectedSuggestion
+        ) {
+            setLocationError(
+                "Please select a valid city from the suggestions."
+            );
             return;
         }
 
         setSaving(true);
         setLocationError("");
 
-        /*
-          Only location data is stored.
-          No name.
-          No phone.
-        */
         let finalCoordinates = coordinates;
+        let finalCity = trimmed;
 
         /*
-          If user manually typed a city but did not select
-          a suggestion, try to get its coordinates.
-        */
-        if (!finalCoordinates) {
-            finalCoordinates = await geocodeCity(trimmed);
+         * For manually selected locations, use the
+         * selected suggestion's exact city and coordinates.
+         */
+        if (
+            locationSource === "manual" &&
+            selectedSuggestion
+        ) {
+            const selectedCity =
+                extractCityName(selectedSuggestion);
+
+            if (
+                !selectedCity ||
+                !selectedSuggestion?.lat ||
+                !selectedSuggestion?.lon
+            ) {
+                setSaving(false);
+                setLocationError(
+                    "Please select a valid city from the suggestions."
+                );
+                return;
+            }
+
+            finalCity = selectedCity;
+
+            finalCoordinates = {
+                latitude: Number(
+                    selectedSuggestion.lat
+                ),
+                longitude: Number(
+                    selectedSuggestion.lon
+                ),
+            };
         }
 
-        const profile = {
-            location: trimmed,
-            coordinates: finalCoordinates || null,
-            locationSource:
-                locationSource || "manual",
-            completed: true,
-            updatedAt: new Date().toISOString(),
-        };
-
         try {
+            const existingProfile =
+                getSavedProfile() || {};
+
+            const profile = {
+                ...existingProfile,
+                location: finalCity,
+                coordinates:
+                    finalCoordinates || null,
+                locationSource:
+                    locationSource || "manual",
+                completed: true,
+                updatedAt:
+                    new Date().toISOString(),
+            };
+
             localStorage.setItem(
                 STORAGE_KEY,
                 JSON.stringify(profile)
             );
 
-            latestSavedLocationRef.current = trimmed;
+            latestSavedLocationRef.current =
+                finalCity;
 
             window.dispatchEvent(
-                new CustomEvent(
-                    "locationChanged",
-                    {
-                        detail: profile,
-                    }
-                )
+                new CustomEvent("locationChanged", {
+                    detail: profile,
+                })
             );
         } catch {
             setSaving(false);
@@ -725,13 +727,17 @@ const LocationOnboarding = () => {
             return;
         }
 
-        setCoordinates(finalCoordinates || null);
+        setCoordinates(
+            finalCoordinates || null
+        );
+
         setSelectedSuggestion({
-            display_name: trimmed,
+            display_name: finalCity,
             lat: finalCoordinates?.latitude,
             lon: finalCoordinates?.longitude,
         });
 
+        setLocationInput(finalCity);
         setSuggestions([]);
         setLocationError("");
         setPermissionIssue(false);
@@ -742,16 +748,21 @@ const LocationOnboarding = () => {
 
         setIsOpen(false);
 
-        const currentPath = window.location.pathname;
+        const currentPath =
+            window.location.pathname;
 
         if (currentPath !== "/") {
-            window.history.pushState({}, "", "/");
+            window.history.pushState(
+                {},
+                "",
+                "/"
+            );
+
             window.dispatchEvent(
                 new PopStateEvent("popstate")
             );
         }
     };
-
     /* -------------------------------------------------------
        Skip
     ------------------------------------------------------- */
@@ -822,7 +833,7 @@ const LocationOnboarding = () => {
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-3 py-1.5 backdrop-blur-md sm:px-6 sm:py-4">
-            <div className="relative w-[86vw] max-w-[430px] rounded-[20px] border border-white/60 bg-[#fffdf5] shadow-[0_30px_100px_rgba(0,0,0,0.28)] sm:w-[70vw] sm:max-w-[440px] sm:rounded-[24px]">
+            <div className="relative w-[86vw] max-w-[430px] rounded-md border border-white/60 bg-[#fffdf5] shadow-[0_30px_100px_rgba(0,0,0,0.28)] sm:w-[70vw] sm:max-w-[440px]">
 
                 {/* Top decorative background */}
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-24 overflow-hidden rounded-t-[24px]">
@@ -843,7 +854,7 @@ const LocationOnboarding = () => {
 
                     {/* Heading */}
                     <div>
-                        <h2 className="text-[23px] font-black leading-[1.05] tracking-[-0.04em] text-[#182322] sm:text-3xl">
+                        <h2 className="text-[23px] font-black leading-[1.12] tracking-[-0.04em] text-[#182322] sm:text-3xl">
                             Find what's
 
                             <span className="block bg-gradient-to-r from-[#44807F] to-[#6ba58f] bg-clip-text text-transparent">
@@ -851,7 +862,7 @@ const LocationOnboarding = () => {
                             </span>
                         </h2>
 
-                        <p className="mt-1.5 max-w-sm text-[12px] leading-4 text-[#182322]/60 sm:mt-2 sm:text-sm sm:leading-5">
+                        <p className="mt-2 max-w-sm text-[12px] leading-4 text-[#182322]/60 sm:mt-2 sm:text-sm sm:leading-5">
                             Tell us where you are and discover events happening around you.
                         </p>
                     </div>
@@ -911,7 +922,7 @@ const LocationOnboarding = () => {
                                 }
                                 placeholder="Enter your city"
                                 autoComplete="off"
-                                className="h-11 w-full rounded-xl border border-[#182322]/10 bg-white pl-11 pr-10 text-sm font-medium text-[#182322] outline-none transition placeholder:text-[#182322]/35 focus:border-[#44807F]/50 focus:ring-4 focus:ring-[#44807F]/10"
+                                className="h-11 w-full rounded-md border border-[#182322]/10 bg-white pl-11 pr-10 text-sm font-medium text-[#182322] outline-none transition placeholder:text-[#182322]/35 focus:border-[#44807F]/50 focus:ring-4 focus:ring-[#44807F]/10"
                             />
 
                             {isSearching && (
@@ -1093,7 +1104,7 @@ const LocationOnboarding = () => {
                                 handleContinue
                             }
                             disabled={saving}
-                            className="group flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#182322] px-5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(24,35,34,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#44807F] hover:shadow-[0_16px_35px_rgba(68,128,127,0.22)] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="group flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[#182322] px-5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(24,35,34,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#44807F] hover:shadow-[0_16px_35px_rgba(68,128,127,0.22)] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {saving ? (
                                 <>
