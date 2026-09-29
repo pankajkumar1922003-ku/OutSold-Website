@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import {
     collection,
+    getDocs,
     onSnapshot,
     query,
     where,
-    doc,
-    getDoc,
 } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
-
-const TEST_COMPANY_ID = import.meta.env.VITE_TEST_COMPANY_ID;
 
 const getPrice = (tiers = []) => {
     if (!tiers.length) return "Free";
@@ -24,7 +21,7 @@ const getPrice = (tiers = []) => {
     return `₹${Math.min(...prices)}`;
 };
 
-const mapFirebaseEvent = (id, data, subdomain) => {
+const mapFirebaseEvent = (id, data, companyId) => {
     return {
         id,
 
@@ -55,17 +52,16 @@ const mapFirebaseEvent = (id, data, subdomain) => {
 
         isOnline: Boolean(data.isOnline),
 
-        registrationMode: data.registrationMode || "tickets",
+        registrationMode:
+            data.registrationMode || "tickets",
 
         tiers: data.tiers || [],
 
-        companyId: TEST_COMPANY_ID,
+        companyId: companyId || null,
 
-        // Event slug
         slug: data.slug || null,
 
-        // Company's custom subdomain
-        subdomain: subdomain || null,
+        subdomain: data.subdomain || null,
 
         isPrivate: Boolean(data.isPrivate),
 
@@ -77,102 +73,145 @@ export function useOutsoldEvents() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [subdomain, setSubdomain] = useState(null);
 
     useEffect(() => {
-        if (!TEST_COMPANY_ID) {
-            setError("VITE_TEST_COMPANY_ID is missing");
-            setLoading(false);
-            return;
-        }
+        let unsubscribers = [];
+        let isActive = true;
 
-        let unsubscribeEvents;
-
-        const loadData = async () => {
+        const loadEvents = async () => {
             try {
+                setLoading(true);
+                setError(null);
+
                 // -----------------------------------------
-                // 1. Get company's custom subdomain
+                // 1. Get ALL companies
                 // -----------------------------------------
-                const companyRef = doc(
-                    db,
-                    "companies",
-                    TEST_COMPANY_ID
+
+                const companiesSnapshot = await getDocs(
+                    collection(db, "companies")
                 );
 
-                const companySnap = await getDoc(companyRef);
-
-                let companySubdomain = null;
-
-                if (companySnap.exists()) {
-                    const companyData = companySnap.data();
-
-                    companySubdomain =
-                        companyData.subdomain || null;
-
-                    setSubdomain(companySubdomain);
-                }
+                if (!isActive) return;
 
                 // -----------------------------------------
-                // 2. Get published events
+                // 2. Listen to every company's events
                 // -----------------------------------------
-                const eventsRef = collection(
-                    db,
-                    "companies",
-                    TEST_COMPANY_ID,
-                    "events"
-                );
 
-                const eventsQuery = query(
-                    eventsRef,
-                    where("status", "==", "published")
-                );
+                const allEvents = new Map();
 
-                unsubscribeEvents = onSnapshot(
-                    eventsQuery,
-                    (snapshot) => {
-                        const mappedEvents = snapshot.docs
-                            .map((doc) =>
-                                mapFirebaseEvent(
-                                    doc.id,
-                                    doc.data(),
-                                    companySubdomain
-                                )
-                            )
-                            .filter(
-                                (event) => !event.isPrivate
+                companiesSnapshot.docs.forEach((companyDoc) => {
+                    const companyId = companyDoc.id;
+                    const companyData = companyDoc.data();
+
+                    const eventsRef = collection(
+                        db,
+                        "companies",
+                        companyId,
+                        "events"
+                    );
+
+                    const eventsQuery = query(
+                        eventsRef,
+                        where("status", "==", "published")
+                    );
+
+                    const unsubscribe = onSnapshot(
+                        eventsQuery,
+                        (snapshot) => {
+                            // Remove old events of this company
+                            for (const [key, event] of allEvents) {
+                                if (
+                                    event.companyId ===
+                                    companyId
+                                ) {
+                                    allEvents.delete(key);
+                                }
+                            }
+
+                            // Add latest events
+                            snapshot.docs.forEach((eventDoc) => {
+                                const data =
+                                    eventDoc.data();
+
+                                allEvents.set(
+                                    `${companyId}_${eventDoc.id}`,
+                                    mapFirebaseEvent(
+                                        eventDoc.id,
+                                        {
+                                            ...data,
+
+                                            // If event doesn't contain
+                                            // subdomain, use company subdomain
+                                            subdomain:
+                                                data.subdomain ||
+                                                companyData.subdomain ||
+                                                null,
+                                        },
+                                        companyId
+                                    )
+                                );
+                            });
+
+                            if (isActive) {
+                                setEvents(
+                                    Array.from(
+                                        allEvents.values()
+                                    ).filter(
+                                        (event) =>
+                                            !event.isPrivate
+                                    )
+                                );
+
+                                setLoading(false);
+                            }
+                        },
+                        (firebaseError) => {
+                            console.error(
+                                `Failed to fetch events for company ${companyId}:`,
+                                firebaseError
                             );
 
-                        setEvents(mappedEvents);
-                        setLoading(false);
-                        setError(null);
-                    },
-                    (firebaseError) => {
-                        console.error(
-                            "Failed to fetch Outsold events:",
-                            firebaseError
-                        );
+                            if (isActive) {
+                                setError(
+                                    firebaseError.message
+                                );
+                                setLoading(false);
+                            }
+                        }
+                    );
 
-                        setError(firebaseError.message);
-                        setLoading(false);
-                    }
-                );
+                    unsubscribers.push(unsubscribe);
+                });
+
+                // Agar companies hi nahi hain
+                if (
+                    companiesSnapshot.empty &&
+                    isActive
+                ) {
+                    setEvents([]);
+                    setLoading(false);
+                }
             } catch (firebaseError) {
                 console.error(
-                    "Failed to load Outsold data:",
+                    "Failed to load companies/events:",
                     firebaseError
                 );
 
-                setError(firebaseError.message);
-                setLoading(false);
+                if (isActive) {
+                    setError(firebaseError.message);
+                    setLoading(false);
+                }
             }
         };
 
-        loadData();
+        loadEvents();
 
         return () => {
-            if (unsubscribeEvents) {
-                unsubscribeEvents();
-            }
+            isActive = false;
+
+            unsubscribers.forEach(
+                (unsubscribe) => unsubscribe()
+            );
         };
     }, []);
 
@@ -180,6 +219,5 @@ export function useOutsoldEvents() {
         events,
         loading,
         error,
-        subdomain,
     };
 }

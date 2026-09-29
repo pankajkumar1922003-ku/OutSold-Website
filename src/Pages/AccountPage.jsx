@@ -19,8 +19,6 @@ import {
   onSnapshot,
   orderBy,
   query,
-  where,
-  getDoc,
 } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
@@ -186,8 +184,7 @@ const EventRail = ({ events, railId, label }) => {
                   .replace(/[^a-z0-9]+/g, "-")
                   .replace(/^-+|-+$/g, "");
 
-                window.location.href = `${baseUrl}/e/${slug || "event"
-                  }--${eventId}`;
+                window.location.href = `${baseUrl}/e/${slug || "event"}--${eventId}`;
               }}
             />
           </div>
@@ -239,10 +236,7 @@ const AccountPage = () => {
       "wishlist"
     );
 
-    const wishlistQuery = query(
-      wishlistRef,
-      orderBy("createdAt", "desc")
-    );
+    const wishlistQuery = query(wishlistRef, orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(
       wishlistQuery,
@@ -255,8 +249,7 @@ const AccountPage = () => {
         setWishlist(wishlistEvents);
         setWishlistLoading(false);
       },
-      (error) => {
-        ;
+      () => {
         setWishlistLoading(false);
       }
     );
@@ -265,16 +258,22 @@ const AccountPage = () => {
   }, [user?.uid, authLoading]);
 
   /* =====================================================
-   MY BOOKED EVENTS
-===================================================== */
+     MY BOOKED EVENTS
+  ===================================================== */
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading) {
+      return;
+    }
 
     if (!user) {
       setBookedEvents([]);
       setBookedEventsLoading(false);
       return;
     }
+
+    /* =====================================================
+       PHONE NORMALIZER
+    ===================================================== */
 
     const normalizePhone = (value) => {
       if (!value) return "";
@@ -284,15 +283,18 @@ const AccountPage = () => {
       return digits.slice(-10);
     };
 
+    /* =====================================================
+       USER PHONE
+    ===================================================== */
+
     const profilePhone = normalizePhone(profile?.phone);
     const authPhone = normalizePhone(user?.phoneNumber);
 
-    const possiblePhones = [
-      profilePhone,
-      authPhone,
-    ].filter(Boolean);
+    const possiblePhones = [profilePhone, authPhone].filter(Boolean);
 
-    if (possiblePhones.length === 0) {
+    const uniquePhones = [...new Set(possiblePhones)];
+
+    if (uniquePhones.length === 0) {
       setBookedEvents([]);
       setBookedEventsLoading(false);
       return;
@@ -300,151 +302,164 @@ const AccountPage = () => {
 
     let cancelled = false;
 
+    /* =====================================================
+       FETCH BOOKED EVENTS
+    ===================================================== */
+
     const fetchBookedEvents = async () => {
       try {
         setBookedEventsLoading(true);
 
-        ;
-        ;
-        ;
-        ;
+        /* =====================================================
+           STEP 1
+           FETCH EVENTS
+        ===================================================== */
 
-        // Get all events from:
-        // companies/CMP-3158/events
+        const COMPANY_ID = "CMP-3158";
+
         const eventsRef = collection(
           db,
           "companies",
-          "CMP-3158",
+          COMPANY_ID,
           "events"
         );
 
         const eventsSnapshot = await getDocs(eventsRef);
 
-        ;
-
-        ;
-
         if (cancelled) return;
 
-        const uniqueEvents = new Map();
+        if (eventsSnapshot.empty) {
+          setBookedEvents([]);
+          return;
+        }
 
-        await Promise.all(
-          eventsSnapshot.docs.map(async (eventDoc) => {
-            try {
-              const eventId = eventDoc.id;
+        const bookedEventsMap = new Map();
 
-              // Get attendees from:
-              // companies/CMP-3158/events/{eventId}/attendees
-              const attendeesRef = collection(
-                db,
-                "companies",
-                "CMP-3158",
-                "events",
-                eventId,
-                "attendees"
-              );
+        /* =====================================================
+           STEP 2
+           CHECK EVERY EVENT
+        ===================================================== */
 
-              const attendeesSnapshot = await getDocs(
-                attendeesRef
-              );
+        for (const eventDoc of eventsSnapshot.docs) {
+          if (cancelled) return;
 
-              ;
+          try {
+            const eventId = eventDoc.id;
 
-              const attendees = attendeesSnapshot.docs.map(
-                (attendeeDoc) => {
-                  const attendeeData = attendeeDoc.data();
+            /* =================================================
+               EVENT DATA
+            ================================================= */
 
-                  return {
-                    id: attendeeDoc.id,
-                    phone: attendeeData.phone,
-                    normalizedPhone: normalizePhone(
-                      attendeeData.phone
-                    ),
-                  };
-                }
-              );
+            const eventData = eventDoc.data();
 
-              ;
+            /* =================================================
+               STEP 3
+               FETCH ATTENDEES
+            ================================================= */
 
-              if (attendeesSnapshot.empty) {
-                return;
-              }
+            const attendeesRef = collection(
+              db,
+              "companies",
+              COMPANY_ID,
+              "events",
+              eventId,
+              "attendees"
+            );
 
-              // Check every attendee's phone after normalization
-              const matchedAttendee = attendeesSnapshot.docs.find(
-                (attendeeDoc) => {
-                  const attendeeData = attendeeDoc.data();
+            const attendeesSnapshot = await getDocs(attendeesRef);
 
-                  const attendeePhone = normalizePhone(
-                    attendeeData.phone
-                  );
+            if (cancelled) return;
 
-                  const matched =
-                    attendeePhone &&
-                    possiblePhones.includes(attendeePhone);
+            /* =================================================
+               NO ATTENDEES
+            ================================================= */
 
-                  ;
-
-                  if (matched) {
-                    ;
-                  }
-
-                  return matched;
-                }
-              );
-
-              if (!matchedAttendee) {
-                return;
-              }
-
-              const eventData = eventDoc.data();
-
-              const event = {
-                id: eventId,
-                companyId: "CMP-3158",
-                title: eventData.title || "Untitled Event",
-                category: eventData.category || "",
-                description: eventData.description || "",
-                date: eventData.date || "",
-                endDate: eventData.endDate || "",
-                time: eventData.time || "",
-                venue: eventData.venue || "",
-                isOnline: eventData.isOnline || false,
-                image:
-                  eventData.coverImageUrls?.[0] ||
-                  eventData.coverImageUrl ||
-                  eventData.coverImageDesktop ||
-                  FALLBACK_IMAGE,
-                images:
-                  eventData.coverImageUrls ||
-                  (eventData.coverImageUrl
-                    ? [eventData.coverImageUrl]
-                    : []),
-                subdomain: eventData.subdomain || "",
-                status: eventData.status || "",
-                isPrivate: eventData.isPrivate || false,
-                registrationMode:
-                  eventData.registrationMode || "tickets",
-                rsvpLink: eventData.rsvpLink || "",
-                rsvpButtonLabel:
-                  eventData.rsvpButtonLabel || "RSVP Now",
-                tiers: eventData.tiers || [],
-              };
-
-              uniqueEvents.set(
-                `CMP-3158_${eventId}`,
-                event
-              );
-            } catch (error) {
-              ;
+            if (attendeesSnapshot.empty) {
+              continue;
             }
-          })
-        );
 
-        if (cancelled) return;
+            /* =================================================
+               STEP 4
+               CHECK ATTENDEES
+            ================================================= */
 
-        const events = Array.from(
-          uniqueEvents.values()
+            const matchedAttendee = attendeesSnapshot.docs.find(
+              (attendeeDoc) => {
+                const attendeeData = attendeeDoc.data();
+
+                const rawPhone = attendeeData?.phone;
+
+                const attendeePhone = normalizePhone(rawPhone);
+
+                const isMatch = uniquePhones.includes(attendeePhone);
+
+                return isMatch;
+              }
+            );
+
+            /* =================================================
+               NOT MATCHED
+            ================================================= */
+
+            if (!matchedAttendee) {
+              continue;
+            }
+
+            /* =================================================
+               STEP 5
+               CREATE EVENT OBJECT
+            ================================================= */
+
+            const event = {
+              id: eventId,
+              companyId: COMPANY_ID,
+              title: eventData?.title || "Untitled Event",
+              category: eventData?.category || "",
+              description: eventData?.description || "",
+              date: eventData?.date || "",
+              endDate: eventData?.endDate || "",
+              time: eventData?.time || "",
+              venue: eventData?.venue || "",
+              isOnline: eventData?.isOnline || false,
+              image:
+                eventData?.coverImageUrls?.[0] ||
+                eventData?.coverImageUrl ||
+                eventData?.coverImageDesktop ||
+                FALLBACK_IMAGE,
+              images:
+                eventData?.coverImageUrls ||
+                (eventData?.coverImageUrl
+                  ? [eventData.coverImageUrl]
+                  : []),
+              subdomain: eventData?.subdomain || "",
+              status: eventData?.status || "",
+              isPrivate: eventData?.isPrivate || false,
+              registrationMode: eventData?.registrationMode || "tickets",
+              rsvpLink: eventData?.rsvpLink || "",
+              rsvpButtonLabel: eventData?.rsvpButtonLabel || "RSVP Now",
+              tiers: eventData?.tiers || [],
+            };
+
+            /* =================================================
+               STEP 6
+               ADD TO MAP
+            ================================================= */
+
+            const uniqueKey = `${COMPANY_ID}_${eventId}`;
+
+            bookedEventsMap.set(uniqueKey, event);
+          } catch (eventError) {
+            // Ignore individual event processing errors
+          }
+        }
+
+        /* =====================================================
+           STEP 7
+           FINAL RESULT
+        ===================================================== */
+
+        const finalBookedEvents = Array.from(
+          bookedEventsMap.values()
         ).sort((a, b) => {
           const dateA = new Date(a.date || 0).getTime();
           const dateB = new Date(b.date || 0).getTime();
@@ -452,15 +467,14 @@ const AccountPage = () => {
           return dateB - dateA;
         });
 
-        ;
-
-        setBookedEvents(events);
-      } catch (error) {
-        ;
-
-        if (!cancelled) {
+        if (!finalBookedEvents.length) {
           setBookedEvents([]);
+          return;
         }
+
+        setBookedEvents(finalBookedEvents);
+      } catch (error) {
+        setBookedEvents([]);
       } finally {
         if (!cancelled) {
           setBookedEventsLoading(false);
@@ -493,7 +507,7 @@ const AccountPage = () => {
         replace: true,
       });
     } catch (error) {
-      ;
+      // Ignore logout errors
     } finally {
       setLoggingOut(false);
     }
@@ -577,7 +591,6 @@ const AccountPage = () => {
 
                 <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-white/55">
                   <Phone size={15} />
-
                   <span>{displayPhone}</span>
                 </div>
               </div>
