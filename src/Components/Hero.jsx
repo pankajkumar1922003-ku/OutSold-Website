@@ -1,163 +1,245 @@
 import { motion } from "framer-motion";
-import {
-    ArrowRight,
-    Sparkles,
-    ChevronDown,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin, Music, Sparkles, Users, UtensilsCrossed } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const STORAGE_KEY = "outsold_user_profile";
+
+// Decorative preview cards (not linked to real data, edit text freely)
+const PREVIEW_CARDS = [
+    {
+        icon: Music,
+        title: "Live Music Night",
+        time: "Sat, 7:00 PM",
+        place: "Open-air stage",
+        tile: "bg-emerald-100 text-emerald-600",
+        position: "left-0 top-0",
+        rotate: -4,
+    },
+    {
+        icon: Users,
+        title: "Startup Meetup",
+        time: "Sun, 11:00 AM",
+        place: "City co-work hub",
+        tile: "bg-teal-100 text-teal-600",
+        position: "right-0 top-[150px]",
+        rotate: 3,
+    },
+    {
+        icon: UtensilsCrossed,
+        title: "Street Food Fest",
+        time: "Fri, 5:30 PM",
+        place: "Central park",
+        tile: "bg-green-100 text-green-600",
+        position: "left-8 top-[300px]",
+        rotate: -2,
+    },
+];
 
 const Hero = () => {
-    const scrollToJourney = () => {
-        document
-            .getElementById("journey")
-            ?.scrollIntoView({ behavior: "smooth" });
+    const [userName, setUserName] = useState("");
+
+    // Read user name from localStorage
+    useEffect(() => {
+        const readUserProfile = () => {
+            try {
+                const savedProfile = localStorage.getItem(STORAGE_KEY);
+
+                if (!savedProfile) {
+                    setUserName("");
+                    return;
+                }
+                const profile = JSON.parse(savedProfile);
+                const name = profile?.name?.trim();
+                setUserName(name || "");
+            } catch (error) {
+                console.error("User profile read error:", error);
+                setUserName("");
+            }
+        };
+        readUserProfile();
+        window.addEventListener("locationChanged", readUserProfile);
+        return () => {
+            window.removeEventListener("locationChanged", readUserProfile);
+        };
+    }, []);
+
+    const handleExplore = () => {
+        const eventsSection = document.getElementById("events");
+
+        if (eventsSection) {
+            eventsSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        }
     };
+
+    const greetingText = userName
+        ? `Hey! ${userName}`
+        : "Hey! Event Explorer";
 
     return (
         <section
             id="home"
-            className="relative flex min-h-screen items-center justify-center overflow-hidden"
+            className="
+                relative flex min-h-screen
+                items-center
+                overflow-hidden
+                bg-gradient-to-br from-[#f2fdf8] via-white to-[#eefbf8]
+                px-5 py-24
+                sm:px-8
+            "
         >
-            {/* Background Video */}
-            <motion.div
-                initial={{ scale: 1.15 }}
-                animate={{ scale: 1 }}
-                transition={{
-                    duration: 1.8,
-                    ease: "easeOut",
-                }}
-                className="absolute inset-0"
-            >
-                <video
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="h-full w-full object-cover"
-                >
-                    <source src="/HeroVid.mp4" type="video/mp4" />
-                </video>
-            </motion.div>
-
-            {/* Dark Overlay */}
-            <div className="absolute inset-0 bg-black/70" />
-
-            {/* Teal Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#007A78]/30 via-transparent to-[#001817]/80" />
-
-            {/* Left Teal Glow */}
-            <div className="absolute -left-32 top-1/4 h-80 w-80 rounded-full bg-[#007A78]/30 blur-[120px]" />
-
-            {/* Right Color Glow */}
-            <div className="absolute -right-32 bottom-1/4 h-96 w-96 rounded-full bg-purple-500/20 blur-[150px]" />
-
-            {/* Main Content */}
-            <div className="relative z-10 mx-auto w-full max-w-6xl -translate-y-8 px-5 text-center sm:px-8 lg:px-10 md:-translate-y-1">
-
-                {/* Main Heading */}
-                <div className="overflow-hidden">
-                    <motion.h1
-                        initial={{ opacity: 0, y: 80 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                            duration: 0.9,
-                            delay: 0.45,
-                            ease: [0.22, 1, 0.36, 1],
-                        }}
-                        className="mx-auto max-w-5xl text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl"
-                    >
-                        From One Idea.
-                    </motion.h1>
-                </div>
-
-                <div className="overflow-hidden">
-                    <motion.h1
-                        initial={{ opacity: 0, y: 80 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                            duration: 0.9,
-                            delay: 0.6,
-                            ease: [0.22, 1, 0.36, 1],
-                        }}
-                        className="mx-auto max-w-6xl text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl"
-                    >
-                        <span className="text-white">To An </span>
-
-                        <span className="bg-gradient-to-r from-[#48D1CC] via-[#20B2AA] to-[#7DE2D1] bg-clip-text text-transparent">
-                            Unforgettable Event.
-                        </span>
-                    </motion.h1>
-                </div>
-
-                {/* Badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: 25 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, delay: 0.3 }}
-                    className="mb-2 mt-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-white/90 backdrop-blur-md sm:text-sm"
-                >
-                    <Sparkles size={16} className="text-[#48D1CC]" />
-                    All-in-One Event Management
-                </motion.div>
-
-                {/* Description */}
-                <motion.p
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, delay: 0.9 }}
-                    className="mx-auto mt-2 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg md:text-xl"
-                >
-                    Plan, manage, and grow your events — all in one powerful platform.
-                </motion.p>
-
-                {/* CTA Buttons */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, delay: 1.1 }}
-                    className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row"
-                >
-                    {/* Primary Button */}
-                    <a
-                        href="https://app.outsold.in/login"
-                        target="_blank"
-                        className="group flex w-full items-center justify-center gap-3 rounded-md bg-[#007A78] px-7 py-4 text-base font-semibold text-white shadow-xl shadow-[#007A78]/30 transition duration-300 hover:scale-105 hover:bg-[#00918E] sm:w-auto"
-                    >
-                        Start Your Journey
-
-                        <ArrowRight
-                            size={19}
-                            className="transition-transform duration-300 group-hover:translate-x-1"
-                        />
-                    </a>
-                </motion.div>
+            {/* Soft background glows */}
+            <div className="pointer-events-none absolute inset-0">
+                <div className="absolute -left-40 top-0 h-[420px] w-[420px] rounded-full bg-emerald-200/40 blur-[120px]" />
+                <div className="absolute -bottom-32 right-0 h-[480px] w-[480px] rounded-full bg-teal-200/45 blur-[130px]" />
             </div>
 
-            {/* Bottom Gradient */}
-            <div className="absolute bottom-0 left-0 h-40 w-full bg-gradient-to-t from-[#001817] to-transparent" />
-
-            {/* Scroll Indicator */}
-            <motion.button
-                onClick={scrollToJourney}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.5 }}
-                className="absolute sm:bottom-8 bottom-24 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 text-white/60 transition hover:text-white"
+            <div
+                className="
+                    relative z-10 mx-auto
+                    grid w-full max-w-6xl
+                    items-center gap-14
+                    lg:grid-cols-[1.1fr_0.9fr]
+                "
             >
-                <span className="text-[10px] font-semibold uppercase tracking-[0.3em] sm:text-xs">
-                    Begin the Journey
-                </span>
+                {/* LEFT: text */}
+                <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="
+                            mb-6 flex items-center gap-2
+                            rounded-full
+                            border border-teal-100
+                            bg-white/80
+                            py-1.5 pl-3 pr-4
+                            text-sm font-medium text-teal-700
+                            shadow-[0_2px_12px_rgba(13,148,136,0.08)]
+                            backdrop-blur-md
+                        "
+                    >
+                        <Sparkles size={15} className="text-teal-500" />
+                        Discover what's happening nearby
+                    </motion.div>
 
-                <motion.div
-                    animate={{ y: [0, 7, 0] }}
-                    transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    }}
+                    <motion.h1
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                            duration: 0.7,
+                            delay: 0.1,
+                            ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className="
+                            max-w-full break-words
+                            text-[42px] font-extrabold
+                            leading-[1.08] tracking-[-0.035em]
+                            text-slate-800
+                            sm:text-6xl
+                            lg:text-[68px]
+                        "
+                    >
+                        {greetingText}
+
+                        <motion.span
+                            className="ml-2 inline-block"
+                            style={{ originX: 0.7, originY: 0.7 }}
+                            animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
+                            transition={{ duration: 1.4, delay: 0.9, ease: "easeInOut" }}
+                        >
+                            👋
+                        </motion.span>
+                    </motion.h1>
+
+                    <motion.p
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.25 }}
+                        className="mt-5 max-w-md text-base leading-relaxed text-slate-500 sm:text-lg"
+                    >
+                        Ready to find something fun happening around you?
+                    </motion.p>
+
+                    <motion.button
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleExplore}
+                        className="
+                            group mt-9 cursor-pointer
+                            flex items-center gap-3
+                            rounded-full bg-teal-600
+                            py-2.5 pl-7 pr-2.5
+                            text-sm font-semibold text-white
+                            shadow-[0_10px_30px_rgba(13,148,136,0.25)]
+                            transition-all duration-300
+                            hover:-translate-y-0.5 hover:bg-teal-700
+                            hover:shadow-[0_14px_36px_rgba(13,148,136,0.32)]
+                            focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-200
+                            sm:text-base
+                        "
+                    >
+                        Explore Events
+
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 transition-colors duration-300 group-hover:bg-white/30">
+                            <ArrowRight
+                                size={18}
+                                className="transition-transform duration-300 group-hover:translate-x-0.5"
+                            />
+                        </span>
+                    </motion.button>
+                </div>
+
+                {/* RIGHT: decorative event cards (desktop only) */}
+                <div
+                    aria-hidden="true"
+                    className="relative mx-auto hidden h-[420px] w-full max-w-md lg:block"
                 >
-                    <ChevronDown size={22} />
-                </motion.div>
-            </motion.button>
+                    {/* Soft circle behind the cards */}
+                    <div className="absolute left-1/2 top-1/2 h-[340px] w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 opacity-80" />
+
+                    {PREVIEW_CARDS.map((card, index) => {
+                        const Icon = card.icon;
+
+                        return (
+                            <motion.div
+                                key={card.title}
+                                initial={{ opacity: 0, y: 30, rotate: 0 }}
+                                animate={{ opacity: 1, y: 0, rotate: card.rotate }}
+                                transition={{
+                                    duration: 0.7,
+                                    delay: 0.35 + index * 0.15,
+                                    ease: [0.22, 1, 0.36, 1],
+                                }}
+                                className={`
+                                    absolute ${card.position}
+                                    flex w-72 items-center gap-4
+                                    rounded-3xl
+                                    border border-teal-100/80
+                                    bg-white
+                                    p-4
+                                    shadow-[0_18px_40px_rgba(13,148,136,0.12)]
+                                `}
+                            >
+                                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${card.tile}`}>
+                                    <Icon size={24} />
+                                </div>
+
+                                <div className="min-w-0">
+                                    <p className="truncate text-[15px] font-semibold text-slate-800">
+                                        {card.title}
+                                    </p>
+                                    
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            </div>
         </section>
     );
 };

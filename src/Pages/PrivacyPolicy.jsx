@@ -1,4 +1,4 @@
-import { ArrowLeft, ShieldCheck, Mail } from "lucide-react";
+import { ShieldCheck, Mail } from "lucide-react";
 
 const PrivacyPolicy = () => {
   return (
