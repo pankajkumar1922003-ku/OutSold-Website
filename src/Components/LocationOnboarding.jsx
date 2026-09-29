@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
     MapPin,
     Navigation,
-    User,
-    Phone,
     ArrowRight,
     Loader2,
     Sparkles,
@@ -45,8 +43,7 @@ const getSavedProfile = () => {
         }
 
         return profile;
-    } catch (error) {
-        console.error("Profile read error:", error);
+    } catch {
         return null;
     }
 };
@@ -57,9 +54,6 @@ const getSavedProfile = () => {
 
 const LocationOnboarding = () => {
     const [isOpen, setIsOpen] = useState(false);
-
-    const [name, setName] = useState("");
-    const [phone, setPhone] = useState("");
 
     const [locationInput, setLocationInput] = useState("");
     const [coordinates, setCoordinates] = useState(null);
@@ -86,33 +80,30 @@ const LocationOnboarding = () => {
     const searchTimer = useRef(null);
 
     /*
-      Important:
-      This prevents automatic GPS detection from starting again
+      Prevent automatic GPS detection from starting again
       after manual location input.
     */
     const autoDetectTriedRef = useRef(false);
 
     /*
-      Tracks whether the user has manually edited the location
+      Tracks whether user manually edited the location
       during the current popup session.
     */
     const manualEditRef = useRef(false);
 
     /*
-      Tracks the latest location saved by the user.
+      Tracks latest saved location.
     */
     const latestSavedLocationRef = useRef("");
 
     /* -------------------------------------------------------
-       Load saved profile
-  ------------------------------------------------------- */
+       Load saved location
+    ------------------------------------------------------- */
 
     const loadProfileIntoState = () => {
         const profile = getSavedProfile();
 
         if (!profile) {
-            setName("");
-            setPhone("");
             setLocationInput("");
             setCoordinates(null);
             setLocationSource(null);
@@ -125,27 +116,17 @@ const LocationOnboarding = () => {
 
         const savedLocation = profile?.location || "";
 
-        setName(profile?.name || "");
-        setPhone(profile?.phone || "");
-
-        /*
-          Only load saved location when popup is being opened.
-          Once user starts typing, this value will NEVER be
-          re-injected during that session.
-        */
         setLocationInput(savedLocation);
-
         setCoordinates(profile?.coordinates || null);
-
         setLocationSource(profile?.locationSource || "manual");
 
         setSelectedSuggestion(
             savedLocation
                 ? {
-                    display_name: savedLocation,
-                    lat: profile?.coordinates?.latitude,
-                    lon: profile?.coordinates?.longitude,
-                }
+                      display_name: savedLocation,
+                      lat: profile?.coordinates?.latitude,
+                      lon: profile?.coordinates?.longitude,
+                  }
                 : null
         );
 
@@ -156,38 +137,32 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Initial mount
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     useEffect(() => {
         const profile = getSavedProfile();
 
         if (profile?.completed) {
-            setName(profile?.name || "");
-            setPhone(profile?.phone || "");
-            setLocationInput(profile?.location || "");
+            const savedLocation = profile?.location || "";
+
+            setLocationInput(savedLocation);
             setCoordinates(profile?.coordinates || null);
             setLocationSource(profile?.locationSource || "manual");
 
             setSelectedSuggestion(
-                profile?.location
+                savedLocation
                     ? {
-                        display_name: profile.location,
-                        lat: profile?.coordinates?.latitude,
-                        lon: profile?.coordinates?.longitude,
-                    }
+                          display_name: savedLocation,
+                          lat: profile?.coordinates?.latitude,
+                          lon: profile?.coordinates?.longitude,
+                      }
                     : null
             );
 
-            latestSavedLocationRef.current = profile?.location || "";
+            latestSavedLocationRef.current = savedLocation;
 
             setIsOpen(false);
         } else {
-            /*
-              No completed profile.
-              Start onboarding.
-            */
-            setName("");
-            setPhone("");
             setLocationInput("");
             setCoordinates(null);
             setLocationSource(null);
@@ -197,9 +172,6 @@ const LocationOnboarding = () => {
 
             setIsOpen(true);
 
-            /*
-              Allow GPS detection on first onboarding.
-            */
             autoDetectTriedRef.current = false;
             manualEditRef.current = false;
         }
@@ -207,17 +179,10 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Navbar trigger
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     useEffect(() => {
         const openFromNavbar = () => {
-            /*
-              IMPORTANT:
-              Load the latest saved profile ONLY ONCE
-              when opening the popup.
-      
-              After this, typing manually will control the input.
-            */
             loadProfileIntoState();
 
             setLocationError("");
@@ -229,10 +194,9 @@ const LocationOnboarding = () => {
 
             /*
               Navbar opening should NOT automatically replace
-              the saved location with GPS.
+              saved location with GPS.
             */
             autoDetectTriedRef.current = true;
-
             manualEditRef.current = false;
 
             setIsOpen(true);
@@ -253,25 +217,15 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Auto detect
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     useEffect(() => {
         if (!isOpen) return;
 
-        /*
-          Never auto detect when popup was opened from navbar
-          with an already saved location.
-        */
         if (autoDetectTriedRef.current) return;
 
-        /*
-          If user has manually edited location, never run GPS.
-        */
         if (manualEditRef.current) return;
 
-        /*
-          If location already exists, don't replace it with GPS.
-        */
         if (locationInput.trim()) return;
 
         autoDetectTriedRef.current = true;
@@ -287,7 +241,7 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Reverse geocode
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const getCityFromCoordinates = async (
         latitude,
@@ -313,19 +267,14 @@ const LocationOnboarding = () => {
                 address: data?.address,
                 display_name: "",
             });
-        } catch (error) {
-            console.error(
-                "Reverse geocoding error:",
-                error
-            );
-
+        } catch {
             return "";
         }
     };
 
     /* -------------------------------------------------------
        Forward geocode
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const geocodeCity = async (query) => {
         try {
@@ -350,12 +299,6 @@ const LocationOnboarding = () => {
                 return null;
             }
 
-            /*
-              Try to find a result whose city/town/municipality
-              matches the user's typed city.
-      
-              This avoids blindly taking the first Nominatim result.
-            */
             const normalizedQuery = query
                 .trim()
                 .toLowerCase();
@@ -382,19 +325,14 @@ const LocationOnboarding = () => {
                 latitude: Number(item.lat),
                 longitude: Number(item.lon),
             };
-        } catch (error) {
-            console.error(
-                "Geocode error:",
-                error
-            );
-
+        } catch {
             return null;
         }
     };
 
     /* -------------------------------------------------------
        GPS detect
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const detectLocation = () => {
         if (!navigator.geolocation) {
@@ -519,7 +457,7 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Search suggestions
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const searchLocations = async (
         query,
@@ -545,40 +483,28 @@ const LocationOnboarding = () => {
 
             const data = await res.json();
 
-            /*
-              Ignore old search response.
-            */
             if (reqId !== searchReqId.current) {
                 return;
             }
 
             const validResults = Array.isArray(data)
                 ? data.filter(
-                    (item) =>
-                        item?.lat &&
-                        item?.lon &&
-                        item?.display_name
-                )
+                      (item) =>
+                          item?.lat &&
+                          item?.lon &&
+                          item?.display_name
+                  )
                 : [];
 
             setSuggestions(validResults);
-        } catch (error) {
-            if (
-                reqId !== searchReqId.current
-            ) {
+        } catch {
+            if (reqId !== searchReqId.current) {
                 return;
             }
 
-            console.error(
-                "Location search error:",
-                error
-            );
-
             setSuggestions([]);
         } finally {
-            if (
-                reqId === searchReqId.current
-            ) {
+            if (reqId === searchReqId.current) {
                 setIsSearching(false);
             }
         }
@@ -586,51 +512,24 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Manual typing
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const handleLocationInput = (value) => {
         /*
-          MOST IMPORTANT FIX:
-    
           The moment user types anything, GPS is cancelled
-          and the old saved location is completely ignored.
+          and saved location is no longer re-injected.
         */
         manualEditRef.current = true;
 
-        /*
-          Cancel any running GPS request.
-        */
         detectReqId.current += 1;
-
-        /*
-          Cancel old search request.
-        */
         searchReqId.current += 1;
 
-        /*
-          Never allow auto detection after manual typing.
-        */
         autoDetectTriedRef.current = true;
 
-        /*
-          Manual source.
-        */
         setLocationSource("manual");
-
-        /*
-          This is now the ONLY source for the input.
-        */
         setLocationInput(value);
 
-        /*
-          Old coordinates are invalid because user changed
-          the location text.
-        */
         setCoordinates(null);
-
-        /*
-          Old selected suggestion is invalid.
-        */
         setSelectedSuggestion(null);
 
         setLocationError("");
@@ -660,30 +559,17 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Select suggestion
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
-    const handleSelectSuggestion = (
-        item
-    ) => {
-        /*
-          User explicitly selected a manual location.
-        */
+    const handleSelectSuggestion = (item) => {
         manualEditRef.current = true;
 
-        /*
-          Cancel GPS.
-        */
         detectReqId.current += 1;
-
-        /*
-          Cancel pending searches.
-        */
         searchReqId.current += 1;
 
         autoDetectTriedRef.current = true;
 
-        const cityName =
-            extractCityName(item);
+        const cityName = extractCityName(item);
 
         if (!cityName) {
             setLocationError(
@@ -693,9 +579,6 @@ const LocationOnboarding = () => {
             return;
         }
 
-        /*
-          Replace input with selected city.
-        */
         setLocationInput(cityName);
 
         setCoordinates({
@@ -706,7 +589,6 @@ const LocationOnboarding = () => {
         setSelectedSuggestion(item);
 
         setSuggestions([]);
-
         setIsSearching(false);
         setLocationError("");
         setPermissionIssue(false);
@@ -716,13 +598,9 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Detect button
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const handleDetectClick = () => {
-        /*
-          User explicitly requested GPS.
-          Therefore manual edit state is reset.
-        */
         manualEditRef.current = false;
 
         detectReqId.current += 1;
@@ -744,7 +622,7 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Scroll to events
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const scrollToEventsHome = () => {
         let attempts = 0;
@@ -781,58 +659,102 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Save + continue
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         const trimmed = locationInput.trim();
 
         if (!trimmed) {
-            setLocationError("Please select your city or detect your location.");
+            setLocationError(
+                "Please select your city or detect your location."
+            );
+
             return;
         }
 
         setSaving(true);
         setLocationError("");
 
+        /*
+          Only location data is stored.
+          No name.
+          No phone.
+        */
+        let finalCoordinates = coordinates;
+
+        /*
+          If user manually typed a city but did not select
+          a suggestion, try to get its coordinates.
+        */
+        if (!finalCoordinates) {
+            finalCoordinates = await geocodeCity(trimmed);
+        }
+
         const profile = {
-            name: name.trim(),
-            phone: phone.trim(),
             location: trimmed,
-            coordinates: coordinates || null, // suggestion/GPS se mila to use karo, warna null — koi baat nahi
-            locationSource: locationSource || "manual",
+            coordinates: finalCoordinates || null,
+            locationSource:
+                locationSource || "manual",
             completed: true,
             updatedAt: new Date().toISOString(),
         };
 
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(profile)
+            );
+
             latestSavedLocationRef.current = trimmed;
-            window.dispatchEvent(new CustomEvent("locationChanged", { detail: profile }));
-        } catch (error) {
-            console.error("Profile save error:", error);
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "locationChanged",
+                    {
+                        detail: profile,
+                    }
+                )
+            );
+        } catch {
             setSaving(false);
-            setLocationError("Something went wrong while saving your location. Please try again.");
+
+            setLocationError(
+                "Something went wrong while saving your location. Please try again."
+            );
+
             return;
         }
+
+        setCoordinates(finalCoordinates || null);
+        setSelectedSuggestion({
+            display_name: trimmed,
+            lat: finalCoordinates?.latitude,
+            lon: finalCoordinates?.longitude,
+        });
 
         setSuggestions([]);
         setLocationError("");
         setPermissionIssue(false);
         setSaving(false);
+
         manualEditRef.current = false;
         autoDetectTriedRef.current = true;
 
-        // ← ye ab HAMESHA chalega, kisi network call pe depend nahi
         setIsOpen(false);
 
         const currentPath = window.location.pathname;
+
         if (currentPath !== "/") {
             window.history.pushState({}, "", "/");
-            window.dispatchEvent(new PopStateEvent("popstate"));
+            window.dispatchEvent(
+                new PopStateEvent("popstate")
+            );
         }
-
     };
 
+    /* -------------------------------------------------------
+       Skip
+    ------------------------------------------------------- */
 
     const handleSkip = () => {
         setIsOpen(false);
@@ -848,41 +770,30 @@ const LocationOnboarding = () => {
         /*
           Keep existing saved location intact.
         */
-        const saved =
-            getSavedProfile();
+        const saved = getSavedProfile();
 
         if (saved?.location) {
-            setLocationInput(
-                saved.location
-            );
+            setLocationInput(saved.location);
 
             setCoordinates(
                 saved.coordinates || null
             );
 
             setLocationSource(
-                saved.locationSource ||
-                "manual"
+                saved.locationSource || "manual"
             );
 
             setSelectedSuggestion({
-                display_name:
-                    saved.location,
-
-                lat:
-                    saved.coordinates
-                        ?.latitude,
-
-                lon:
-                    saved.coordinates
-                        ?.longitude,
+                display_name: saved.location,
+                lat: saved.coordinates?.latitude,
+                lon: saved.coordinates?.longitude,
             });
         }
     };
 
     /* -------------------------------------------------------
        Cleanup
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     useEffect(() => {
         return () => {
@@ -899,7 +810,7 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        Modal hidden
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     if (!isOpen) {
         return null;
@@ -907,7 +818,7 @@ const LocationOnboarding = () => {
 
     /* -------------------------------------------------------
        UI
-  ------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-3 py-1.5 backdrop-blur-md sm:px-6 sm:py-4">
@@ -920,7 +831,7 @@ const LocationOnboarding = () => {
                     <div className="absolute -left-12 -top-16 h-36 w-36 rounded-full bg-[#44807F]/20 blur-3xl" />
                 </div>
 
-                <div className="relative px-4 pb-1 pt-2 sm:px-7 sm:pb-6 sm:pt-7">
+                <div className="relative px-4 pb-4 pt-2 sm:px-7 sm:pb-6 sm:pt-7">
 
                     {/* Icon */}
                     <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#44807F] text-white shadow-[0_10px_30px_rgba(68,128,127,0.25)]">
@@ -992,9 +903,7 @@ const LocationOnboarding = () => {
 
                             <input
                                 type="text"
-                                value={
-                                    locationInput
-                                }
+                                value={locationInput}
                                 onChange={(e) =>
                                     handleLocationInput(
                                         e.target.value
@@ -1022,77 +931,75 @@ const LocationOnboarding = () => {
                         </div>
 
                         {/* Suggestions */}
-                        {suggestions.length >
-                            0 && (
-                                <div className="mt-2 overflow-hidden rounded-xl border border-[#182322]/10 bg-white shadow-[0_15px_35px_rgba(24,35,34,0.12)]">
+                        {suggestions.length > 0 && (
+                            <div className="mt-2 overflow-hidden rounded-xl border border-[#182322]/10 bg-white shadow-[0_15px_35px_rgba(24,35,34,0.12)]">
 
-                                    <div className="border-b border-[#182322]/5 px-3 py-2">
-                                        <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#182322]/35">
-                                            Select a location
-                                        </p>
-                                    </div>
-
-                                    {suggestions.map(
-                                        (
-                                            item,
-                                            index
-                                        ) => {
-                                            const address =
-                                                item?.address ||
-                                                {};
-
-                                            const city =
-                                                extractCityName(
-                                                    item
-                                                );
-
-                                            const state =
-                                                address.state ||
-                                                "";
-
-                                            return (
-                                                <button
-                                                    key={`${item.place_id}-${index}`}
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleSelectSuggestion(
-                                                            item
-                                                        )
-                                                    }
-                                                    className="flex w-full cursor-pointer items-start gap-3 border-b border-[#182322]/5 px-3 py-3 text-left transition last:border-b-0 hover:bg-[#44807F]/5"
-                                                >
-                                                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#44807F]/10">
-                                                        <MapPin
-                                                            size={14}
-                                                            className="text-[#44807F]"
-                                                        />
-                                                    </div>
-
-                                                    <div className="min-w-0">
-                                                        <p className="truncate text-xs font-bold text-[#182322]">
-                                                            {city}
-                                                        </p>
-
-                                                        <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-[#182322]/45">
-                                                            {state
-                                                                ? `${city}, ${state}`
-                                                                : item.display_name}
-                                                        </p>
-                                                    </div>
-                                                </button>
-                                            );
-                                        }
-                                    )}
+                                <div className="border-b border-[#182322]/5 px-3 py-2">
+                                    <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#182322]/35">
+                                        Select a location
+                                    </p>
                                 </div>
-                            )}
+
+                                {suggestions.map(
+                                    (
+                                        item,
+                                        index
+                                    ) => {
+                                        const address =
+                                            item?.address ||
+                                            {};
+
+                                        const city =
+                                            extractCityName(
+                                                item
+                                            );
+
+                                        const state =
+                                            address.state ||
+                                            "";
+
+                                        return (
+                                            <button
+                                                key={`${item.place_id}-${index}`}
+                                                type="button"
+                                                onClick={() =>
+                                                    handleSelectSuggestion(
+                                                        item
+                                                    )
+                                                }
+                                                className="flex w-full cursor-pointer items-start gap-3 border-b border-[#182322]/5 px-3 py-3 text-left transition last:border-b-0 hover:bg-[#44807F]/5"
+                                            >
+                                                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#44807F]/10">
+                                                    <MapPin
+                                                        size={14}
+                                                        className="text-[#44807F]"
+                                                    />
+                                                </div>
+
+                                                <div className="min-w-0">
+                                                    <p className="truncate text-xs font-bold text-[#182322]">
+                                                        {city}
+                                                    </p>
+
+                                                    <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-[#182322]/45">
+                                                        {state
+                                                            ? `${city}, ${state}`
+                                                            : item.display_name}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        );
+                                    }
+                                )}
+                            </div>
+                        )}
 
                         {/* No results */}
                         {!isSearching &&
                             locationInput
                                 .trim()
                                 .length >= 2 &&
-                            suggestions.length ===
-                            0 &&
+                            suggestions.length === 0 &&
                             !selectedSuggestion && (
                                 <div className="mt-2 flex items-center gap-2 rounded-xl bg-[#182322]/5 px-3 py-2.5">
                                     <Search
@@ -1177,93 +1084,8 @@ const LocationOnboarding = () => {
                             )}
                     </div>
 
-                    {/* Personal information */}
-                    <div className="mt-4 sm:mt-5">
-
-                        <div className="mb-3">
-
-                            <div className="flex items-center gap-2">
-                                <p className="text-sm font-extrabold tracking-[-0.01em] text-[#182322]">
-                                    Let's make it yours
-                                </p>
-
-                                <span className="text-sm">
-                                    ✨
-                                </span>
-                            </div>
-
-                            <p className="mt-1 max-w-sm text-[11px] leading-4 text-[#182322]/55">
-                                Tell us a little about you and we'll make your experience feel more personal.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-
-                            {/* Name */}
-                            <div className="group relative rounded-xl border border-[#182322]/10 bg-white transition-all duration-200 focus-within:border-[#44807F]/50 focus-within:ring-4 focus-within:ring-[#44807F]/10">
-
-                                <User
-                                    size={15}
-                                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#182322]/30 transition-colors group-focus-within:text-[#44807F]"
-                                />
-
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) =>
-                                        setName(
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder="Your Name ?"
-                                    className="h-11 w-full rounded-xl bg-transparent pl-10 pr-3 text-sm font-medium text-[#182322] outline-none placeholder:text-[#182322]/35"
-                                />
-                            </div>
-
-                            {/* Phone */}
-                            <div className="group relative rounded-xl border border-[#182322]/10 bg-white transition-all duration-200 focus-within:border-[#44807F]/50 focus-within:ring-4 focus-within:ring-[#44807F]/10">
-
-                                <Phone
-                                    size={15}
-                                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#182322]/30 transition-colors group-focus-within:text-[#44807F]"
-                                />
-
-                                <input
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) =>
-                                        setPhone(
-                                            e.target.value
-                                                .replace(
-                                                    /\D/g,
-                                                    ""
-                                                )
-                                                .slice(
-                                                    0,
-                                                    10
-                                                )
-                                        )
-                                    }
-                                    placeholder="Your mobile number"
-                                    className="h-11 w-full rounded-xl bg-transparent pl-10 pr-3 text-sm font-medium text-[#182322] outline-none placeholder:text-[#182322]/35"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-2.5 flex items-center gap-1.5 text-[10px] text-[#182322]/40">
-                            <Sparkles
-                                size={11}
-                                className="text-[#44807F]"
-                            />
-
-                            <span>
-                                Helps us personalize your event experience.
-                            </span>
-                        </div>
-                    </div>
-
                     {/* Continue */}
-                    <div className="mt-3 sm:mt-4">
+                    <div className="mt-4 sm:mt-5">
 
                         <button
                             type="button"
@@ -1316,3 +1138,4 @@ const LocationOnboarding = () => {
 };
 
 export default LocationOnboarding;
+

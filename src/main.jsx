@@ -8,7 +8,7 @@ import TermsConditions from './Pages/Terms-Cond.jsx'
 import Layout from './Layout/Layout.jsx'
 import ExploreLayout from './Layout/ExploreLayout.jsx'
 import EventsPage from './Components/All Events.jsx'
-
+import AccountPage from './Pages/AccountPage.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 
 const router = createBrowserRouter([
@@ -27,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: "/all-events",
         element: <EventsPage />
+      },
+      {
+        path:"/account",
+        element:<AccountPage/>
       },
       {
         path: "/privacy-policy",

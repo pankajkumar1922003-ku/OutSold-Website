@@ -66,7 +66,7 @@ const WhyChooseUs = () => {
     return (
         <section
             id="why-choose-us"
-            className="relative overflow-hidden bg-[#102725] py-16 text-white sm:py-24 lg:py-28"
+            className="relative overflow-hidden bg-[#102725] py-16 text-white"
         >
             {/* ================= BACKGROUND GLOW ================= */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">

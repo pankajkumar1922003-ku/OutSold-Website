@@ -12,7 +12,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import logo from "/Outsold Logo.png";
 import { motion } from "framer-motion";
 
-// Same font import as EventsHome
 const FONT_IMPORT =
   "@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap');";
 
@@ -25,71 +24,166 @@ const Footer = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const scrollToSection = (id) => {
+  const scrollToElement = (id, smooth = true) => {
+    if (!id) return false;
+
+    const element = document.getElementById(id);
+
+    if (!element) return false;
+
+    const yOffset = -100;
+    const y =
+      element.getBoundingClientRect().top +
+      window.pageYOffset +
+      yOffset;
+
+    window.scrollTo({
+      top: Math.max(0, y),
+      behavior: smooth ? "smooth" : "auto",
+    });
+
+    return true;
+  };
+
+  const scrollToHomeSection = (id) => {
+    if (!id) return;
+
     if (location.pathname === "/") {
-      const element = document.getElementById(id);
-
-      if (element) {
-        const yOffset = -100;
-
-        const y =
-          element.getBoundingClientRect().top +
-          window.pageYOffset +
-          yOffset;
-
-        window.scrollTo({
-          top: y,
-          behavior: "smooth",
-        });
-      }
-    } else {
-      navigate("/", {
-        state: { scrollTo: id },
+      requestAnimationFrame(() => {
+        scrollToElement(id, true);
       });
+      return;
+    }
+
+    navigate("/", {
+      state: {
+        scrollTo: id,
+      },
+    });
+  };
+
+  const handleRouteLink = (link) => {
+    if (!link) return;
+
+    const targetRoute = link.route;
+    const targetSection = link.scrollTo;
+
+    if (targetRoute && targetSection) {
+      if (location.pathname === targetRoute) {
+        setTimeout(() => {
+          let attempts = 0;
+          const maxAttempts = 30;
+
+          const retryScroll = () => {
+            const success = scrollToElement(targetSection, true);
+
+            if (success) return;
+
+            attempts++;
+
+            if (attempts < maxAttempts) {
+              setTimeout(retryScroll, 100);
+            }
+          };
+
+          retryScroll();
+        }, 50);
+
+        return;
+      }
+
+      navigate(targetRoute, {
+        state: {
+          scrollTo: targetSection,
+        },
+      });
+
+      return;
+    }
+
+    if (targetRoute) {
+      navigate(targetRoute);
+      return;
+    }
+
+    if (link.id) {
+      scrollToHomeSection(link.id);
     }
   };
 
   useEffect(() => {
-    if (location.pathname === "/" && location.state?.scrollTo) {
-      const id = location.state.scrollTo;
+    const scrollTarget = location.state?.scrollTo;
 
-      setTimeout(() => {
-        const element = document.getElementById(id);
+    if (scrollTarget) {
+      let attempts = 0;
+      const maxAttempts = 30;
 
-        if (element) {
-          const yOffset = -100;
+      const findAndScroll = () => {
+        const success = scrollToElement(scrollTarget, true);
 
-          const y =
-            element.getBoundingClientRect().top +
-            window.pageYOffset +
-            yOffset;
-
-          window.scrollTo({
-            top: y,
-            behavior: "smooth",
+        if (success) {
+          navigate(location.pathname, {
+            replace: true,
+            state: null,
           });
+          return;
         }
 
-        navigate("/", {
-          replace: true,
-          state: null,
-        });
-      }, 100);
+        attempts++;
+
+        if (attempts < maxAttempts) {
+          setTimeout(findAndScroll, 100);
+        }
+      };
+
+      const timer = setTimeout(findAndScroll, 100);
+
+      return () => clearTimeout(timer);
     }
-  }, [location, navigate]);
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [location.pathname, navigate]);
 
   const footerLinks = {
     Platform: [
-      { name: "Discover Events", id: "events" },
-      { name: "Create Event", id: "createEvents" },
-      { name: "Features", id: "why-choose-us" },
-      { name: "Statistics", id: "statistics" },
+      {
+        name: "Discover Events",
+        route:"/",
+        scrollTo: "home",
+      },
+      {
+        name: "List Your Events",
+        id: "organizerCTA",
+      },
+      {
+        name: "Features",
+        route: "/explore",
+        scrollTo: "why-choose-us",
+      },
+      {
+        name: "Statistics",
+        route: "/explore",
+        scrollTo: "statistics",
+      },
     ],
-
     Company: [
-      { name: "About Us", id: "home" },
-      { name: "Testimonials", id: "testimonials" },
-      { name: "Contact Us", id: "contact" },
+      {
+        name: "Testimonials",
+        route: "/explore",
+        scrollTo: "testimonials",
+      },
+      {
+        name: "Privacy Policy",
+        route: "/privacy-policy",
+      },
+      {
+        name: "Terms & Conditions",
+        route: "/terms-Conditions",
+      },
     ],
   };
 
@@ -101,18 +195,14 @@ const Footer = () => {
     >
       <style>{FONT_IMPORT}</style>
 
-      {/* Background Glow */}
       <div className="absolute -left-32 top-0 h-72 w-72 rounded-full bg-[#44807F]/20 blur-[120px]" />
-
       <div className="absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-[#FEDF24]/10 blur-[150px]" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
-        {/* ================= TOP SECTION ================= */}
+      <div className="relative z-10 mx-auto max-w-7xl px-2 sm:px-8 lg:px-10">
         <div className="grid gap-10 border-b border-[#fffdf5]/10 pb-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] lg:gap-x-16">
-          {/* ================= BRAND SECTION ================= */}
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
             <motion.button
-              onClick={() => scrollToSection("home")}
+              onClick={() => scrollToHomeSection("home")}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -130,11 +220,9 @@ const Footer = () => {
               events all in one powerful platform.
             </p>
 
-            {/* ================= SOCIAL ICONS ================= */}
             <div className="mt-6 flex items-center gap-3">
-              {/* Instagram */}
               <a
-                href="https://www.instagram.com/sellar.in?igsh=MXhobzJrMzIzbGdlaQ%3D%3D"
+                href="https://www.instagram.com/outsold.in?stkn=YWlocjRpaGFhN29u"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
@@ -143,7 +231,6 @@ const Footer = () => {
                 <FaInstagram size={18} />
               </a>
 
-              {/* LinkedIn */}
               <a
                 href="https://www.linkedin.com/company/sellar-in/"
                 target="_blank"
@@ -154,7 +241,6 @@ const Footer = () => {
                 <FaLinkedinIn size={18} />
               </a>
 
-              {/* Facebook */}
               <a
                 href="https://www.facebook.com/people/Sellarin/61583546437046/"
                 target="_blank"
@@ -167,9 +253,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* ================= PLATFORM & COMPANY ================= */}
-          <div className="ml-6 grid grid-cols-2 gap-8 lg:contents">
-            {/* Platform */}
+          <div className="ml-6 grid grid-cols-2 gap-4 lg:contents">
             <div>
               <h3 className="text-base font-semibold text-[#fffdf5]">
                 Platform
@@ -179,7 +263,7 @@ const Footer = () => {
                 {footerLinks.Platform.map((link) => (
                   <li key={link.name}>
                     <button
-                      onClick={() => scrollToSection(link.id)}
+                      onClick={() => handleRouteLink(link)}
                       className="group flex cursor-pointer items-center gap-2 text-left text-sm text-[#fffdf5]/60 transition hover:text-[#FEDF24]"
                     >
                       {link.name}
@@ -194,7 +278,6 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Company */}
             <div>
               <h3 className="text-base font-semibold text-[#fffdf5]">
                 Company
@@ -204,7 +287,7 @@ const Footer = () => {
                 {footerLinks.Company.map((link) => (
                   <li key={link.name}>
                     <button
-                      onClick={() => scrollToSection(link.id)}
+                      onClick={() => handleRouteLink(link)}
                       className="group flex cursor-pointer items-center gap-2 text-left text-sm text-[#fffdf5]/60 transition hover:text-[#FEDF24]"
                     >
                       {link.name}
@@ -220,7 +303,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* ================= GET IN TOUCH ================= */}
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
             <h3 className="text-base font-semibold text-[#fffdf5]">
               Get In Touch
@@ -230,22 +312,18 @@ const Footer = () => {
               Have questions about our platform? We'd love to hear from you.
             </p>
 
-            <div className="mx-auto mt-5 flex flex-col items-start justify-center gap-3 md:gap-4">
-              {/* Email */}
+            <div className="mx-auto mt-5 flex flex-col items-start gap-3 md:flex-row md:items-center md:gap-4">
               <a
                 href="mailto:sellarsuite@gmail.com"
-                className="flex items-center gap-2 text-sm text-[#fffdf5]/60 transition hover:text-[#FEDF24]"
+                className="flex items-center gap-2 text-[#fffdf5]/60 transition hover:text-[#FEDF24] text-sm"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fffdf5]/5 text-[#FEDF24] shadow-sm">
                   <FaEnvelope size={16} />
                 </span>
 
-                <span className="break-all">
-                  sellarsuite@gmail.com
-                </span>
+                <span className="whitespace-nowrap">sellarsuite@gmail.com</span>
               </a>
 
-              {/* Phone */}
               <a
                 href="tel:9818815838"
                 className="flex items-center gap-2 text-sm text-[#fffdf5]/60 transition hover:text-[#FEDF24]"
@@ -254,41 +332,23 @@ const Footer = () => {
                   <FaPhone size={16} />
                 </span>
 
-                <span>9818815838</span>
+                <span className="whitespace-nowrap">9818815838</span>
               </a>
             </div>
           </div>
         </div>
 
-        {/* ================= BOTTOM SECTION ================= */}
         <div className="flex flex-col items-center justify-center gap-5 py-7 text-center text-sm text-[#fffdf5]/50 sm:flex-row sm:justify-between sm:text-left">
           <p>© {new Date().getFullYear()} OutSold. All rights reserved.</p>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-x-6 sm:gap-y-2">
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              {/* Privacy Policy */}
-              <a
-                href="/privacy-policy"
-                className="transition hover:text-[#FEDF24]"
-              >
-                Privacy Policy
-              </a>
-
-              {/* Terms & Conditions */}
-              <a
-                href="/terms-Conditions"
-                className="transition hover:text-[#FEDF24]"
-              >
-                Terms & Conditions
-              </a>
+              <span className="flex items-center justify-center gap-1 whitespace-nowrap">
+                Made with
+                <FaHeart size={14} className="text-[#FEDF24]" />
+                for events
+              </span>
             </div>
-
-            {/* Made With Love */}
-            <span className="flex items-center justify-center gap-1 whitespace-nowrap">
-              Made with
-              <FaHeart size={14} className="text-[#FEDF24]" />
-              for events
-            </span>
           </div>
         </div>
       </div>

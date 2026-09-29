@@ -20,3 +20,7 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
+
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
