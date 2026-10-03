@@ -161,7 +161,7 @@ const PlatformStatistics = () => {
                 {/* =========================
                     MILESTONE CARDS
                 ========================== */}
-                <div className="mx-auto mt-12 grid max-w-3xl gap-4 sm:grid-cols-2 sm:gap-5">
+                <div className="mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-3 sm:gap-5">
                     {/* Card 1 */}
                     <motion.div
                         whileHover={{ y: -4 }}
@@ -170,7 +170,7 @@ const PlatformStatistics = () => {
                         {/* Card Glow */}
                         <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#FEDF24]/10 blur-3xl" />
 
-                        <div className="relative flex items-center gap-4">
+                        <div className="relative flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:gap-4 sm:text-left">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#FEDF24]/10 bg-[#FEDF24]/10 text-[#FEDF24] transition group-hover:bg-[#FEDF24] group-hover:text-[#102522]">
                                 <CalendarDays size={21} />
                             </div>
@@ -180,9 +180,6 @@ const PlatformStatistics = () => {
                                     More events
                                 </p>
 
-                                <p className="mt-1 text-xs leading-5 text-white/45">
-                                    New experiences are joining the platform.
-                                </p>
                             </div>
                         </div>
                     </motion.div>
@@ -195,7 +192,7 @@ const PlatformStatistics = () => {
                         {/* Card Glow */}
                         <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#44807F]/20 blur-3xl" />
 
-                        <div className="relative flex items-center gap-4">
+                        <div className="relative flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:gap-4 sm:text-left">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#44807F]/15 bg-[#44807F]/10 text-[#7FC5C1] transition group-hover:bg-[#44807F] group-hover:text-white">
                                 <Users size={21} />
                             </div>
@@ -205,9 +202,6 @@ const PlatformStatistics = () => {
                                     Growing community
                                 </p>
 
-                                <p className="mt-1 text-xs leading-5 text-white/45">
-                                    More organizers and audiences are coming.
-                                </p>
                             </div>
                         </div>
                     </motion.div>

@@ -7,12 +7,12 @@ const TermsConditions = () => {
       {/* Hero Section */}
       <section className="border-b border-[#123331]/10 bg-white">
         <div className="mx-auto max-w-5xl px-5 py-10">
-          
-          <div className="mt-20 inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
-            <FileText size={16} />
-            Please read these terms carefully
+          <div className="flex items-center justify-center">
+            <div className="mt-20 inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
+              <FileText size={16} />
+              Please read these terms carefully
+            </div>
           </div>
-
           <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
             Terms & Conditions
           </h1>
@@ -31,7 +31,7 @@ const TermsConditions = () => {
       {/* Main Content */}
       <main className="mx-auto max-w-5xl px-5 py-12">
         <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#123331]/5 sm:p-10 lg:p-14">
-          
+
           <p className="leading-8 text-[#123331]/70">
             Welcome to OutSold. By accessing or using our website, platform,
             or related services, you agree to be bound by these Terms and
@@ -262,11 +262,12 @@ const TermsConditions = () => {
             </p>
 
             <a
-              href="mailto:hello@outsold.com"
+              href="mailto:sellarsuite@gmail.com"
               className="mt-6 flex w-fit items-center gap-3 rounded-xl bg-[#007A78]/10 px-5 py-4 font-medium text-[#007A78] transition hover:bg-[#007A78] hover:text-white"
             >
               <Mail size={20} />
-              hello@outsold.com
+              sellarsuite@gmail.com
+
             </a>
           </section>
         </div>

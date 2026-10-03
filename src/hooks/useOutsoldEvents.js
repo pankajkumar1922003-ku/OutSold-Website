@@ -21,25 +21,45 @@ const getPrice = (tiers = []) => {
     return `₹${Math.min(...prices)}`;
 };
 
-const mapFirebaseEvent = (id, data, companyId) => {
+/* -------------------------------------------------------------------------- */
+/* COMPANY EVENT                                                              */
+/* -------------------------------------------------------------------------- */
+
+const mapCompanyEvent = (id, data, companyId, companyData = {}) => {
     return {
         id,
-
         title: data.title || "Untitled Event",
-
         category: data.category || "Other",
+        otherCategory:
+            data.otherCategory ||
+            data.customCategory ||
+            data.categoryName ||
+            "",
+        description: data.description || "",
+        date: data.date || data.startDate || "",
 
-        date: data.date || "",
+        startDate:
+            data.startDate ||
+            data.start_date ||
+            data.eventStartDate ||
+            data.date ||
+            "",
 
-        endDate: data.endDate || "",
+        endDate:
+            data.endDate ||
+            data.end_date ||
+            data.eventEndDate ||
+            data.startDate ||
+            data.date ||
+            "",
 
         time: data.time || "",
 
-        location: data.venue || "",
+        location: data.venue || data.location || "",
 
         venue: data.venue || "",
 
-        price: getPrice(data.tiers),
+        price: data.pricing || getPrice(data.tiers),
 
         image:
             data.coverImageDesktop ||
@@ -49,6 +69,16 @@ const mapFirebaseEvent = (id, data, companyId) => {
             data.coverImageUrl,
 
         featured: Boolean(data.featured),
+
+        /*
+         * Existing company events don't necessarily have
+         * displaySection.
+         *
+         * Keep their old behaviour by putting them in
+         * Events You'll Love by default.
+         */
+        displaySection:
+            data.displaySection || "events_youll_love",
 
         isOnline: Boolean(data.isOnline),
 
@@ -61,13 +91,134 @@ const mapFirebaseEvent = (id, data, companyId) => {
 
         slug: data.slug || null,
 
-        subdomain: data.subdomain || null,
+        subdomain:
+            data.subdomain ||
+            companyData.subdomain ||
+            null,
 
         isPrivate: Boolean(data.isPrivate),
 
         status: data.status,
+
+        bookingUrl:
+            data.bookingUrl ||
+            data.ticketBookingUrl ||
+            null,
+
+        source: "company",
     };
 };
+
+/* -------------------------------------------------------------------------- */
+/* LIST YOUR EVENT                                                            */
+/* -------------------------------------------------------------------------- */
+
+const mapSubmittedEvent = (id, data) => {
+    return {
+        id: `submission_${id}`,
+        title:
+            data.eventName ||
+            data.title ||
+            "Untitled Event",
+
+        category: data.category || "Other",
+        description: data.description || "",
+        otherCategory:
+            data.otherCategory ||
+            data.customCategory ||
+            data.categoryName ||
+            "",
+
+        date:
+            data.startDate ||
+            data.date ||
+            "",
+
+        startDate:
+            data.startDate ||
+            data.date ||
+            "",
+
+        endDate:
+            data.endDate ||
+            data.startDate ||
+            data.date ||
+            "",
+
+        time: data.time || "",
+
+        location:
+            data.venue ||
+            data.location ||
+            "",
+
+        venue:
+            data.venue ||
+            data.location ||
+            "",
+
+        price:
+            data.pricing ||
+            "Free",
+
+        image:
+            data.coverImageDesktop ||
+            data.coverImageMobile ||
+            data.coverImage ||
+            data.coverImageUrl ||
+            data.coverImageUrls?.[0],
+
+        featured:
+            data.displaySection === "featured",
+
+        displaySection:
+            data.displaySection || "all",
+
+        isOnline: Boolean(data.isOnline),
+
+        registrationMode:
+            data.registrationMode ||
+            "tickets",
+
+        tiers:
+            data.tiers || [],
+
+        companyId:
+            data.companyId ||
+            null,
+
+        slug:
+            data.slug ||
+            null,
+
+        subdomain:
+            data.subdomain ||
+            null,
+
+        isPrivate:
+            Boolean(data.isPrivate),
+
+        status:
+            data.status || "published",
+
+        bookingUrl:
+            data.bookingUrl ||
+            data.ticketBookingUrl ||
+            null,
+
+        source: "event_submission",
+
+        createdAt:
+            data.createdAt || null,
+
+        updatedAt:
+            data.updatedAt || null,
+    };
+};
+
+/* -------------------------------------------------------------------------- */
+/* HOOK                                                                       */
+/* -------------------------------------------------------------------------- */
 
 export function useOutsoldEvents() {
     const [events, setEvents] = useState([]);
@@ -78,14 +229,38 @@ export function useOutsoldEvents() {
         let unsubscribers = [];
         let isActive = true;
 
+        /*
+         * We keep events from BOTH sources here:
+         *
+         * 1. companies/{companyId}/events
+         * 2. event_submissions
+         */
+        const allEvents = new Map();
+
+        const updateEvents = () => {
+            if (!isActive) return;
+
+            const mergedEvents = Array.from(
+                allEvents.values()
+            ).filter(
+                (event) =>
+                    event &&
+                    !event.isPrivate &&
+                    event.status === "published"
+            );
+
+            setEvents(mergedEvents);
+            setLoading(false);
+        };
+
         const loadEvents = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // -----------------------------------------
-                // 1. Get ALL companies
-                // -----------------------------------------
+                /* ========================================================== */
+                /* 1. GET ALL COMPANIES                                       */
+                /* ========================================================== */
 
                 const companiesSnapshot = await getDocs(
                     collection(db, "companies")
@@ -93,81 +268,174 @@ export function useOutsoldEvents() {
 
                 if (!isActive) return;
 
-                // -----------------------------------------
-                // 2. Listen to every company's events
-                // -----------------------------------------
+                /* ========================================================== */
+                /* 2. EXISTING COMPANY EVENTS                                */
+                /* ========================================================== */
 
-                const allEvents = new Map();
+                companiesSnapshot.docs.forEach(
+                    (companyDoc) => {
+                        const companyId =
+                            companyDoc.id;
 
-                companiesSnapshot.docs.forEach((companyDoc) => {
-                    const companyId = companyDoc.id;
-                    const companyData = companyDoc.data();
+                        const companyData =
+                            companyDoc.data();
 
-                    const eventsRef = collection(
+                        const eventsRef =
+                            collection(
+                                db,
+                                "companies",
+                                companyId,
+                                "events"
+                            );
+
+                        const eventsQuery =
+                            query(
+                                eventsRef,
+                                where(
+                                    "status",
+                                    "==",
+                                    "published"
+                                )
+                            );
+
+                        const unsubscribe =
+                            onSnapshot(
+                                eventsQuery,
+                                (snapshot) => {
+                                    /*
+                                     * Remove previous events
+                                     * belonging to this company.
+                                     */
+                                    for (const [
+                                        key,
+                                        event,
+                                    ] of allEvents) {
+                                        if (
+                                            event.source ===
+                                            "company" &&
+                                            event.companyId ===
+                                            companyId
+                                        ) {
+                                            allEvents.delete(
+                                                key
+                                            );
+                                        }
+                                    }
+
+                                    /*
+                                     * Add latest company events.
+                                     */
+                                    snapshot.docs.forEach(
+                                        (eventDoc) => {
+                                            const data =
+                                                eventDoc.data();
+
+                                            const event =
+                                                mapCompanyEvent(
+                                                    eventDoc.id,
+                                                    data,
+                                                    companyId,
+                                                    companyData
+                                                );
+
+                                            allEvents.set(
+                                                `company_${companyId}_${eventDoc.id}`,
+                                                event
+                                            );
+                                        }
+                                    );
+
+                                    updateEvents();
+                                },
+                                (firebaseError) => {
+                                    console.error(
+                                        `Failed to fetch events for company ${companyId}:`,
+                                        firebaseError
+                                    );
+
+                                    if (isActive) {
+                                        setError(
+                                            firebaseError.message
+                                        );
+                                        setLoading(false);
+                                    }
+                                }
+                            );
+
+                        unsubscribers.push(
+                            unsubscribe
+                        );
+                    }
+                );
+
+                /* ========================================================== */
+                /* 3. LIST YOUR EVENT / EVENT SUBMISSIONS                   */
+                /* ========================================================== */
+
+                const submissionsRef =
+                    collection(
                         db,
-                        "companies",
-                        companyId,
-                        "events"
+                        "event_submissions"
                     );
 
-                    const eventsQuery = query(
-                        eventsRef,
-                        where("status", "==", "published")
+                const submissionsQuery =
+                    query(
+                        submissionsRef,
+                        where(
+                            "status",
+                            "==",
+                            "published"
+                        )
                     );
 
-                    const unsubscribe = onSnapshot(
-                        eventsQuery,
+                const unsubscribeSubmissions =
+                    onSnapshot(
+                        submissionsQuery,
                         (snapshot) => {
-                            // Remove old events of this company
-                            for (const [key, event] of allEvents) {
+                            /*
+                             * Remove previous submission events.
+                             */
+                            for (const [
+                                key,
+                                event,
+                            ] of allEvents) {
                                 if (
-                                    event.companyId ===
-                                    companyId
+                                    event.source ===
+                                    "event_submission"
                                 ) {
-                                    allEvents.delete(key);
+                                    allEvents.delete(
+                                        key
+                                    );
                                 }
                             }
 
-                            // Add latest events
-                            snapshot.docs.forEach((eventDoc) => {
-                                const data =
-                                    eventDoc.data();
+                            /*
+                             * Add newly published
+                             * List Your Event events.
+                             */
+                            snapshot.docs.forEach(
+                                (eventDoc) => {
+                                    const data =
+                                        eventDoc.data();
 
-                                allEvents.set(
-                                    `${companyId}_${eventDoc.id}`,
-                                    mapFirebaseEvent(
-                                        eventDoc.id,
-                                        {
-                                            ...data,
+                                    const event =
+                                        mapSubmittedEvent(
+                                            eventDoc.id,
+                                            data
+                                        );
 
-                                            // If event doesn't contain
-                                            // subdomain, use company subdomain
-                                            subdomain:
-                                                data.subdomain ||
-                                                companyData.subdomain ||
-                                                null,
-                                        },
-                                        companyId
-                                    )
-                                );
-                            });
+                                    allEvents.set(
+                                        `submission_${eventDoc.id}`,
+                                        event
+                                    );
+                                }
+                            );
 
-                            if (isActive) {
-                                setEvents(
-                                    Array.from(
-                                        allEvents.values()
-                                    ).filter(
-                                        (event) =>
-                                            !event.isPrivate
-                                    )
-                                );
-
-                                setLoading(false);
-                            }
+                            updateEvents();
                         },
                         (firebaseError) => {
                             console.error(
-                                `Failed to fetch events for company ${companyId}:`,
+                                "Failed to fetch event submissions:",
                                 firebaseError
                             );
 
@@ -180,16 +448,23 @@ export function useOutsoldEvents() {
                         }
                     );
 
-                    unsubscribers.push(unsubscribe);
-                });
+                unsubscribers.push(
+                    unsubscribeSubmissions
+                );
 
-                // Agar companies hi nahi hain
+                /*
+                 * If there are no companies, submissions
+                 * listener can still provide events.
+                 */
                 if (
                     companiesSnapshot.empty &&
                     isActive
                 ) {
-                    setEvents([]);
-                    setLoading(false);
+                    /*
+                     * Don't set loading false here.
+                     * event_submissions listener still needs
+                     * to finish its first snapshot.
+                     */
                 }
             } catch (firebaseError) {
                 console.error(
@@ -198,7 +473,9 @@ export function useOutsoldEvents() {
                 );
 
                 if (isActive) {
-                    setError(firebaseError.message);
+                    setError(
+                        firebaseError.message
+                    );
                     setLoading(false);
                 }
             }
@@ -210,7 +487,8 @@ export function useOutsoldEvents() {
             isActive = false;
 
             unsubscribers.forEach(
-                (unsubscribe) => unsubscribe()
+                (unsubscribe) =>
+                    unsubscribe()
             );
         };
     }, []);

@@ -4,9 +4,12 @@ import {
     BarChart3,
     CalendarDays,
     CheckCircle2,
+    FileText,
+    Layers3,
     Sparkles,
     Ticket,
     Users,
+    Wallet,
 } from "lucide-react";
 import { useLayoutEffect } from "react";
 
@@ -25,6 +28,39 @@ const organizerFeatures = [
         icon: Users,
         title: "Manage Attendees",
         description: "Keep your audience and bookings organized.",
+    },
+];
+
+const floatingFeatures = [
+    {
+        icon: Layers3,
+        title: "All-in-One Management",
+        yellow: true,
+        position: "left-0 top-[8%]",
+    },
+    {
+        icon: Users,
+        title: "Smart Attendees",
+        yellow: false,
+        position: "right-0 top-[25%]",
+    },
+    {
+        icon: BarChart3,
+        title: "Real-Time Analytics",
+        yellow: true,
+        position: "left-0 top-[44%]",
+    },
+    {
+        icon: Wallet,
+        title: "UPI Payments",
+        yellow: false,
+        position: "right-0 bottom-[25%]",
+    },
+    {
+        icon: FileText,
+        title: "Powerful Reports",
+        yellow: true,
+        position: "left-0 bottom-[7%]",
     },
 ];
 
@@ -50,10 +86,7 @@ const CreateEventSection = () => {
             id="createEvents"
             className="relative overflow-hidden bg-[#FFFBEA] text-[#142522]"
         >
-            {/* =====================================================
-                LIGHT TOP AREA
-            ====================================================== */}
-
+            {/* LIGHT TOP AREA */}
             <div className="relative overflow-hidden py-6">
                 {/* Background Glow */}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -69,12 +102,10 @@ const CreateEventSection = () => {
                 {/* Top Glow Line */}
                 <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[80%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#44807F]/40 to-transparent" />
 
-                <div className=" mt-20 md:mt-32 relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+                <div className="relative z-10 mx-auto mt-20 max-w-7xl px-5 md:mt-32 sm:px-8 lg:px-10">
                     <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
-                        {/* =========================
-                            DESKTOP IMAGE
-                        ========================== */}
 
+                        {/* DESKTOP IMAGE */}
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -83,7 +114,7 @@ const CreateEventSection = () => {
                                 duration: 0.8,
                                 ease: [0.22, 1, 0.36, 1],
                             }}
-                            className="relative order-2 hidden md:block lg:order-1 md:-mt-16"
+                            className="relative order-2 hidden md:-mt-16 md:block lg:order-1"
                         >
                             <img
                                 src="/Dashboard.png"
@@ -91,71 +122,48 @@ const CreateEventSection = () => {
                                 className="mx-auto h-auto w-[60%] object-contain"
                             />
 
-                            {/* Floating Revenue Card */}
-                            <motion.div
-                                animate={{ y: [0, -7, 0] }}
-                                transition={{
-                                    duration: 4,
-                                    repeat: Infinity,
-                                    ease: "easeInOut",
-                                }}
-                                className="absolute -right-8 -top-10 rounded-2xl border border-[#44807F]/10 bg-white/95 px-4 py-3 shadow-[0_20px_50px_rgba(68,128,127,0.12)] backdrop-blur-xl sm:block md:right-20"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FEDF24]/20">
-                                        <BarChart3
-                                            size={18}
-                                            className="text-[#44807F]"
-                                        />
-                                    </div>
+                            {/* Desktop Floating Feature Cards */}
+                            {floatingFeatures.map((feature, index) => {
+                                const Icon = feature.icon;
 
-                                    <div>
-                                        <p className="text-[10px] text-[#142522]/45">
-                                            Event Revenue
-                                        </p>
+                                return (
+                                    <motion.div
+                                        key={feature.title}
+                                        animate={{
+                                            y: [
+                                                0,
+                                                index % 2 === 0 ? -7 : 7,
+                                                0,
+                                            ],
+                                        }}
+                                        transition={{
+                                            duration: 4 + index * 0.2,
+                                            repeat: Infinity,
+                                            ease: "easeInOut",
+                                        }}
+                                        className={`absolute ${feature.position} z-20 flex items-center gap-3 rounded-2xl border border-[#44807F]/10 bg-white/95 px-4 py-3 shadow-[0_20px_50px_rgba(68,128,127,0.12)] backdrop-blur-xl`}
+                                    >
+                                        <div
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${feature.yellow
+                                                    ? "bg-[#FEDF24]/20"
+                                                    : "bg-[#44807F]/10"
+                                                }`}
+                                        >
+                                            <Icon
+                                                size={18}
+                                                className="text-[#44807F]"
+                                            />
+                                        </div>
 
-                                        <p className="mt-0.5 text-sm font-bold text-[#142522]">
-                                            +24.8%
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.div>
-
-                            {/* Floating Ticket Card */}
-                            <motion.div
-                                animate={{ y: [0, 7, 0] }}
-                                transition={{
-                                    duration: 4.5,
-                                    repeat: Infinity,
-                                    ease: "easeInOut",
-                                }}
-                                className="absolute -bottom-5 -left-3 rounded-2xl border border-[#44807F]/10 bg-white/95 px-4 py-3 shadow-[0_20px_50px_rgba(68,128,127,0.12)] backdrop-blur-xl sm:block lg:left-10"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#44807F]/10">
-                                        <Ticket
-                                            size={18}
-                                            className="text-[#44807F]"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <p className="text-[10px] text-[#142522]/45">
-                                            Tickets Sold
-                                        </p>
-
-                                        <p className="mt-0.5 text-sm font-bold text-[#142522]">
-                                            1,284
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.div>
+                                        <span className="whitespace-nowrap text-xs font-bold text-[#142522]">
+                                            {feature.title}
+                                        </span>
+                                    </motion.div>
+                                );
+                            })}
                         </motion.div>
 
-                        {/* =========================
-                            CONTENT
-                        ========================== */}
-
+                        {/* CONTENT */}
                         <motion.div
                             initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -168,12 +176,14 @@ const CreateEventSection = () => {
                             className="order-1 lg:order-2"
                         >
                             {/* Badge */}
-                            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#44807F]/15 bg-white/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#44807F] shadow-sm backdrop-blur-md sm:text-xs">
-                                <Sparkles size={14} />
-                                Built for Event Organizers
+                            <div className="mt-2 flex items-center justify-center">
+                                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#44807F]/15 bg-white/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#44807F] shadow-sm backdrop-blur-md sm:text-xs">
+                                    <Sparkles size={14} />
+                                    Built for Event Organizers
+                                </div>
                             </div>
 
-                            {/* Interactive Heading */}
+                            {/* Heading */}
                             <motion.h2
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -185,15 +195,13 @@ const CreateEventSection = () => {
                                 className="max-w-3xl text-4xl font-black leading-[1.05] tracking-[-0.045em] text-[#142522] sm:text-5xl md:text-6xl"
                             >
                                 Turn your event into
-                                <span className="mt-2 block bg-gradient-to-r from-[#FEDF24] via-[#b8c957] to-[#44807F] bg-clip-text text-transparent">
-                                    an experience.
+                                <span className="relative mt-2 inline-block text-[#44807F]">
+                                    an Experience.
+                                    <span className="absolute -bottom-2 left-0 h-[4px] w-full rounded-full bg-[#FEDF24]" />
                                 </span>
                             </motion.h2>
 
-                            {/* =========================
-                                MOBILE IMAGE
-                            ========================== */}
-
+                            {/* MOBILE IMAGE */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -210,65 +218,51 @@ const CreateEventSection = () => {
                                     className="mx-auto h-auto w-full object-contain"
                                 />
 
-                                {/* Mobile Revenue Card */}
-                                <motion.div
-                                    animate={{ y: [0, -5, 0] }}
-                                    transition={{
-                                        duration: 4,
-                                        repeat: Infinity,
-                                        ease: "easeInOut",
-                                    }}
-                                    className="absolute right-0 top-2 rounded-xl border border-[#44807F]/10 bg-white/95 px-3 py-2 shadow-[0_12px_30px_rgba(68,128,127,0.12)] backdrop-blur-xl"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FEDF24]/20">
-                                            <BarChart3
-                                                size={15}
-                                                className="text-[#44807F]"
-                                            />
-                                        </div>
 
-                                        <div>
-                                            <p className="text-[8px] text-[#142522]/45">
-                                                Event Revenue
-                                            </p>
+                                {/* Mobile Floating Feature Cards */}
+                                {floatingFeatures.map((feature, index) => {
+                                    const Icon = feature.icon;
 
-                                            <p className="text-xs font-bold text-[#142522]">
-                                                +24.8%
-                                            </p>
-                                        </div>
-                                    </div>
-                                </motion.div>
+                                    // Mobile-only positions and compact badge sizing
+                                    const mobilePositions = [
+                                        "left-0 top-[5%]",
+                                        "right-0 top-[24%]",
+                                        "left-0 top-[43%]",
+                                        "right-0 bottom-[24%]",
+                                        "left-0 bottom-[5%]",
+                                    ];
 
-                                {/* Mobile Ticket Card */}
-                                <motion.div
-                                    animate={{ y: [0, 5, 0] }}
-                                    transition={{
-                                        duration: 4.5,
-                                        repeat: Infinity,
-                                        ease: "easeInOut",
-                                    }}
-                                    className="absolute bottom-2 left-0 rounded-xl border border-[#44807F]/10 bg-white/95 px-3 py-2 shadow-[0_12px_30px_rgba(68,128,127,0.12)] backdrop-blur-xl"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#44807F]/10">
-                                            <Ticket
-                                                size={15}
-                                                className="text-[#44807F]"
-                                            />
-                                        </div>
+                                    return (
+                                        <motion.div
+                                            key={feature.title}
+                                            animate={{
+                                                y: [0, index % 2 === 0 ? -3 : 3, 0],
+                                            }}
+                                            transition={{
+                                                duration: 4 + index * 0.2,
+                                                repeat: Infinity,
+                                                ease: "easeInOut",
+                                            }}
+                                            className={`absolute ${mobilePositions[index]} z-20 flex w-fit max-w-[44%] items-center gap-2 rounded-xl border border-[#44807F]/10 bg-white/95 px-2 py-2 shadow-[0_12px_30px_rgba(68,128,127,0.12)] backdrop-blur-xl`}
+                                        >
+                                            <div
+                                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${feature.yellow
+                                                        ? "bg-[#FEDF24]/20"
+                                                        : "bg-[#44807F]/10"
+                                                    }`}
+                                            >
+                                                <Icon
+                                                    size={14}
+                                                    className="text-[#44807F]"
+                                                />
+                                            </div>
 
-                                        <div>
-                                            <p className="text-[8px] text-[#142522]/45">
-                                                Tickets Sold
-                                            </p>
-
-                                            <p className="text-xs font-bold text-[#142522]">
-                                                1,284
-                                            </p>
-                                        </div>
-                                    </div>
-                                </motion.div>
+                                            <span className="min-w-0 whitespace-normal break-words text-[9px] font-bold leading-tight text-[#142522] sm:text-[10px]">
+                                                {feature.title}
+                                            </span>
+                                        </motion.div>
+                                    );
+                                })}
                             </motion.div>
 
                             {/* Description */}
@@ -330,16 +324,11 @@ const CreateEventSection = () => {
                 </div>
             </div>
 
-            {/* =====================================================
-                DARK TEAL SECTION
-                STARTS FROM MINI STATS
-            ====================================================== */}
-
+            {/* DARK TEAL SECTION */}
             <div className="relative overflow-hidden bg-[#0B1512] px-5 pb-10 pt-8 sm:px-8 sm:pt-10 lg:px-10">
-                {/* ================= DARK BACKGROUND ================= */}
-
+                {/* Dark Background */}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    {/* Smooth Light → Dark Transition */}
+                    {/* Smooth Light to Dark Transition */}
                     <div className="absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-[#FFFBEA] via-[#13251F] to-[#0B1512]" />
 
                     {/* Left Teal Glow */}
@@ -369,10 +358,7 @@ const CreateEventSection = () => {
                 <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[75%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#FEDF24]/35 to-transparent" />
 
                 <div className="relative z-10 mx-auto max-w-7xl">
-                    {/* =================================================
-                        MINI STATS
-                    ================================================== */}
-
+                    {/* Mini Stats */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -411,11 +397,8 @@ const CreateEventSection = () => {
                         </div>
                     </motion.div>
 
-                    {/* =================================================
-                        FEATURE CARDS
-                    ================================================== */}
-
-                    <div className="mt-10 grid gap-3 sm:mt-16 sm:grid-cols-3 sm:gap-4">
+                    {/* Feature Cards */}
+                    <div className="mt-10 grid grid-cols-3 gap-2 sm:mt-16 sm:gap-4">
                         {organizerFeatures.map((feature, index) => {
                             const Icon = feature.icon;
 
@@ -436,24 +419,20 @@ const CreateEventSection = () => {
                                         delay: index * 0.1,
                                     }}
                                     whileHover={{ y: -5 }}
-                                    className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] p-4 shadow-xl shadow-black/10 backdrop-blur-md transition-all duration-300 hover:border-[#44807F]/40 hover:bg-white/[0.09] sm:p-5"
+                                    className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] p-3 shadow-xl shadow-black/10 backdrop-blur-md transition-all duration-300 hover:border-[#44807F]/40 hover:bg-white/[0.09] sm:p-5"
                                 >
                                     {/* Card Glow */}
                                     <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#FEDF24]/10 blur-[50px] transition-all duration-300 group-hover:bg-[#FEDF24]/15" />
 
-                                    <div className="relative flex items-start gap-4">
+                                    <div className="relative flex flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-4 sm:text-left">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FEDF24]/15 to-[#44807F]/15 text-[#FEDF24] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-[#FEDF24] group-hover:to-[#44807F] group-hover:text-[#17302E]">
                                             <Icon size={20} />
                                         </div>
 
                                         <div>
-                                            <h3 className="text-sm font-bold text-white sm:text-base">
+                                            <h3 className="text-xs font-bold text-white sm:text-base">
                                                 {feature.title}
                                             </h3>
-
-                                            <p className="mt-1 text-xs leading-5 text-white/50">
-                                                {feature.description}
-                                            </p>
                                         </div>
                                     </div>
 
