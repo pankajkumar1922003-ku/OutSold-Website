@@ -10,6 +10,7 @@ import ExploreLayout from './Layout/ExploreLayout.jsx'
 import EventsPage from './Components/All Events.jsx'
 import AccountPage from './Pages/AccountPage.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import FloatingWhatsApp from './Components/FloatingWhatsApp.jsx'
 
 const router = createBrowserRouter([
   {
@@ -47,8 +48,8 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      {/* <LocationOnboarding/> */}
       <RouterProvider router={router} />
+      <FloatingWhatsApp />
     </AuthProvider>
   </StrictMode>,
 )

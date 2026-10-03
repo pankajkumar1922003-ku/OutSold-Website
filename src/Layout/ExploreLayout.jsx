@@ -1,6 +1,6 @@
 import CreateEventSection from "../Components/CreateEventSection";
 import WhyChooseUs from "../Components/WhyChooseUs";
-import PlatformStatistics from "../Components/PlatformStatistics";
+// import PlatformStatistics from "../Components/PlatformStatistics";
 import Testimonials from "../Components/Testimonials";
 
 const ExploreLayout = () => {
@@ -8,7 +8,7 @@ const ExploreLayout = () => {
         <>
             <CreateEventSection />
             <WhyChooseUs />
-            <PlatformStatistics />
+            {/* <PlatformStatistics /> */}
             <Testimonials />
         </>
     );

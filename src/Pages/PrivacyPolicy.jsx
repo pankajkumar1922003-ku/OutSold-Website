@@ -7,12 +7,13 @@ const PrivacyPolicy = () => {
       {/* Hero */}
       <section className="border-b border-[#123331]/10 bg-white">
         <div className="mx-auto max-w-5xl px-5 py-10">
-          
-          <div className="mt-20 inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
-            <ShieldCheck size={16} />
-            Your privacy matters to us
-          </div>
 
+          <div className="mt-20 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#007A78]/10 px-4 py-2 text-sm font-medium text-[#007A78]">
+              <ShieldCheck size={16} />
+              Your privacy matters to us
+            </div>
+          </div>
           <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
             Privacy Policy
           </h1>
@@ -32,7 +33,7 @@ const PrivacyPolicy = () => {
       {/* Content */}
       <main className="mx-auto max-w-5xl px-5 py-12">
         <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#123331]/5 sm:p-10 lg:p-14">
-          
+
           <p className="leading-8 text-[#123331]/70">
             Welcome to OutSold. We respect your privacy and are committed to
             protecting your personal information. This Privacy Policy explains
@@ -273,7 +274,6 @@ const PrivacyPolicy = () => {
             <ul className="mt-4 list-disc space-y-2 pl-6 text-[#123331]/70">
               <li>Access your personal information</li>
               <li>Request correction of inaccurate information</li>
-              <li>Request deletion of your information</li>
               <li>Withdraw consent where applicable</li>
               <li>Request information about how your data is used</li>
             </ul>
@@ -317,11 +317,11 @@ const PrivacyPolicy = () => {
             </p>
 
             <a
-              href="mailto:hello@outsold.com"
+              href="mailto: sellarsuite@gmail.com"
               className="mt-6 flex w-fit items-center gap-3 rounded-xl bg-[#007A78]/10 px-5 py-4 font-medium text-[#007A78] transition hover:bg-[#007A78] hover:text-white"
             >
               <Mail size={20} />
-              hello@outsold.com
+              sellarsuite@gmail.com
             </a>
           </section>
         </div>
