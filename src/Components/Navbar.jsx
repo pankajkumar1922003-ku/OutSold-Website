@@ -39,6 +39,15 @@ const Navbar = () => {
     setIsLoginOpen(true);
   };
 
+  const handleListEventClick = () => {
+    if (isLoggedIn) {
+      setIsListEventOpen(true);
+      return;
+    }
+
+    setIsLoginOpen(true);
+  };
+
   useEffect(() => {
     const openLogin = () => {
       setIsLoginOpen(true);
@@ -278,7 +287,7 @@ const Navbar = () => {
               {/* LIST YOUR EVENT + BUTTON */}
               <motion.button
                 type="button"
-                onClick={() => setIsListEventOpen(true)}
+                onClick={handleListEventClick}
                 whileHover={{
                   y: -1,
                   scale: 1.03,
@@ -376,7 +385,7 @@ const Navbar = () => {
                 {/* LIST YOUR EVENT + BUTTON */}
                 <motion.button
                   type="button"
-                  onClick={() => setIsListEventOpen(true)}
+                  onClick={handleListEventClick}
                   whileTap={{ scale: 0.92 }}
                   aria-label="List your event"
                   className="mr-2 flex h-[40px] w-[40px] shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#44807F] text-white shadow-[0_7px_18px_rgba(68,128,127,0.18)] transition-all duration-200 hover:bg-[#FEDF24] hover:text-[#182322] active:scale-95"

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   FaInstagram,
-  FaLinkedinIn,
+  FaYoutube,
   FaFacebookF,
   FaArrowUpRightFromSquare,
   FaEnvelope,
@@ -252,13 +252,13 @@ const Footer = () => {
                 </a>
 
                 <a
-                  href="https://www.linkedin.com/company/sellar-in/"
+                  href="https://www.youtube.com/@getoutsold"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="LinkedIn"
+                  aria-label="YouTube"
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fffdf5]/15 bg-[#fffdf5]/5 text-[#fffdf5] transition hover:border-[#FEDF24] hover:bg-[#FEDF24] hover:text-[#182322]"
                 >
-                  <FaLinkedinIn size={18} />
+                  <FaYoutube size={18} />
                 </a>
 
                 <a
@@ -348,7 +348,7 @@ const Footer = () => {
                   </span>
 
                   <span className="whitespace-nowrap">
-                    sellarsuite@gmail.com
+                    getoutsold@gmail.com
                   </span>
                 </a>
 

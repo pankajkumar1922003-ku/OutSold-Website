@@ -69,17 +69,7 @@ const mapCompanyEvent = (id, data, companyId, companyData = {}) => {
             data.coverImageUrl,
 
         featured: Boolean(data.featured),
-
-        /*
-         * Existing company events don't necessarily have
-         * displaySection.
-         *
-         * Keep their old behaviour by putting them in
-         * Events You'll Love by default.
-         */
-        displaySection:
-            data.displaySection || "events_youll_love",
-
+        displaySection: data.displaySection || (data.featured ? "featured" : "events_youll_love"),
         isOnline: Boolean(data.isOnline),
 
         registrationMode:

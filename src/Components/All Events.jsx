@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useOutsoldEvents } from "../hooks/useOutsoldEvents";
-import EventDetailsModal from "../Components/EventDetailsModal";
+import EventDetailsModal from "./EventDetailsModal";
 import { db } from "../lib/firebase";
 import {
     collection,
@@ -110,6 +110,19 @@ const toDate = (value) => {
             : new Date(value);
 
     return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatEventDate = (value) => {
+    if (!value) return "";
+
+    const date = toDate(value);
+    if (!date) return String(value);
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
 };
 
 const getStartDate = (event) =>
@@ -262,16 +275,6 @@ const endOfDay = (date) => {
     return copy;
 };
 
-/* -------------------------------------------------------------------------- */
-/* NOTCH                                                                      */
-/* -------------------------------------------------------------------------- */
-
-const TicketNotch = ({ side = "left" }) => (
-    <span
-        aria-hidden="true"
-        className={`absolute z-20 h-5 w-5 rounded-full bg-[#FFF8DC] ${side === "left" ? "-left-2.5" : "-right-2.5"}`}
-    />
-);
 
 /* -------------------------------------------------------------------------- */
 /* CATEGORY FILTER                                                            */
@@ -338,18 +341,17 @@ const CategoryFilter = ({
 /* EVENT TICKET                                                               */
 /* -------------------------------------------------------------------------- */
 
-const datePartsFor = (event) => getDateParts(event);
-
-const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
-    const reduceMotion = useReducedMotion();
-    const style = getCategoryConfig(event?.category);
-    const CategoryIcon = style.icon || Ticket;
+const EventTicket = ({
+    event,
+    onOpen,
+    interested = false,
+    onToggle,
+}) => {
+    const start = toDate(getStartDate(event));
+    const end = toDate(getEndDate(event));
 
     return (
-        <motion.article
-            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+        <article
             role="link"
             tabIndex={0}
             onClick={() => onOpen(event)}
@@ -360,148 +362,120 @@ const EventTicket = ({ event, onOpen, interested = false, onToggle }) => {
                 }
             }}
             aria-label={`View ${event?.title || "event"}`}
-            className="group relative flex min-w-0 cursor-pointer flex-col overflow-visible rounded-md border border-[#E8D9AE] bg-[#FFFDF5] outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.12)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]"
+            className="group flex h-full w-full min-w-0 cursor-pointer flex-col outline-none"
         >
-            <div className="relative aspect-16/10 overflow-hidden bg-[#e9ece7]">
-
-                {/* Blurred background for side gaps */}
-                <img
-                    src={getImage(event)}
-                    alt=""
-                    aria-hidden="true"
-                    onError={handleImageError}
-                    className="absolute inset-0 h-full w-full scale-125 object-cover opacity-80 blur-2xl"
-                />
-
-                {/* Full image - no cropping */}
+            {/* ========================================================= */}
+            {/* IMAGE CARD — SAME AS EVENTS HOME                        */}
+            {/* ========================================================= */}
+            <div
+                className="
+                    relative
+                    aspect-[4/3]
+                    overflow-hidden
+                    rounded-lg
+                    bg-[#e9ece7]
+                    shadow-[0_10px_28px_rgba(24,35,34,0.07)]
+                    transition
+                    duration-300
+                    group-hover:-translate-y-1
+                    group-hover:shadow-[0_18px_38px_rgba(24,35,34,0.12)]
+                "
+            >
                 <img
                     src={getImage(event)}
                     alt={event?.title || "Event"}
                     loading="lazy"
+                    draggable={false}
                     onError={handleImageError}
-                    className="absolute inset-0 h-full w-full object-contain transition duration-700 group-hover:scale-[1.02]"
+                    className="
+                        absolute
+                        inset-0
+                        h-full
+                        w-full
+                        object-cover
+                        transition-transform
+                        duration-500
+                        group-hover:scale-[1.03]
+                    "
                 />
 
-                <span className="absolute left-2.5 top-2.5 z-10 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-bold text-[#3A3326] shadow-sm sm:left-3 sm:top-3 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs">
-                    <CategoryIcon size={11} className={style.text || ""} />
-                    {getEventCategoryLabel(event)}
-                </span>
+                {/* ===================================================== */}
+                {/* WISHLIST HEART                                         */}
+                {/* ===================================================== */}
+                <motion.button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle?.(event?.id);
+                    }}
+                    whileTap={{ scale: 0.88 }}
+                    aria-label={
+                        interested
+                            ? "Remove from interested"
+                            : "Add to interested"
+                    }
+                    aria-pressed={interested}
+                    className={`absolute right-3 top-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border bg-white/95 backdrop-blur-sm transition sm:right-4 sm:top-4 sm:h-10 sm:w-10 ${interested
+                            ? "border-[#FF2D55] bg-[#FF2D55] text-white"
+                            : "border-[#FF2D55]/25 text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE8ED]"
+                        }`}
+                >
+                    <Heart
+                        size={16}
+                        fill={interested ? "currentColor" : "none"}
+                        strokeWidth={2.5}
+                    />
+                </motion.button>
             </div>
 
-            <div className="relative flex flex-col border-t-2 border-dashed border-[#B8860B]/25 p-2.5 sm:p-4">
-                <span
-                    aria-hidden="true"
-                    className="absolute -left-2.5 -top-[11px] z-20 h-5 w-5 rounded-full bg-[#FFF8DC]"
-                />
+            {/* ========================================================= */}
+            {/* DETAILS — SAME AS EVENTS HOME                            */}
+            {/* ========================================================= */}
+            <div className="px-1.5 pt-3.5 sm:px-2 sm:pt-4">
 
-                <span
-                    aria-hidden="true"
-                    className="absolute -right-2.5 -top-[11px] z-20 h-5 w-5 rounded-full bg-[#FFF8DC]"
-                />
+                {/* DATE */}
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#44807F] sm:text-[11px]">
+                    {start ? formatEventDate(start) : "Date TBA"}
 
-                <div className="flex flex-col gap-2">
-                    {/* DATE */}
-                    <div className="flex min-h-8 items-center">
-                        {(() => {
-                            const start = toDate(getStartDate(event));
-                            const end = toDate(getEndDate(event));
-
-                            if (!start) {
-                                return (
-                                    <p className="text-xs font-bold text-[#3A3326]/60">
-                                        Date TBA
-                                    </p>
-                                );
-                            }
-
-                            const startDay = start.toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                            });
-
-                            const startMonth = start.toLocaleDateString("en-IN", {
-                                month: "short",
-                            });
-
-                            const isSameDay =
-                                !end || start.toDateString() === end.toDateString();
-
-                            const endDay = end?.toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                            });
-
-                            const endMonth = end?.toLocaleDateString("en-IN", {
-                                month: "short",
-                            });
-
-                            return (
-                                <div className="flex items-center gap-1.5">
-                                    <CalendarDays size={14} className="shrink-0 text-[#C18B2C]" />
-
-                                    <span className="text-sm font-extrabold text-[#C18B2C]">
-                                        {startDay} {startMonth}
-                                    </span>
-
-                                    {!isSameDay && (
-                                        <>
-                                            <span className="text-xs font-bold">→</span>
-                                            <span className="text-sm font-extrabold text-[#C18B2C]">
-                                                {endDay} {endMonth}
-                                            </span>
-                                        </>
-                                    )}
-                                </div>
-                            );
-                        })()}
-                    </div>
-
-                    {/* EVENT NAME */}
-                    <h4 className="line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-snug tracking-[-0.01em] text-[#3A3326] sm:min-h-0 sm:text-lg">
-                        {event?.title || "Untitled Event"}
-                    </h4>
+                    {end &&
+                        start &&
+                        end.toDateString() !== start.toDateString() && (
+                            <>
+                                {" - "}
+                                {formatEventDate(end)}
+                            </>
+                        )}
                 </div>
 
-                <div className="flex w-full items-center gap-2 sm:mt-4 sm:gap-2.5">
-                    {/* Details BUTTON */}
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onOpen(event);
-                        }}
-                        className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#D9A441] px-2 py-2 text-[11px] font-bold text-[#3A3326] transition duration-200 hover:bg-[#B8860B] hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
-                    >
-                        <span>Details</span>
-                        <ArrowUpRight size={13} className="shrink-0" />
-                    </button>
+                {/* EVENT NAME */}
+                <h4 className="line-clamp-2 text-sm font-extrabold leading-[1.15] tracking-[-0.02em] text-[#182322] sm:text-base">
+                    {event?.title || "Untitled Event"}
+                </h4>
 
-                    {/* HEART BUTTON */}
-                    <motion.button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggle?.(event?.id);
-                        }}
-                        whileTap={{ scale: 0.88 }}
-                        aria-label={
-                            interested
-                                ? "Remove from interested"
-                                : "Add to interested"
-                        }
-                        aria-pressed={interested}
-                        className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interested
-                            ? "border-[#FF2D55] bg-[#FF2D55] text-white shadow-[0_5px_14px_rgba(255,45,85,0.28)]"
-                            : "border-[#FF2D55]/35 bg-[#FFF0F3] text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE1E8]"
-                            }`}
-                    >
-                        <Heart
-                            size={16}
-                            fill={interested ? "currentColor" : "none"}
-                            strokeWidth={2.5}
-                        />
-                    </motion.button>
+                {/* LOCATION + PRICE */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-[#182322]/60 sm:text-xs">
+
+                    {event?.location && (
+                        <span className="truncate">
+                            {event.location}
+                        </span>
+                    )}
+
+                    {event?.location && event?.price && (
+                        <span className="text-[#182322]/25">
+                            •
+                        </span>
+                    )}
+
+                    {event?.price && (
+                        <span className="text-[#182322]">
+                            ₹{event.price}
+                        </span>
+                    )}
+
                 </div>
             </div>
-        </motion.article>
+        </article>
     );
 };
 
@@ -567,9 +541,9 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
     if (!events.length) return null;
 
     return (
-        <section className="relative -mx-4 mt-6 overflow-hidden bg-[#D9A441] md:rounded-md sm:-mx-7 lg:-mx-10">
-            <div className="relative h-[350px] w-full overflow-hidden sm:h-[290px] lg:h-[500px]">
-                {/* SLIDES TRACK: mobile pe swipe, sm+ pe overflow-hidden (sirf arrows/auto) */}
+        <section className="relative z-20 block w-[calc(100%+2rem)] min-h-[350px] -ml-4 mt-6 overflow-hidden bg-[#D9A441] sm:w-auto sm:min-h-0 sm:ml-[-1.75rem] sm:mr-[-1.75rem] sm:rounded-lg lg:ml-[-2.5rem] lg:mr-[-2.5rem]">
+            <div className="relative h-[350px] min-h-[350px] w-full overflow-hidden sm:h-[290px] sm:min-h-0 lg:h-[500px]">
+
                 <div
                     ref={trackRef}
                     onScroll={handleScroll}
@@ -578,8 +552,6 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                     style={{ WebkitOverflowScrolling: "touch" }}
                 >
                     {events.map((event) => {
-                        const categoryStyle = getCategoryConfig(event?.category);
-                        const CategoryIcon = categoryStyle.icon || Ticket;
                         const isInterested = interestedEvents.includes(event?.id);
 
                         return (
@@ -587,7 +559,6 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                 key={event?.id}
                                 className="relative h-full w-full min-w-full shrink-0 snap-center overflow-hidden"
                             >
-                                {/* Blurred background (portrait / side gaps ke liye) */}
                                 <img
                                     src={getImage(event)}
                                     alt=""
@@ -596,7 +567,6 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                     className="absolute inset-0 h-full w-full scale-125 object-cover opacity-80 blur-2xl"
                                 />
 
-                                {/* Full image, bina crop ke */}
                                 <img
                                     src={getImage(event)}
                                     alt={event?.title || "Featured event"}
@@ -605,16 +575,11 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                 />
 
                                 <div className="absolute inset-0 bg-gradient-to-r from-[#182322]/80 via-[#182322]/35 to-transparent" />
+
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#182322]/95 via-[#182322]/30 to-transparent" />
 
                                 <div className="absolute inset-x-0 bottom-0 z-10">
                                     <div className="max-w-2xl px-4 pb-5 sm:px-7 sm:pb-7 lg:px-10 lg:pb-10">
-                                        <div className="mb-2 flex items-center gap-2">
-                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEDF24] px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#3A3326]">
-                                                <CategoryIcon size={12} />
-                                                {getEventCategoryLabel(event)}
-                                            </span>
-                                        </div>
 
                                         <h2 className="line-clamp-2 text-2xl font-extrabold leading-tight tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl">
                                             {event?.title || "Featured Event"}
@@ -629,6 +594,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                             {event?.location && (
                                                 <span className="flex items-center gap-1.5">
                                                     <MapPin size={14} />
+
                                                     <span className="line-clamp-1 max-w-[220px]">
                                                         {event.location}
                                                     </span>
@@ -671,6 +637,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                                 />
                                             </motion.button>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -687,6 +654,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                 {events.length > 1 && (
                     <div className="pointer-events-none absolute inset-x-0 top-0 z-[200] flex justify-end px-4 pt-4 sm:px-7 sm:pt-5 lg:px-10">
                         <div className="pointer-events-auto flex items-center gap-2">
+
                             <button
                                 type="button"
                                 onClick={() => {
@@ -710,6 +678,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                             >
                                 <ChevronRight size={22} strokeWidth={2.7} />
                             </button>
+
                         </div>
                     </div>
                 )}
@@ -733,6 +702,7 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                         ))}
                     </div>
                 )}
+
             </div>
         </section>
     );
@@ -1287,12 +1257,12 @@ const EventsPage = () => {
         return events
             .filter(
                 (event) =>
-                    event?.displaySection ===
-                    "featured"
+                    String(event?.displaySection || "")
+                        .trim()
+                        .toLowerCase() === "featured"
             )
             .slice(0, MAX_FEATURED);
     }, [events]);
-
     /* ---------------------------------------------------------------------- */
     /* GROUP EVENTS BY CATEGORY                                               */
     /* ---------------------------------------------------------------------- */
@@ -1342,19 +1312,19 @@ const EventsPage = () => {
     return (
         <main
             style={FONT_STYLE}
-            className="relative min-h-screen overflow-hidden bg-[#FFF9E8] text-[#3A3326]"
+            className="relative min-h-screen overflow-hidden bg-white text-[#182322]"
         >
             <style>{FONT_IMPORT}</style>
 
             {/* Decorative blobs */}
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute right-[-150px] top-[180px] h-[350px] w-[350px] rounded-full bg-[#FEDF24]/10 blur-3xl"
+                className="pointer-events-none absolute right-[-150px] top-[180px] h-[350px] w-[350px] rounded-full bg-[#FEDF24]/8 blur-3xl"
             />
 
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute left-[-180px] top-[850px] h-[350px] w-[350px] rounded-full bg-[#B8860B]/8 blur-3xl"
+                className="pointer-events-none absolute left-[-180px] top-[850px] h-[350px] w-[350px] rounded-full bg-[#44807F]/6 blur-3xl"
             />
 
             <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-1 sm:px-7 sm:pt-16 lg:px-10">

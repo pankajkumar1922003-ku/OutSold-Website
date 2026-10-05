@@ -145,8 +145,8 @@ const CreateEventSection = () => {
                                     >
                                         <div
                                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${feature.yellow
-                                                    ? "bg-[#FEDF24]/20"
-                                                    : "bg-[#44807F]/10"
+                                                ? "bg-[#FEDF24]/20"
+                                                : "bg-[#44807F]/10"
                                                 }`}
                                         >
                                             <Icon
@@ -247,8 +247,8 @@ const CreateEventSection = () => {
                                         >
                                             <div
                                                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${feature.yellow
-                                                        ? "bg-[#FEDF24]/20"
-                                                        : "bg-[#44807F]/10"
+                                                    ? "bg-[#FEDF24]/20"
+                                                    : "bg-[#44807F]/10"
                                                     }`}
                                             >
                                                 <Icon
@@ -358,49 +358,26 @@ const CreateEventSection = () => {
                 <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[75%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#FEDF24]/35 to-transparent" />
 
                 <div className="relative z-10 mx-auto max-w-7xl">
-                    {/* Mini Stats */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="grid max-w-lg grid-cols-3 border-t border-white/10 pt-6"
-                    >
-                        <div>
-                            <p className="text-xl font-black text-white sm:text-2xl">
-                                1K+
-                            </p>
-
-                            <p className="mt-1 text-[10px] text-white/40 sm:text-xs">
-                                Events Created
-                            </p>
-                        </div>
-
-                        <div className="border-l border-white/10 pl-4 sm:pl-6">
-                            <p className="text-xl font-black text-white sm:text-2xl">
-                                50K+
-                            </p>
-
-                            <p className="mt-1 text-[10px] text-white/40 sm:text-xs">
-                                Tickets Sold
-                            </p>
-                        </div>
-
-                        <div className="border-l border-white/10 pl-4 sm:pl-6">
-                            <p className="text-xl font-black text-white sm:text-2xl">
-                                24/7
-                            </p>
-
-                            <p className="mt-1 text-[10px] text-white/40 sm:text-xs">
-                                Event Control
-                            </p>
-                        </div>
-                    </motion.div>
-
-                    {/* Feature Cards */}
-                    <div className="mt-10 grid grid-cols-3 gap-2 sm:mt-16 sm:gap-4">
+                    
+                    {/* Feature Cards + Stats */}
+                    <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4">
                         {organizerFeatures.map((feature, index) => {
                             const Icon = feature.icon;
+
+                            const stats = [
+                                {
+                                    value: "1K+",
+                                    label: "Events Created",
+                                },
+                                {
+                                    value: "50K+",
+                                    label: "Tickets Sold",
+                                },
+                                {
+                                    value: "24/7",
+                                    label: "Event Control",
+                                },
+                            ];
 
                             return (
                                 <motion.div
@@ -419,25 +396,40 @@ const CreateEventSection = () => {
                                         delay: index * 0.1,
                                     }}
                                     whileHover={{ y: -5 }}
-                                    className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] p-3 shadow-xl shadow-black/10 backdrop-blur-md transition-all duration-300 hover:border-[#44807F]/40 hover:bg-white/[0.09] sm:p-5"
+                                    className="group relative"
                                 >
-                                    {/* Card Glow */}
-                                    <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#FEDF24]/10 blur-[50px] transition-all duration-300 group-hover:bg-[#FEDF24]/15" />
+                                    {/* Stat directly above card */}
+                                    <div className="mb-3 text-center">
+                                        <p className="text-xl font-black text-white sm:text-2xl">
+                                            {stats[index].value}
+                                        </p>
 
-                                    <div className="relative flex flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-4 sm:text-left">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FEDF24]/15 to-[#44807F]/15 text-[#FEDF24] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-[#FEDF24] group-hover:to-[#44807F] group-hover:text-[#17302E]">
-                                            <Icon size={20} />
-                                        </div>
-
-                                        <div>
-                                            <h3 className="text-xs font-bold text-white sm:text-base">
-                                                {feature.title}
-                                            </h3>
-                                        </div>
+                                        <p className="mt-1 text-[10px] text-white/40 sm:text-xs">
+                                            {stats[index].label}
+                                        </p>
                                     </div>
 
-                                    {/* Bottom Accent */}
-                                    <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-[#FEDF24] to-[#44807F] transition-all duration-500 group-hover:w-full" />
+                                    {/* Feature Card */}
+                                    <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] p-3 shadow-xl shadow-black/10 backdrop-blur-md transition-all duration-300 hover:border-[#44807F]/40 hover:bg-white/[0.09] sm:p-5">
+
+                                        {/* Card Glow */}
+                                        <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#FEDF24]/10 blur-[50px] transition-all duration-300 group-hover:bg-[#FEDF24]/15" />
+
+                                        <div className="relative flex flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-4 sm:text-left">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FEDF24]/15 to-[#44807F]/15 text-[#FEDF24] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-[#FEDF24] group-hover:to-[#44807F] group-hover:text-[#17302E]">
+                                                <Icon size={20} />
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-xs font-bold text-white sm:text-base">
+                                                    {feature.title}
+                                                </h3>
+                                            </div>
+                                        </div>
+
+                                        {/* Bottom Accent */}
+                                        <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-[#FEDF24] to-[#44807F] transition-all duration-500 group-hover:w-full" />
+                                    </div>
                                 </motion.div>
                             );
                         })}

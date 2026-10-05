@@ -321,7 +321,7 @@ const PrivacyPolicy = () => {
               className="mt-6 flex w-fit items-center gap-3 rounded-xl bg-[#007A78]/10 px-5 py-4 font-medium text-[#007A78] transition hover:bg-[#007A78] hover:text-white"
             >
               <Mail size={20} />
-              sellarsuite@gmail.com
+              getoutsold@gmail.com
             </a>
           </section>
         </div>
