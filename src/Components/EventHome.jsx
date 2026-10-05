@@ -3,6 +3,7 @@ import {
     ArrowRight,
     ArrowUpRight,
     BriefcaseBusiness,
+    CalendarDays,
     ChevronLeft,
     ChevronRight,
     Heart,
@@ -173,251 +174,169 @@ const handleImageError = (e) => {
 const hideScrollbar =
     "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
-const BlurBackdrop = ({ src }) => (
-    <img
-        src={src}
-        alt=""
-        aria-hidden="true"
-        loading="lazy"
-        onError={handleImageError}
-        className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-80 blur-2xl"
-    />
+/* Blurred copy of the image — fills the empty space around the full image
+   with colors that match the image itself. */
+const BlurBackdrop = ({ src, eager = false }) => (
+    <>
+        <img
+            src={src}
+            alt=""
+            aria-hidden="true"
+            loading={eager ? "eager" : "lazy"}
+            draggable={false}
+            onError={handleImageError}
+            className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-90 blur-2xl"
+        />
+        <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-white/10"
+        />
+    </>
+);
+
+const SectionHeader = ({ title, note, action }) => (
+    <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+            <h3 className="text-xl font-extrabold tracking-[-0.025em] text-[#182322] sm:text-3xl">
+                {title}
+            </h3>
+
+            {note && (
+                <p className="mt-1 text-sm text-[#182322]/55">
+                    {note}
+                </p>
+            )}
+        </div>
+
+        {action}
+    </div>
 );
 
 /* -------------------------------------------------------------------------- */
-/*  Ticket pieces                                                             */
+/*  Event cards                                                               */
 /* -------------------------------------------------------------------------- */
 
-const Notch = ({ tone = "plain", className = "" }) => {
-    const tones = {
-        plain: "bg-[#fff7cf]",
-        bordered: "bg-[#fff7cf] border border-[#44807F]/15",
-        dark: "bg-[#182322]",
-        page: "bg-[#fff7cf]",
-    };
-
-    return (
-        <span
-            aria-hidden="true"
-            className={`absolute h-5 w-5 rounded-full ${tones[tone]} ${className}`}
-        />
-    );
-};
-
-const DateBlock = ({ event, className = "" }) => {
-    const start = toDate(getEventStartDate(event));
-    const end = toDate(getEventEndDate(event));
-
-    if (!start) {
-        return (
-            <div
-                className={`min-w-[1rem] text-center leading-none ${className}`}
-            >
-                <p className="text-sm font-bold text-[#182322]/60">
-                    Date TBA
-                </p>
-            </div>
-        );
-    }
-
-    const startDay = start.toLocaleDateString("en-IN", {
-        day: "2-digit",
-    });
-
-    const startMonth = start.toLocaleDateString("en-IN", {
-        month: "short",
-    });
-
-    const isSameDay =
-        !end || start.toDateString() === end.toDateString();
-
-    const endDay = end?.toLocaleDateString("en-IN", {
-        day: "2-digit",
-    });
-
-    const endMonth = end?.toLocaleDateString("en-IN", {
-        month: "short",
-    });
-
-    return (
-        <div
-            className={`shrink-0 border-r border-[#182322]/10 pr-2.5 text-center leading-none sm:pr-4 ${className}`}
-        >
-            <div className="flex items-center gap-1">
-                {/* START DATE */}
-                <div className="min-w-[20px]">
-                    <p className="text-sm font-extrabold tabular-nums text-[#44807F] sm:text-3xl">
-                        {startDay}
-                    </p>
-
-                    <p className="mt-0.5 text-xs font-semibold text-[#182322]/70 sm:text-sm">
-                        {startMonth}
-                    </p>
-                </div>
-
-                {/* ARROW */}
-                {!isSameDay && (
-                    <span className="text-base font-extrabold text-[#182322] sm:text-lg">
-                        →
-                    </span>
-                )}
-
-                {/* END DATE */}
-                {!isSameDay && (
-                    <div className="min-w-[20px]">
-                        <p className="text-sm font-extrabold tabular-nums text-[#44807F] sm:text-3xl">
-                            {endDay}
-                        </p>
-
-                        <p className="mt-0.5 text-xs font-semibold text-[#182322]/70 sm:text-sm">
-                            {endMonth}
-                        </p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-const SectionHeader = ({ title, note, action, tone = "light" }) => {
-    const dark = tone === "dark";
-
-    return (
-        <div className="mb-6 flex items-end justify-between gap-4">
-            <div className="min-w-0">
-                <h3
-                    className={`text-xl font-extrabold tracking-[-0.025em] sm:text-3xl ${dark ? "text-[#fffdf5]" : "text-[#182322]"}`}
-                >
-                    {title}
-                </h3>
-
-                {note && (
-                    <p
-                        className={`mt-1 text-sm ${dark ? "text-[#fffdf5]/60" : "text-[#182322]/55"}`}
-                    >
-                        {note}
-                    </p>
-                )}
-            </div>
-
-            {action}
-        </div>
-    );
-};
-
-/* -------------------------------------------------------------------------- */
-/*  Event Ticket                                                              */
-/* -------------------------------------------------------------------------- */
-
-const EventTicket = ({
+const EventCard = ({
     event,
     onOpen,
     interested = false,
     onToggle,
 }) => {
-    const style = getCategoryStyle(event.category);
-    const CategoryIcon = style.icon;
+    const start = toDate(getEventStartDate(event));
+    const end = toDate(getEventEndDate(event));
 
     return (
         <article
-            id="eventsHome"
             role="link"
             tabIndex={0}
             onClick={() => onOpen(event)}
             onKeyDown={(e) => e.key === "Enter" && onOpen(event)}
             aria-label={`View ${event.title || "event"}`}
-            className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-md bg-white outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(24,35,34,0.10)] focus-visible:ring-4 focus-visible:ring-[#FEDF24]"
+            className="group flex h-full w-full min-w-0 cursor-pointer flex-col outline-none"
         >
-            {/* IMAGE */}
-            <div className="relative aspect-[16/10] overflow-hidden bg-[#e9ece7]">
-                {/* Blurred backdrop (side gaps for portrait images) */}
-                <BlurBackdrop src={getImage(event)} />
-
-                {/* Full image, no crop */}
+            {/* IMAGE CARD */}
+            <div
+                className="
+                    relative
+                    aspect-[4/3]
+                    overflow-hidden
+                    rounded-lg
+                    bg-[#e9ece7]
+                    shadow-[0_10px_28px_rgba(24,35,34,0.07)]
+                    transition
+                    duration-300
+                    group-hover:-translate-y-1
+                    group-hover:shadow-[0_18px_38px_rgba(24,35,34,0.12)]
+                "
+            >
                 <img
                     src={getImage(event)}
                     alt={event.title || "Event"}
                     loading="lazy"
-                    className="absolute inset-0 h-full w-full object-contain transition duration-700 group-hover:scale-105"
+                    draggable={false}
                     onError={handleImageError}
+                    className="
+                        absolute
+                        inset-0
+                        h-full
+                        w-full
+                        object-cover
+                        transition-transform
+                        duration-500
+                        group-hover:scale-[1.03]
+                    "
                 />
 
-                {/* CATEGORY */}
-                <span className="absolute left-2.5 top-2.5 z-10 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-bold text-[#182322] shadow-sm sm:left-3 sm:top-3 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs">
-                    <CategoryIcon size={11} className={style.text} />
-
-                    {event.category || "Event"}
-                </span>
+                {/* WISHLIST HEART */}
+                <motion.button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle?.(event.id);
+                    }}
+                    whileTap={{ scale: 0.88 }}
+                    aria-label={
+                        interested
+                            ? "Remove from interested"
+                            : "Add to interested"
+                    }
+                    aria-pressed={interested}
+                    className={`absolute right-3 top-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border bg-white/95 backdrop-blur-sm transition sm:right-4 sm:top-4 sm:h-10 sm:w-10 ${interested
+                            ? "border-[#FF2D55] bg-[#FF2D55] text-white"
+                            : "border-[#FF2D55]/25 text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE8ED]"
+                        }`}
+                >
+                    <Heart
+                        size={16}
+                        fill={interested ? "currentColor" : "none"}
+                        strokeWidth={2.5}
+                    />
+                </motion.button>
             </div>
 
-            {/* CARD CONTENT */}
-            <div className="relative flex flex-col border-t-2 border-dashed border-[#182322]/15 p-2.5 sm:p-4">
-                <Notch tone="plain" className="-left-2.5 -top-2.5" />
+            {/* DETAILS */}
+            <div className="px-1.5 pt-3.5 sm:px-2 sm:pt-4">
 
-                <Notch tone="plain" className="-right-2.5 -top-2.5" />
-
-                {/* DATE + TITLE */}
-                <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:items-start sm:gap-4">
-                    {/* DATE — MOBILE CENTER */}
-                    <div className="w-full text-center sm:w-auto sm:text-left">
-                        <DateBlock
-                            event={event}
-                            className="mx-auto w-fit border-r-0 pr-0 sm:mx-0 sm:border-r sm:pr-4"
-                        />
-                    </div>
-
-                    {/* EVENT NAME */}
-                    <div className="w-full min-w-0 text-center sm:flex-1 sm:text-left">
-                        <h4 className="mx-auto line-clamp-2 max-w-full wrap-break-word text-md font-bold leading-[1.3] tracking-normal text-[#182322] sm:mx-0 sm:text-lg sm:leading-snug">
-                            {event.title || "Untitled Event"}
-                        </h4>
-                    </div>
+                {/* DATE */}
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#44807F] sm:text-[11px]">
+                    {start ? formatEventDate(start) : "Date TBA"}
+                    {end &&
+                        start &&
+                        end.toDateString() !== start.toDateString() && (
+                            <>
+                                {" - "}
+                                {formatEventDate(end)}
+                            </>
+                        )}
                 </div>
 
-                {/* ACTIONS */}
-                <div className="mt-3 flex w-full items-center gap-2 sm:mt-4 sm:gap-2.5">
-                    {/* EXPLORE BUTTON */}
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onOpen(event);
-                        }}
-                        className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-2 py-2 text-[11px] font-bold text-[#FEDF24] transition duration-200 hover:bg-[#44807F] hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
-                    >
-                        <span>Details</span>
+                {/* EVENT NAME */}
+                <h4 className="line-clamp-2 text-sm font-extrabold leading-[1.15] tracking-[-0.02em] text-[#182322] sm:text-base">
+                    {event.title || "Untitled Event"}
+                </h4>
 
-                        <ArrowUpRight size={13} className="shrink-0" />
-                    </button>
+                {/* LOCATION / PRICE */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-[#182322]/60 sm:text-xs">
+                    {event.location && (
+                        <span className="truncate">
+                            {event.location}
+                        </span>
+                    )}
 
-                    {/* HEART BUTTON */}
-                    <motion.button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggle?.(event.id);
-                        }}
-                        whileTap={{ scale: 0.88 }}
-                        aria-label={
-                            interested
-                                ? "Remove from interested"
-                                : "Add to interested"
-                        }
-                        aria-pressed={interested}
-                        className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interested ? "border-[#FF2D55] bg-[#FF2D55] text-white shadow-[0_5px_14px_rgba(255,45,85,0.28)]" : "border-[#FF2D55]/35 bg-[#FFF0F3] text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE1E8]"}`}
-                    >
-                        <Heart
-                            size={16}
-                            fill={interested ? "currentColor" : "none"}
-                            strokeWidth={2.5}
-                        />
-                    </motion.button>
+                    {event.location && event.price && (
+                        <span className="text-[#182322]/25">•</span>
+                    )}
+
+                    {event.price && (
+                        <span className="text-[#182322]">
+                            ₹{event.price}
+                        </span>
+                    )}
                 </div>
             </div>
         </article>
     );
 };
-
 /* -------------------------------------------------------------------------- */
 /*  Main Component                                                            */
 /* -------------------------------------------------------------------------- */
@@ -671,13 +590,19 @@ const EventsHome = () => {
     /* --------------------- slides / grid / interested ------------------- */
 
     const { slides, gridEvents } = useMemo(() => {
-        const slides = events
+        const featured = events
             .filter(
                 (event) =>
                     event?.displaySection === "featured" &&
                     !isEventExpired(event)
             )
             .slice(0, MAX_SLIDES);
+
+        const fallbackFeatured = events
+            .filter((event) => !isEventExpired(event))
+            .slice(0, MAX_SLIDES);
+
+        const slides = featured.length ? featured : fallbackFeatured;
         const source = (hasActiveFilters ? filteredEvents : events)
             .filter((event) => !isEventExpired(event));
 
@@ -752,7 +677,8 @@ const EventsHome = () => {
                 // Past events: sabse recent end date first
                 return priorityB - priorityA;
             })
-            .slice(0, 9);
+            // 12 cards = 3 rows x 4 (desktop) / 3 rows x 4 (mobile)
+            .slice(0, 12);
 
         const interestEvents = source
             .filter((event) => event?.displaySection === "recommended")
@@ -764,6 +690,17 @@ const EventsHome = () => {
             interestEvents,
         };
     }, [events, filteredEvents, hasActiveFilters]);
+
+    // Mobile rows: up to 3 rows, 4 cards each
+    const mobileRows = useMemo(
+        () =>
+            Array.from(
+                { length: Math.min(3, Math.ceil(gridEvents.length / 4)) },
+                (_, rowIndex) =>
+                    gridEvents.slice(rowIndex * 4, rowIndex * 4 + 4)
+            ),
+        [gridEvents]
+    );
 
     /* -------------------------------- slideshow ------------------------------- */
 
@@ -869,13 +806,15 @@ const EventsHome = () => {
         <section
             id="home"
             style={FONT_STYLE}
-            className="relative overflow-hidden bg-[#fff7cf] pt-28 text-[#182322] sm:pt-28"
+            className="relative overflow-hidden bg-white pt-28 text-[#182322] sm:pt-28"
         >
             <style>{FONT_IMPORT}</style>
 
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#fff7cf] to-transparent" />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
 
-            {/* MAIN CONTENT PARENT */}
+            {/* ================================================== */}
+            {/* TOP: HEADING + DESKTOP SEARCH (padded container)     */}
+            {/* ================================================== */}
             <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
 
                 {/* HERO HEADING */}
@@ -1098,743 +1037,597 @@ const EventsHome = () => {
                         )}
                     </AnimatePresence>
                 </div>
+            </div>
 
-                {/* EVENTS AREA */}
-                <div id="events" className="scroll-mt-24">
+            {/* ================================================== */}
+            {/* FEATURED EVENT — FULL WIDTH IMAGE CARD             */}
+            {/* ================================================== */}
+            <div
+                id="events"
+                className="relative z-10 mx-auto mt-5 w-full max-w-[1600px] scroll-mt-24 px-3 sm:mt-6 sm:px-6 lg:px-10"
+            >
+                {/* FEATURED LABEL */}
+                <div className="mb-3 flex items-center gap-1.5 px-1 sm:mb-4 sm:px-2">
+                    <Sparkles size={16} className="text-[#FEDF24]" />
 
-                    {/* FEATURED SLIDESHOW */}
-                    {currentSlide && (
-                        <div
-                            className=""
-                            onPointerEnter={(e) =>
-                                e.pointerType === "mouse" && setPaused(true)
-                            }
-                            onPointerLeave={(e) =>
-                                e.pointerType === "mouse" && setPaused(false)
-                            }
+                    <span className="text-sm font-extrabold tracking-tight text-[#182322] sm:text-base">
+                        Featured
+                    </span>
+                </div>
+
+                {currentSlide && (
+                    <div
+                        onPointerEnter={(e) =>
+                            e.pointerType === "mouse" && setPaused(true)
+                        }
+                        onPointerLeave={(e) =>
+                            e.pointerType === "mouse" && setPaused(false)
+                        }
+                        className="relative overflow-hidden rounded-lg bg-[#182322] shadow-[0_28px_70px_rgba(24,35,34,0.16)] sm:rounded-[32px]"
+                    >
+                        {/* ================================================== */}
+                        {/* IMAGE / SLIDER                                    */}
+                        {/* ================================================== */}
+                        <motion.div
+                            drag={slides.length > 1 ? "x" : false}
+                            dragConstraints={{ left: 0, right: 0 }}
+                            dragElastic={0.12}
+                            style={{ touchAction: "pan-y" }}
+                            onDragStart={() => setPaused(true)}
+                            onDragEnd={(_, info) => {
+                                setPaused(false);
+
+                                if (info.offset.x < -60) {
+                                    goToSlide(activeIndex + 1);
+                                } else if (info.offset.x > 60) {
+                                    goToSlide(activeIndex - 1);
+                                }
+                            }}
+                            onTap={(e) => {
+                                if (e.target.closest("button")) return;
+
+                                openEvent(currentSlide);
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    openEvent(currentSlide);
+                                }
+                            }}
+                            aria-label={`Open ${currentSlide.title || "featured event"
+                                }`}
+                            className="relative aspect-[16/10] w-full cursor-pointer overflow-hidden bg-[#e9ece7] sm:aspect-[16/8] lg:aspect-[16/5]"
                         >
-                            {/* MOBILE: SAME FEATURED CARD DESIGN + HORIZONTAL SWIPE */}
-                            <div
-                                data-featured-mobile-slider
-                                className={`sm:hidden overflow-x-auto snap-x snap-mandatory ${hideScrollbar}`}
-                                onTouchStart={() => setPaused(true)}
-                                onTouchEnd={() => setPaused(false)}
-                                onTouchCancel={() => setPaused(false)}
-                                onScroll={(e) => {
-                                    const container = e.currentTarget;
-                                    const card = container.querySelector(
-                                        "[data-featured-card]"
-                                    );
-                                    if (!card || !slides.length) return;
+                            <AnimatePresence initial={false}>
+                                <motion.div
+                                    key={currentSlide.id ?? activeIndex}
+                                    initial={{ opacity: 0, scale: 1.02 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{
+                                        duration: reduceMotion ? 0 : 0.5,
+                                        ease: "easeInOut",
+                                    }}
+                                    className="absolute inset-0"
+                                >
+                                    <BlurBackdrop src={getImage(currentSlide)} eager />
 
-                                    const cardWidth =
-                                        card.getBoundingClientRect().width;
-                                    const gap = 16;
-                                    const nextIndex = Math.round(
-                                        container.scrollLeft /
-                                        (cardWidth + gap)
-                                    );
+                                    <img
+                                        src={getImage(currentSlide)}
+                                        alt={currentSlide.title || "Featured event"}
+                                        loading="eager"
+                                        decoding="async"
+                                        draggable={false}
+                                        onError={handleImageError}
+                                        className="absolute inset-0 z-[1] h-full w-full object-contain"
+                                    />
 
-                                    if (nextIndex !== activeIndex) {
-                                        setSlideIndex(
-                                            Math.max(
-                                                0,
-                                                Math.min(
-                                                    nextIndex,
-                                                    slides.length - 1
+                                    <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+                                </motion.div>
+                            </AnimatePresence>
+
+                            {/* ================================================== */}
+                            {/* SLIDE COUNT                                        */}
+                            {/* ================================================== */}
+                            {slides.length > 1 && (
+                                <span className="absolute right-4 top-4 z-20 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-bold text-white backdrop-blur-sm sm:right-6 sm:top-6 sm:text-xs">
+                                    {activeIndex + 1} / {slides.length}
+                                </span>
+                            )}
+
+                            {/* ================================================== */}
+                            {/* BOTTOM LEFT CONTENT                                */}
+                            {/* ================================================== */}
+                            <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-white sm:p-7 lg:p-9">
+                                <div className="max-w-3xl">
+
+                                    {/* EVENT NAME */}
+                                    <h2 className="line-clamp-2 text-xl font-black leading-[1.05] tracking-[-0.035em] sm:text-3xl lg:text-5xl">
+                                        {currentSlide.title ||
+                                            "An unforgettable experience"}
+                                    </h2>
+
+                                    {/* ================================================== */}
+                                    {/* DATE + HEART                                      */}
+                                    {/* ================================================== */}
+                                    <div className="mt-2 flex items-center gap-2 sm:mt-3">
+
+                                        {/* DATE */}
+                                        <div className="flex items-center gap-2 text-xs font-semibold text-white/80 sm:text-sm">
+                                            <CalendarDays
+                                                size={15}
+                                                className="shrink-0 text-[#FEDF24]"
+                                            />
+
+                                            {currentParts ? (
+                                                <span>
+                                                    {currentParts.day}{" "}
+                                                    {currentParts.month}{" "}
+                                                    {currentParts.weekday}
+
+                                                    {currentParts.until &&
+                                                        ` • till ${currentParts.until}`}
+                                                </span>
+                                            ) : (
+                                                <span>Date TBA</span>
+                                            )}
+                                        </div>
+
+                                        {/* HEART */}
+                                        <motion.button
+                                            type="button"
+                                            onPointerDown={(e) =>
+                                                e.stopPropagation()
+                                            }
+                                            onPointerUp={(e) =>
+                                                e.stopPropagation()
+                                            }
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+
+                                                toggleInterested(
+                                                    currentSlide.id
+                                                );
+                                            }}
+                                            whileTap={{ scale: 0.88 }}
+                                            aria-label={
+                                                interestedEvents.includes(
+                                                    currentSlide.id
                                                 )
+                                                    ? "Remove from interested"
+                                                    : "Add to interested"
+                                            }
+                                            aria-pressed={interestedEvents.includes(
+                                                currentSlide.id
+                                            )}
+                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border backdrop-blur-sm transition sm:h-9 sm:w-9 ${interestedEvents.includes(
+                                                currentSlide.id
                                             )
-                                        );
-                                    }
-                                }}
+                                                ? "border-[#FF2D55] bg-[#FF2D55] text-white"
+                                                : "border-white/40 bg-black/30 text-white hover:border-[#FF2D55] hover:bg-[#FF2D55]"
+                                                }`}
+                                        >
+                                            <Heart
+                                                size={14}
+                                                strokeWidth={2.5}
+                                                fill={
+                                                    interestedEvents.includes(
+                                                        currentSlide.id
+                                                    )
+                                                        ? "currentColor"
+                                                        : "none"
+                                                }
+                                            />
+                                        </motion.button>
+                                    </div>
+
+                                    {/* ================================================== */}
+                                    {/* DOTS — BOTTOM LEFT                              */}
+                                    {/* ================================================== */}
+                                    {slides.length > 1 && (
+                                        <div className="mt-2 flex items-center gap-1.5">
+                                            {slides.map((slide, index) => (
+                                                <button
+                                                    key={`featured-dot-${slide.id ?? index
+                                                        }`}
+                                                    type="button"
+                                                    aria-label={`Go to featured event ${index + 1
+                                                        }`}
+                                                    onPointerDown={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                    onPointerUp={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        goToSlide(index);
+                                                    }}
+                                                    className={`h-1.5 rounded-full transition-all duration-300 ${index === activeIndex
+                                                        ? "w-7 bg-[#FEDF24]"
+                                                        : "w-1.5 bg-white/40"
+                                                        }`}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* ================================================== */}
+                            {/* LEFT / RIGHT ARROWS — ACTUAL BOTTOM RIGHT        */}
+                            {/* ================================================== */}
+                            {slides.length > 1 && (
+                                <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2 sm:bottom-7 sm:right-7 lg:bottom-9 lg:right-9">
+
+                                    {/* PREVIOUS */}
+                                    <button
+                                        type="button"
+                                        onPointerDown={(e) =>
+                                            e.stopPropagation()
+                                        }
+                                        onPointerUp={(e) =>
+                                            e.stopPropagation()
+                                        }
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+
+                                            goToSlide(activeIndex - 1);
+                                        }}
+                                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition hover:bg-white hover:text-[#182322] sm:h-10 sm:w-10"
+                                        aria-label="Previous featured event"
+                                    >
+                                        <ChevronLeft size={17} />
+                                    </button>
+
+                                    {/* NEXT */}
+                                    <button
+                                        type="button"
+                                        onPointerDown={(e) =>
+                                            e.stopPropagation()
+                                        }
+                                        onPointerUp={(e) =>
+                                            e.stopPropagation()
+                                        }
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+
+                                            goToSlide(activeIndex + 1);
+                                        }}
+                                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition hover:bg-white hover:text-[#182322] sm:h-10 sm:w-10"
+                                        aria-label="Next featured event"
+                                    >
+                                        <ChevronRight size={17} />
+                                    </button>
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+                )}
+            </div>
+            {/* ================================================== */}
+            {/* SEARCH (mobile) + GRID (padded container)            */}
+            {/* ================================================== */}
+            <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+
+                {/* SEARCH + mobile */}
+                <div className="mx-auto mt-7 max-w-3xl sm:mt-9 block md:hidden">
+                    <div className="flex items-center gap-2 rounded-full border-2 border-[#182322] bg-white py-1.5 pl-5 pr-1.5 shadow-[5px_5px_0_#FEDF24]">
+                        <Search
+                            size={20}
+                            className="shrink-0 text-[#44807F]"
+                        />
+
+                        <input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search events or categories"
+                            aria-label="Search events"
+                            className="min-w-0 flex-1 bg-transparent py-2 text-base font-medium text-[#182322] outline-none placeholder:text-[#182322]/40"
+                        />
+
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm("")}
+                                className="rounded-full p-2 text-[#182322]/50 transition hover:bg-[#182322]/5 hover:text-[#182322]"
+                                aria-label="Clear search"
                             >
-                                <div className="flex gap-4">
-                                    {slides.map((slide, index) => {
-                                        const parts = getDateParts(slide);
+                                <X size={16} />
+                            </button>
+                        )}
+
+                        <button
+                            onClick={() => setShowFilters((value) => !value)}
+                            aria-expanded={showFilters}
+                            className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-colors ${showFilters || selectedCategory !== "All" ? "bg-[#44807F] text-white" : "bg-[#182322] text-white hover:bg-[#44807F]"}`}
+                        >
+                            <SlidersHorizontal size={15} />
+
+                            {selectedCategory === "All"
+                                ? "Category"
+                                : selectedCategory}
+                        </button>
+                    </div>
+
+                    {/* CATEGORY PANEL */}
+                    <AnimatePresence initial={false}>
+                        {showFilters && (
+                            <motion.div
+                                initial={{
+                                    height: 0,
+                                    opacity: 0,
+                                }}
+                                animate={{
+                                    height: "auto",
+                                    opacity: 1,
+                                }}
+                                exit={{
+                                    height: 0,
+                                    opacity: 0,
+                                }}
+                                className="overflow-hidden"
+                            >
+                                <div className="flex flex-wrap justify-center gap-2 pt-4">
+                                    {categories.map((category) => {
+                                        const Icon = category.icon;
+
+                                        const selected =
+                                            selectedCategory === category.name;
 
                                         return (
-                                            <div
-                                                key={`mobile-featured-${slide.id ?? index}`}
-                                                data-featured-card
-                                                className="relative min-w-full snap-center"
+                                            <button
+                                                key={category.name}
+                                                onClick={() =>
+                                                    setSelectedCategory(
+                                                        category.name
+                                                    )
+                                                }
+                                                aria-pressed={selected}
+                                                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${selected ? "border-[#182322] bg-[#182322] text-white" : "border-[#182322]/15 bg-white text-[#182322]/75 hover:border-[#182322]/40"}`}
                                             >
-                                                <div className="relative grid min-h-[170px] grid-cols-[55%_45%] overflow-hidden rounded-md bg-[#182322] shadow-[0_24px_60px_rgba(24,35,34,0.14)]">
-                                                    {/* IMAGE */}
-                                                    <div
-                                                        onClick={() => openEvent(slide)}
-                                                        className="relative h-full min-h-[170px] cursor-pointer overflow-hidden"
-                                                    >
-                                                        {/* Blurred backdrop (side gaps) */}
-                                                        <BlurBackdrop src={getImage(slide)} />
+                                                <Icon
+                                                    size={15}
+                                                    className={
+                                                        selected
+                                                            ? "text-[#FEDF24]"
+                                                            : category.text
+                                                    }
+                                                />
 
-                                                        {/* Full image, no crop */}
-                                                        <motion.img
-                                                            src={getImage(slide)}
-                                                            alt={slide.title || "Featured event"}
-                                                            className="absolute inset-0 h-full w-full object-contain"
-                                                            onError={handleImageError}
-                                                        />
-
-                                                        <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[#182322]/85 px-2.5 py-1 text-[10px] font-bold text-[#FEDF24]">
-                                                            <Sparkles size={12} />
-                                                            Featured
-                                                        </span>
-                                                    </div>
-
-                                                    {/* STUB SIDE */}
-                                                    <div className="relative flex min-w-0 flex-col bg-[#FEDF24] p-3.5 pt-5 text-[#182322]">
-                                                        <span
-                                                            aria-hidden="true"
-                                                            className="absolute left-0 top-0 bottom-0 border-l-2 border-dashed border-[#182322]/30"
-                                                        />
-
-                                                        <Notch
-                                                            tone="page"
-                                                            className="-left-2.5 -top-2.5"
-                                                        />
-
-                                                        <Notch
-                                                            tone="page"
-                                                            className="left-[-10px] right-auto top-auto -bottom-2.5"
-                                                        />
-
-                                                        {slides.length > 1 && (
-                                                            <span className="absolute right-3 top-5 z-10 min-w-[2rem] text-center text-[10px] font-bold tabular-nums">
-                                                                {index + 1}/{slides.length}
-                                                            </span>
-                                                        )}
-
-                                                        <span className="inline-flex w-fit items-center rounded-full border-2 border-[#182322] px-2.5 py-0.5 text-[10px] font-bold">
-                                                            {slide.category || "Event"}
-                                                        </span>
-
-                                                        {/* DATE */}
-                                                        <div className="mt-4 flex items-end gap-2">
-                                                            {parts ? (
-                                                                <>
-                                                                    <p className="text-3xl font-extrabold leading-[0.85] tracking-[-0.05em] tabular-nums">
-                                                                        {parts.day}
-                                                                    </p>
-
-                                                                    <div className="pb-1 leading-tight">
-                                                                        <p className="text-sm font-bold">
-                                                                            {parts.month}
-                                                                        </p>
-
-                                                                        <p className="text-[9px] font-medium text-[#182322]/70">
-                                                                            {parts.weekday}
-                                                                            {parts.until && `, till ${parts.until}`}
-                                                                        </p>
-                                                                    </div>
-                                                                </>
-                                                            ) : (
-                                                                <p className="text-4xl font-extrabold leading-[0.9]">
-                                                                    TBA
-                                                                </p>
-                                                            )}
-                                                        </div>
-
-                                                        <h2 className="mt-3 line-clamp-3 text-base font-extrabold leading-[1.1] tracking-[-0.02em]">
-                                                            {slide.title || "An unforgettable experience"}
-                                                        </h2>
-
-                                                        <div className="mt-auto flex flex-col gap-2 pt-4">
-                                                            <div className="flex items-center gap-1.5 sm:gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        openEvent(slide);
-                                                                    }}
-                                                                    className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-3 py-2 text-[11px] font-bold text-[#FEDF24]"
-                                                                >
-                                                                    <span>Details</span>
-                                                                    <ArrowUpRight size={13} />
-                                                                </button>
-
-                                                                <motion.button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        toggleInterested(slide.id);
-                                                                    }}
-                                                                    whileTap={{ scale: 0.88 }}
-                                                                    aria-label={
-                                                                        interestedEvents.includes(slide.id)
-                                                                            ? "Remove from interested"
-                                                                            : "Add to interested"
-                                                                    }
-                                                                    className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 ${interestedEvents.includes(slide.id)
-                                                                        ? "border-[#FF2D55] bg-[#FF2D55] text-white shadow-[0_5px_14px_rgba(255,45,85,0.28)]"
-                                                                        : "border-[#FF2D55]/35 bg-[#FFF0F3] text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE1E8]"
-                                                                        }`}
-                                                                >
-                                                                    <Heart
-                                                                        size={16}
-                                                                        fill={
-                                                                            interestedEvents.includes(slide.id)
-                                                                                ? "currentColor"
-                                                                                : "none"
-                                                                        }
-                                                                        strokeWidth={2.5}
-                                                                    />
-                                                                </motion.button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                {category.name}
+                                            </button>
                                         );
                                     })}
                                 </div>
-                            </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                            {/* MOBILE SLIDER DOTS */}
-                            {slides.length > 1 && (
-                                <div className="mt-3 flex items-center justify-center gap-1.5 sm:hidden">
-                                    {slides.map((slide, index) => (
-                                        <button
-                                            key={`featured-dot-${slide.id ?? index}`}
-                                            type="button"
-                                            aria-label={`Go to featured event ${index + 1}`}
-                                            onClick={() => {
-                                                const container = document.querySelector(
-                                                    "[data-featured-mobile-slider]"
-                                                );
-                                                const card = container?.querySelector(
-                                                    "[data-featured-card]"
-                                                );
+                    {/* DATE TABS */}
+                    <div
+                        className={`mt-5 flex items-center gap-1.5 overflow-x-auto sm:justify-center ${hideScrollbar}`}
+                    >
+                        {dates.map((date) => {
+                            const selected = selectedDate === date;
 
-                                                if (container && card) {
-                                                    container.scrollTo({
-                                                        left:
-                                                            index *
-                                                            (card.getBoundingClientRect().width + 16),
-                                                        behavior: "smooth",
-                                                    });
-                                                }
-
-                                                setSlideIndex(index);
-                                            }}
-                                            className={`h-1.5 rounded-full transition-all duration-300 ${index === activeIndex
-                                                ? "w-6 bg-[#182322]"
-                                                : "w-1.5 bg-[#182322]/25"
-                                                }`}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* DESKTOP FEATURED SLIDER */}
-                            <div className="relative hidden sm:block">
-                                {/* FEATURED SLIDER CONTROLS */}
-                                {slides.length > 1 && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={() => goToSlide(activeIndex - 1)}
-                                            aria-label="Previous event"
-                                            className="absolute left-3 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/80 text-white shadow-md transition duration-200 hover:bg-black sm:left-4 sm:flex sm:h-10 sm:w-10"
-                                        >
-                                            <ChevronLeft size={19} />
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => goToSlide(activeIndex + 1)}
-                                            aria-label="Next event"
-                                            className="absolute right-3 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/80 text-white shadow-md transition duration-200 hover:bg-black sm:right-4 sm:flex sm:h-10 sm:w-10"
-                                        >
-                                            <ChevronRight size={19} />
-                                        </button>
-                                    </>
-                                )}
-
-                                <div className="relative grid min-h-[170px] grid-cols-[55%_45%] overflow-hidden rounded-md bg-[#182322] shadow-[0_24px_60px_rgba(24,35,34,0.14)] sm:min-h-[420px] lg:min-h-[500px] lg:grid-cols-[minmax(0,1fr)_400px]">
-
-                                    {/* IMAGE */}
-                                    <div
-                                        onClick={() => openEvent(currentSlide)}
-                                        className="relative h-full min-h-[170px] cursor-pointer overflow-hidden sm:min-h-[420px] lg:h-auto"
-                                    >
-                                        {/* Blurred backdrop (side gaps) */}
-                                        <BlurBackdrop src={getImage(currentSlide)} />
-
-                                        <AnimatePresence initial={false}>
-                                            <motion.img
-                                                key={currentSlide.id ?? activeIndex}
-                                                src={getImage(currentSlide)}
-                                                alt={currentSlide.title || "Featured event"}
-                                                initial={{
-                                                    opacity: 0,
-                                                    x: reduceMotion ? 0 : 55,
-                                                    scale: reduceMotion ? 1 : 1.02,
-                                                }}
-                                                animate={{
-                                                    opacity: 1,
-                                                    x: 0,
-                                                    scale: 1,
-                                                }}
-                                                exit={{
-                                                    opacity: 0,
-                                                    x: reduceMotion ? 0 : -55,
-                                                }}
-                                                transition={{
-                                                    duration: reduceMotion ? 0 : 0.55,
-                                                    ease: [0.22, 1, 0.36, 1],
-                                                }}
-                                                className="absolute inset-0 h-full w-full object-contain"
-                                                onError={handleImageError}
-                                            />
-                                        </AnimatePresence>
-
-                                        <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[#182322]/85 px-2.5 py-1 text-xs font-bold text-[#FEDF24] backdrop-blur-md sm:left-6 sm:top-6 sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-sm">
-                                            <Sparkles size={13} />
-                                            Featured
-                                        </span>
-                                    </div>
-
-                                    {/* STUB SIDE */}
-                                    <div className="relative flex min-w-0 flex-col bg-[#FEDF24] p-3.5 pt-5 text-[#182322] sm:p-6 sm:pt-8 lg:p-8 lg:pt-8">
-                                        <span
-                                            aria-hidden="true"
-                                            className="absolute left-0 top-0 bottom-0 border-l-2 border-dashed border-[#182322]/30 lg:inset-y-4 lg:left-0 lg:right-auto lg:top-4 lg:border-l-2 lg:border-t-0"
-                                        />
-
-                                        <Notch
-                                            tone="page"
-                                            className="-left-2.5 -top-2.5"
-                                        />
-
-                                        <Notch
-                                            tone="page"
-                                            className="left-[-10px] right-auto top-auto -bottom-2.5"
-                                        />
-
-                                        {slides.length > 1 && (
-                                            <span className="absolute right-3 top-5 z-10 min-w-[2rem] text-center text-[10px] font-bold tabular-nums sm:right-8 sm:top-8 sm:min-w-[2.5rem] sm:text-sm">
-                                                {activeIndex + 1}/{slides.length}
-                                            </span>
-                                        )}
-
-                                        <AnimatePresence mode="wait" initial={false}>
-                                            <motion.div
-                                                key={currentSlide.id ?? activeIndex}
-                                                initial={{
-                                                    opacity: 0,
-                                                    y: reduceMotion ? 0 : 14,
-                                                }}
-                                                animate={{
-                                                    opacity: 1,
-                                                    y: 0,
-                                                }}
-                                                exit={{
-                                                    opacity: 0,
-                                                    y: reduceMotion ? 0 : -8,
-                                                }}
-                                                transition={{
-                                                    duration: reduceMotion ? 0 : 0.25,
-                                                }}
-                                                className="flex flex-1 flex-col"
-                                            >
-                                                <span className="inline-flex w-fit items-center rounded-full border-2 border-[#182322] px-2.5 py-0.5 text-[10px] font-bold sm:px-3 sm:py-1 sm:text-sm">
-                                                    {currentSlide.category || "Event"}
-                                                </span>
-
-                                                {/* DATE */}
-                                                <div className="flex items-end gap-2 sm:mt-7 sm:gap-4">
-                                                    {currentParts ? (
-                                                        <>
-                                                            <p className="text-3xl font-extrabold leading-[0.85] tracking-[-0.05em] tabular-nums sm:text-8xl">
-                                                                {currentParts.day}
-                                                            </p>
-
-                                                            <div className="pb-1 leading-tight">
-                                                                <p className="text-sm font-bold sm:text-xl">
-                                                                    {currentParts.month}
-                                                                </p>
-
-                                                                <p className="text-[9px] font-medium text-[#182322]/70 sm:text-sm">
-                                                                    {currentParts.weekday}
-
-                                                                    {currentParts.until &&
-                                                                        `, till ${currentParts.until}`}
-                                                                </p>
-                                                            </div>
-                                                        </>
-                                                    ) : (
-                                                        <p className="text-4xl font-extrabold leading-[0.9] tracking-[-0.04em] sm:text-6xl">
-                                                            TBA
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                <h2 className="mt-3 line-clamp-3 text-base font-extrabold leading-[1.1] tracking-[-0.02em] sm:mt-5 sm:text-3xl">
-                                                    {currentSlide.title ||
-                                                        "An unforgettable experience"}
-                                                </h2>
-
-                                                <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pt-7">
-                                                    <div className="flex items-center gap-2 sm:gap-2.5">
-                                                        {/* EXPLORE BUTTON */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openEvent(currentSlide);
-                                                            }}
-                                                            className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#182322] px-3 py-2 text-[11px] font-bold text-[#FEDF24] transition duration-200 hover:bg-[#44807F] hover:text-white sm:gap-1.5 sm:px-6 sm:py-2.5 sm:text-sm lg:px-10"
-                                                        >
-                                                            <span>Details</span>
-
-                                                            <ArrowUpRight
-                                                                size={13}
-                                                                className="shrink-0"
-                                                            />
-                                                        </button>
-
-                                                        {/* HEART BUTTON */}
-                                                        <motion.button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                toggleInterested(currentSlide.id);
-                                                            }}
-                                                            whileTap={{ scale: 0.88 }}
-                                                            aria-label={
-                                                                interestedEvents.includes(currentSlide.id)
-                                                                    ? "Remove from interested"
-                                                                    : "Add to interested"
-                                                            }
-                                                            aria-pressed={interestedEvents.includes(
-                                                                currentSlide.id
-                                                            )}
-                                                            className={`flex h-[34px] w-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border transition duration-200 sm:h-[42px] sm:w-[46px] ${interestedEvents.includes(currentSlide.id)
-                                                                ? "border-[#FF2D55] bg-[#FF2D55] text-white shadow-[0_5px_14px_rgba(255,45,85,0.28)]"
-                                                                : "border-[#FF2D55]/35 bg-[#FFF0F3] text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE1E8]"
-                                                                }`}
-                                                        >
-                                                            <Heart
-                                                                size={16}
-                                                                fill={
-                                                                    interestedEvents.includes(currentSlide.id)
-                                                                        ? "currentColor"
-                                                                        : "none"
-                                                                }
-                                                                strokeWidth={2.5}
-                                                            />
-                                                        </motion.button>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        </AnimatePresence>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-
-
-                    {/* SEARCH + mobile */}
-                    <div className="mx-auto mt-7 max-w-3xl sm:mt-9 block md:hidden">
-                        <div className="flex items-center gap-2 rounded-full border-2 border-[#182322] bg-white py-1.5 pl-5 pr-1.5 shadow-[5px_5px_0_#FEDF24]">
-                            <Search
-                                size={20}
-                                className="shrink-0 text-[#44807F]"
-                            />
-
-                            <input
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search events or categories"
-                                aria-label="Search events"
-                                className="min-w-0 flex-1 bg-transparent py-2 text-base font-medium text-[#182322] outline-none placeholder:text-[#182322]/40"
-                            />
-
-                            {searchTerm && (
+                            return (
                                 <button
-                                    onClick={() => setSearchTerm("")}
-                                    className="rounded-full p-2 text-[#182322]/50 transition hover:bg-[#182322]/5 hover:text-[#182322]"
-                                    aria-label="Clear search"
+                                    key={date}
+                                    type="button"
+                                    onClick={() => setSelectedDate(date)}
+                                    aria-pressed={selected}
+                                    className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${selected
+                                        ? "bg-[#182322] text-white"
+                                        : "text-[#182322]/60 hover:bg-[#182322]/5 hover:text-[#182322]"
+                                        }`}
                                 >
-                                    <X size={16} />
+                                    {date}
                                 </button>
-                            )}
+                            );
+                        })}
 
+                        {hasActiveFilters && (
                             <button
-                                onClick={() => setShowFilters((value) => !value)}
-                                aria-expanded={showFilters}
-                                className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-colors ${showFilters || selectedCategory !== "All" ? "bg-[#44807F] text-white" : "bg-[#182322] text-white hover:bg-[#44807F]"}`}
+                                onClick={clearFilters}
+                                className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-[#44807F] transition hover:bg-[#44807F]/10"
                             >
-                                <SlidersHorizontal size={15} />
-
-                                {selectedCategory === "All"
-                                    ? "Category"
-                                    : selectedCategory}
+                                <X size={14} />
+                                Clear
                             </button>
-                        </div>
-
-                        {/* CATEGORY PANEL */}
-                        <AnimatePresence initial={false}>
-                            {showFilters && (
-                                <motion.div
-                                    initial={{
-                                        height: 0,
-                                        opacity: 0,
-                                    }}
-                                    animate={{
-                                        height: "auto",
-                                        opacity: 1,
-                                    }}
-                                    exit={{
-                                        height: 0,
-                                        opacity: 0,
-                                    }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="flex flex-wrap justify-center gap-2 pt-4">
-                                        {categories.map((category) => {
-                                            const Icon = category.icon;
-
-                                            const selected =
-                                                selectedCategory === category.name;
-
-                                            return (
-                                                <button
-                                                    key={category.name}
-                                                    onClick={() =>
-                                                        setSelectedCategory(
-                                                            category.name
-                                                        )
-                                                    }
-                                                    aria-pressed={selected}
-                                                    className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${selected ? "border-[#182322] bg-[#182322] text-white" : "border-[#182322]/15 bg-white text-[#182322]/75 hover:border-[#182322]/40"}`}
-                                                >
-                                                    <Icon
-                                                        size={15}
-                                                        className={
-                                                            selected
-                                                                ? "text-[#FEDF24]"
-                                                                : category.text
-                                                        }
-                                                    />
-
-                                                    {category.name}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* DATE TABS */}
-                        <div
-                            className={`mt-5 flex items-center gap-1.5 overflow-x-auto sm:justify-center ${hideScrollbar}`}
-                        >
-                            {dates.map((date) => {
-                                const selected = selectedDate === date;
-
-                                return (
-                                    <button
-                                        key={date}
-                                        type="button"
-                                        onClick={() => setSelectedDate(date)}
-                                        aria-pressed={selected}
-                                        className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${selected
-                                            ? "bg-[#182322] text-white"
-                                            : "text-[#182322]/60 hover:bg-[#182322]/5 hover:text-[#182322]"
-                                            }`}
-                                    >
-                                        {date}
-                                    </button>
-                                );
-                            })}
-
-                            {hasActiveFilters && (
-                                <button
-                                    onClick={clearFilters}
-                                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-[#44807F] transition hover:bg-[#44807F]/10"
-                                >
-                                    <X size={14} />
-                                    Clear
-                                </button>
-                            )}
-                        </div>
-
-                        {/* CUSTOM DATE RANGE (FROM / TO) */}
-                        <AnimatePresence initial={false}>
-                            {selectedDate === "Custom Date" && (
-                                <motion.div
-                                    initial={{
-                                        height: 0,
-                                        opacity: 0,
-                                    }}
-                                    animate={{
-                                        height: "auto",
-                                        opacity: 1,
-                                    }}
-                                    exit={{
-                                        height: 0,
-                                        opacity: 0,
-                                    }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-                                        <label className="flex items-center gap-2 rounded-full border-2 border-[#182322]/15 bg-white px-4 py-1.5 text-sm font-semibold">
-                                            <span className="text-[#182322]/60">
-                                                From
-                                            </span>
-
-                                            <input
-                                                type="date"
-                                                value={customFrom}
-                                                max={customTo || undefined}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-
-                                                    setCustomFrom(value);
-
-                                                    if (
-                                                        customTo &&
-                                                        value > customTo
-                                                    ) {
-                                                        setCustomTo("");
-                                                    }
-                                                }}
-                                                className="bg-transparent text-sm font-semibold text-[#182322] outline-none"
-                                            />
-                                        </label>
-
-                                        <label className="flex items-center gap-2 rounded-full border-2 border-[#182322]/15 bg-white px-4 py-1.5 text-sm font-semibold">
-                                            <span className="text-[#182322]/60">
-                                                To
-                                            </span>
-
-                                            <input
-                                                type="date"
-                                                value={customTo}
-                                                min={customFrom || undefined}
-                                                onChange={(e) =>
-                                                    setCustomTo(e.target.value)
-                                                }
-                                                className="bg-transparent text-sm font-semibold text-[#182322] outline-none"
-                                            />
-                                        </label>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        )}
                     </div>
 
-                    {/* NO EVENTS FOUND */}
-                    {hasActiveFilters && gridEvents.length === 0 && (
-                        <div className="mt-10 sm:mt-16">
-                            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#182322]/20 bg-white/60 px-6 text-center">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-md bg-[#FEDF24] text-[#182322]">
-                                    <Ticket size={30} />
-                                </div>
-
-                                <h3 className="mt-5 text-2xl font-extrabold tracking-[-0.02em]">
-                                    No events found
-                                </h3>
-
-                                <p className="mt-2 max-w-md text-sm leading-relaxed text-[#182322]/60">
-                                    Try a different search, date or category.
-                                </p>
-
-                                <button
-                                    onClick={clearFilters}
-                                    className="mt-6 rounded-full bg-[#182322] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#44807F]"
-                                >
-                                    Reset filters
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* EVENTS YOU'LL LOVE GRID */}
-                    {gridEvents.length > 0 && (
-                        <div className="mt-8 sm:mt-12">
-                            <SectionHeader
-                                title={
-                                    isSearching
-                                        ? `${filteredEvents.length} ${filteredEvents.length === 1
-                                            ? "event"
-                                            : "events"
-                                        } found`
-                                        : "Events you'll love"
-                                }
-                                action={
-                                    !isSearching && (
-                                        <button
-                                            type="button"
-                                            onClick={() => navigate("/all-events")}
-                                            className="group flex shrink-0 cursor-pointer items-center gap-1.5 text-xs font-bold text-[#44807F] transition hover:text-[#182322] sm:text-base"
-                                        >
-                                            <span className="whitespace-nowrap">
-                                                Explore all events
-                                            </span>
-
-                                            <ArrowRight
-                                                size={15}
-                                                className="transition-transform group-hover:translate-x-1"
-                                            />
-                                        </button>
-                                    )
-                                }
-                            />
-
-                            {/* DESKTOP: 6 = 3 + 3 | MOBILE: 4 = 2 + 2 */}
-                            <div className="grid grid-cols-2 gap-2 sm:gap-6 lg:grid-cols-3">
-                                {gridEvents.map((event, index) => (
-                                    <div
-                                        key={event.id || index}
-                                        className={
-                                            index >= 8
-                                                ? "hidden lg:block"
-                                                : "block"
-                                        }
-                                    >
-                                        <EventTicket
-                                            event={event}
-                                            onOpen={openEvent}
-                                            interested={interestedEvents.includes(
-                                                event.id
-                                            )}
-                                            onToggle={toggleInterested}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* OLD EXPLORE ALL EVENTS BUTTON - KEPT */}
-                    {filteredEvents.length > 0 && !isSearching && (
-                        <div className="mt-10 flex justify-center sm:mt-12">
-                            <button
-                                onClick={() => navigate("/all-events")}
-                                className="group flex cursor-pointer items-center gap-3 rounded-md bg-[#182322] py-2 pl-7 pr-2 text-sm font-bold text-white transition hover:bg-[#44807F]"
+                    {/* CUSTOM DATE RANGE (FROM / TO) */}
+                    <AnimatePresence initial={false}>
+                        {selectedDate === "Custom Date" && (
+                            <motion.div
+                                initial={{
+                                    height: 0,
+                                    opacity: 0,
+                                }}
+                                animate={{
+                                    height: "auto",
+                                    opacity: 1,
+                                }}
+                                exit={{
+                                    height: 0,
+                                    opacity: 0,
+                                }}
+                                className="overflow-hidden"
                             >
-                                Explore all events
+                                <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+                                    <label className="flex items-center gap-2 rounded-full border-2 border-[#182322]/15 bg-white px-4 py-1.5 text-sm font-semibold">
+                                        <span className="text-[#182322]/60">
+                                            From
+                                        </span>
 
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FEDF24] text-[#182322] transition group-hover:translate-x-1">
-                                    <ArrowRight size={16} />
-                                </span>
+                                        <input
+                                            type="date"
+                                            value={customFrom}
+                                            max={customTo || undefined}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                setCustomFrom(value);
+
+                                                if (
+                                                    customTo &&
+                                                    value > customTo
+                                                ) {
+                                                    setCustomTo("");
+                                                }
+                                            }}
+                                            className="bg-transparent text-sm font-semibold text-[#182322] outline-none"
+                                        />
+                                    </label>
+
+                                    <label className="flex items-center gap-2 rounded-full border-2 border-[#182322]/15 bg-white px-4 py-1.5 text-sm font-semibold">
+                                        <span className="text-[#182322]/60">
+                                            To
+                                        </span>
+
+                                        <input
+                                            type="date"
+                                            value={customTo}
+                                            min={customFrom || undefined}
+                                            onChange={(e) =>
+                                                setCustomTo(e.target.value)
+                                            }
+                                            className="bg-transparent text-sm font-semibold text-[#182322] outline-none"
+                                        />
+                                    </label>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* NO EVENTS FOUND */}
+                {hasActiveFilters && gridEvents.length === 0 && (
+                    <div className="mt-10 sm:mt-16">
+                        <div className="flex min-h-[260px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#182322]/20 bg-white/60 px-6 text-center">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-md bg-[#FEDF24] text-[#182322]">
+                                <Ticket size={30} />
+                            </div>
+
+                            <h3 className="mt-5 text-2xl font-extrabold tracking-[-0.02em]">
+                                No events found
+                            </h3>
+
+                            <p className="mt-2 max-w-md text-sm leading-relaxed text-[#182322]/60">
+                                Try a different search, date or category.
+                            </p>
+
+                            <button
+                                onClick={clearFilters}
+                                className="mt-6 rounded-full bg-[#182322] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#44807F]"
+                            >
+                                Reset filters
                             </button>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
+
+                {/* EVENTS YOU'LL LOVE GRID */}
+                {gridEvents.length > 0 && (
+                    <div className="mt-8 sm:mt-12">
+                        <SectionHeader
+                            title={
+                                isSearching
+                                    ? `${filteredEvents.length} ${filteredEvents.length === 1
+                                        ? "event"
+                                        : "events"
+                                    } found`
+                                    : "Events you'll love"
+                            }
+                            action={
+                                !isSearching && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate("/all-events")}
+                                        className="group flex shrink-0 cursor-pointer items-center gap-1.5 text-xs font-bold text-[#44807F] transition hover:text-[#182322] sm:text-base"
+                                    >
+                                        <span className="whitespace-nowrap">
+                                            Explore all events
+                                        </span>
+
+                                        <ArrowRight
+                                            size={15}
+                                            className="transition-transform group-hover:translate-x-1"
+                                        />
+                                    </button>
+                                )
+                            }
+                        />
+
+                        {/* MOBILE: 3 ROWS x 4 CARDS (+ explore card), HORIZONTAL SCROLL, ~1.5 VISIBLE */}
+                        <div className="flex flex-col gap-5 sm:hidden">
+                            {mobileRows.map((row, rowIndex) => (
+                                <div
+                                    key={`mobile-row-${rowIndex}`}
+                                    className={`-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-5 px-5 pb-2 ${hideScrollbar}`}
+                                >
+                                    {row.map((event, index) => (
+                                        <div
+                                            key={event.id || `${rowIndex}-${index}`}
+                                            className="flex w-[68%] min-w-[68%] shrink-0 snap-start"
+                                        >
+                                            <EventCard
+                                                event={event}
+                                                onOpen={openEvent}
+                                                interested={interestedEvents.includes(
+                                                    event.id
+                                                )}
+                                                onToggle={toggleInterested}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* DESKTOP / TABLET: 12 CARDS = 3 ROWS x 4 */}
+                        <div className="hidden grid-cols-2 gap-x-7 gap-y-9 sm:grid lg:grid-cols-4 lg:gap-x-8 lg:gap-y-10">
+                            {gridEvents.map((event, index) => (
+                                <div key={event.id || index} className="min-w-0">
+                                    <EventCard
+                                        event={event}
+                                        onOpen={openEvent}
+                                        interested={interestedEvents.includes(
+                                            event.id
+                                        )}
+                                        onToggle={toggleInterested}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
             </div>
 
+            {/* EXPLORE ALL EVENTS — PAGE END */}
+            <div className="mt-8 mb-8 flex w-full justify-center px-5">
+                <button
+                    type="button"
+                    onClick={() => navigate("/all-events")}
+                    className="group inline-flex items-center gap-2 rounded-full bg-[#182322] px-7 py-3.5 text-sm font-bold text-white shadow-[0_10px_25px_rgba(24,35,34,0.12)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#44807F] hover:shadow-[0_14px_30px_rgba(24,35,34,0.18)] sm:px-8 sm:py-4 sm:text-base"
+                >
+                    <span>Explore all events</span>
+
+                    <ArrowRight
+                        size={18}
+                        className="transition-transform duration-300 group-hover:translate-x-1"
+                    />
+                </button>
+            </div>
 
             {/* ================================================== */}
             {/* WISHLIST / ORGANIZER CONNECTION */}
             {/* ================================================== */}
 
-            <section className="relative mt-8 w-full overflow-hidden border-y border-[#44807F]/25 bg-[#071A16] px-4 py-8 text-[#F4F1E4] sm:mt-10 sm:px-8 sm:py-12 lg:px-10 lg:py-14">
+            <section className="relative mt-2 w-full overflow-hidden border-y border-[#44807F]/25 bg-[#071A16] px-4 py-8 text-[#F4F1E4] sm:mt-10 sm:px-8 sm:py-12 lg:px-10 lg:py-14">
 
                 {/* GREEN / TEAL BACKGROUND GLOW */}
                 <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#00A896]/20 blur-[100px]" />
@@ -1872,7 +1665,7 @@ const EventsHome = () => {
                                 Your kind of events,{" "}
 
                                 <span className="text-[#FEDF24]">
-                                     all in one place.
+                                    all in one place.
                                 </span>
 
                             </h3>
@@ -1911,7 +1704,6 @@ const EventsHome = () => {
                 </div>
 
             </section>
-
 
             {/* WISHLIST SUCCESS TOAST */}
             <AnimatePresence>

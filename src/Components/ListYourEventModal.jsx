@@ -11,8 +11,6 @@ import {
     Upload,
     X,
     Sparkles,
-    Heart,
-    ThumbsUp,
 } from "lucide-react";
 
 import {
@@ -469,7 +467,7 @@ const ListYourEventModal = ({
 
                                     {/* DATES */}
 
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div className="grid gap-4 grid-cols-2">
                                         <div>
                                             <label className="mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
                                                 <CalendarDays size={14} />
