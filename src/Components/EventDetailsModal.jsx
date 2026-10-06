@@ -147,19 +147,6 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
     const formattedStartDate = formatDate(startDate);
     const formattedEndDate = formatDate(endDate);
 
-    const eventTime =
-        event.time ||
-        (() => {
-            const date = toValidDate(startDate);
-
-            if (!date) return "";
-
-            return date.toLocaleTimeString("en-IN", {
-                hour: "numeric",
-                minute: "2-digit",
-            });
-        })();
-
     const description = cleanDescription(event.description);
 
     const image =
@@ -265,8 +252,17 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
                             )}
                             <div className="px-4 py-4 sm:px-5 sm:py-5">
                                 <h2 className="break-words text-xl font-black leading-tight text-[#182322] sm:text-2xl">
-                                    {event.title || "Untitled Event"}
+                                    {event.title || event.eventName || "Untitled Event"}
                                 </h2>
+
+                                {event.organizedBy && (
+                                    <p className="mt-2 text-sm font-semibold text-[#182322]/55">
+                                        Organized by{" "}
+                                        <span className="font-extrabold text-[#44807F]">
+                                            {event.organizedBy}
+                                        </span>
+                                    </p>
+                                )}
 
                                 {/* Event Information */}
                                 <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -284,7 +280,7 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
                                                         : "Event Date"}
                                                 </p>
 
-                                                <p className="mt-1 break-words text-sm font-bold text-[#182322]">
+                                                <p className="mt-1 wrap-break-word text-sm font-bold text-[#182322]">
                                                     {formattedStartDate}
 
                                                     {hasDifferentEndDate &&
@@ -294,20 +290,20 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
                                         </div>
                                     )}
 
-                                    {eventTime && (
+                                    {event.price && (
                                         <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-[#182322]/8 bg-[#f8faf9] p-3">
-                                            <Clock3
+                                            <Tag
                                                 size={17}
                                                 className="mt-0.5 shrink-0 text-[#44807F]"
                                             />
 
                                             <div className="min-w-0">
                                                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
-                                                    Time
+                                                    Price
                                                 </p>
 
                                                 <p className="mt-1 break-words text-sm font-bold text-[#182322]">
-                                                    {eventTime}
+                                                    Starts from ₹{String(event.price).replace(/^₹\s*/, "")}
                                                 </p>
                                             </div>
                                         </div>
@@ -354,11 +350,11 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
                         </div>
 
                         {/* Footer */}
-                        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[#182322]/10 bg-white p-3.5 sm:flex-row sm:justify-end sm:px-5">
+                        <div className="flex shrink-0 flex-row gap-2 border-t border-[#182322]/10 bg-white p-3.5 sm:justify-end sm:px-5">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="rounded-md border border-[#182322]/15 px-5 py-3 text-sm font-bold text-[#182322] transition hover:bg-[#182322]/5"
+                                className="flex-1 cursor-pointer rounded-md bg-[#182322]/10 px-5 py-3 text-sm font-bold text-black sm:flex-none"
                             >
                                 Close
                             </button>
@@ -368,7 +364,7 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
                                     href={bookingUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[#FEDF24] px-5 py-3 text-sm font-black text-[#182322] transition duration-200 hover:bg-[#44807F] hover:text-white"
+                                    className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#FEDF24] px-5 py-3 text-sm font-black text-[#182322] transition duration-200 hover:bg-[#44807F] hover:text-white sm:flex-none"
                                 >
                                     Book Tickets
                                     <ExternalLink size={16} />

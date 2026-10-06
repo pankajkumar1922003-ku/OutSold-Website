@@ -1032,16 +1032,15 @@ const LocationOnboarding = () => {
 
                                     <MapPin
                                         size={17}
-                                        className="mt-0.5 shrink-0 text-amber-600"
+                                        className="mt-0.5 shrink-0 text-red-500"
                                     />
 
                                     <div className="flex-1">
 
-                                        <p className="text-xs font-bold text-[#182322]">
+                                        <p className="text-xs font-bold text-red-600">
                                             Location access needed
                                         </p>
-
-                                        <p className="mt-1 text-[11px] leading-4 text-[#182322]/60">
+                                        <p className="mt-1 text-[11px] leading-4 text-red-500/80">
                                             {locationError}
                                         </p>
 

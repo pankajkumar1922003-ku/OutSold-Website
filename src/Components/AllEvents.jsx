@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     ArrowUpRight,
     BriefcaseBusiness,
@@ -415,9 +415,9 @@ const EventTicket = ({
                             : "Add to interested"
                     }
                     aria-pressed={interested}
-                    className={`absolute right-3 top-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border bg-white/95 backdrop-blur-sm transition sm:right-4 sm:top-4 sm:h-10 sm:w-10 ${interested
-                            ? "border-[#FF2D55] bg-[#FF2D55] text-white"
-                            : "border-[#FF2D55]/25 text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE8ED]"
+                    className={`absolute right-3 top-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border bg-white backdrop-blur-sm transition sm:right-4 sm:top-4 sm:h-10 sm:w-10 ${interested
+                        ? "border-[#FF2D55] text-[#FF2D55]"
+                        : "border-[#FF2D55]/25 text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE8ED]"
                         }`}
                 >
                     <Heart
@@ -469,7 +469,7 @@ const EventTicket = ({
 
                     {event?.price && (
                         <span className="text-[#182322]">
-                            ₹{event.price}
+                            Starts from ₹{String(event.price).replace(/^₹\s*/, "")}
                         </span>
                     )}
 
@@ -557,26 +557,36 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                         return (
                             <div
                                 key={event?.id}
-                                className="relative h-full w-full min-w-full shrink-0 snap-center overflow-hidden"
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => onOpen(event)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        onOpen(event);
+                                    }
+                                }}
+                                aria-label={`View ${event?.title || "featured event"}`}
+                                className="relative h-full w-full min-w-full shrink-0 snap-center overflow-hidden cursor-pointer"
                             >
                                 <img
                                     src={getImage(event)}
                                     alt=""
                                     aria-hidden="true"
                                     onError={handleImageError}
-                                    className="absolute inset-0 h-full w-full scale-125 object-cover opacity-80 blur-2xl"
+                                    className="absolute inset-0 h-full w-full scale-100 object-cover object-center opacity-70 blur-2xl"
                                 />
 
                                 <img
                                     src={getImage(event)}
                                     alt={event?.title || "Featured event"}
                                     onError={handleImageError}
-                                    className="absolute inset-0 h-full w-full object-contain"
+                                    className="absolute inset-0 md:h-full h-[420px] w-full object-contain object-center"
                                 />
 
                                 <div className="absolute inset-0 bg-gradient-to-r from-[#182322]/80 via-[#182322]/35 to-transparent" />
 
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#182322]/95 via-[#182322]/30 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#182322]/55 via-[#182322]/20 to-transparent" />
 
                                 <div className="absolute inset-x-0 bottom-0 z-10">
                                     <div className="max-w-2xl px-4 pb-5 sm:px-7 sm:pb-7 lg:px-10 lg:pb-10">
@@ -625,9 +635,9 @@ const FeaturedEvents = ({ events, onOpen, interestedEvents, onToggle }) => {
                                                         : "Add to interested"
                                                 }
                                                 aria-pressed={isInterested}
-                                                className={`flex h-[38px] w-[42px] shrink-0 items-center justify-center rounded-lg border transition duration-200 sm:h-[46px] sm:w-[48px] ${isInterested
-                                                    ? "border-[#FF2D55] bg-[#FF2D55] text-white shadow-[0_5px_14px_rgba(255,45,85,0.28)]"
-                                                    : "border-[#FF2D55]/35 bg-[#FFF0F3] text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE1E8]"
+                                                className={`flex h-[38px] w-[42px] shrink-0 items-center justify-center rounded-lg border bg-white transition duration-200 sm:h-[46px] sm:w-[48px] ${isInterested
+                                                    ? "border-[#FF2D55] text-[#FF2D55] shadow-[0_5px_14px_rgba(255,45,85,0.18)]"
+                                                    : "border-[#FF2D55]/35 text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE8ED]"
                                                     }`}
                                             >
                                                 <Heart
@@ -1327,7 +1337,7 @@ const EventsPage = () => {
                 className="pointer-events-none absolute left-[-180px] top-[850px] h-[350px] w-[350px] rounded-full bg-[#44807F]/6 blur-3xl"
             />
 
-            <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-1 sm:px-7 sm:pt-16 lg:px-10">
+            <div className="relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-1 sm:px-7 sm:pt-16 lg:px-10">
                 {/* ================================================================== */}
                 {/* FEATURED                                                             */}
                 {/* ================================================================== */}

@@ -1,7 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
     ArrowRight,
-    ArrowUpRight,
     BriefcaseBusiness,
     CalendarDays,
     ChevronLeft,
@@ -18,7 +17,7 @@ import {
     Wrench,
     X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOutsoldEvents } from "../hooks/useOutsoldEvents";
 import { db } from "../lib/firebase";
@@ -282,8 +281,8 @@ const EventCard = ({
                     }
                     aria-pressed={interested}
                     className={`absolute right-3 top-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border bg-white/95 backdrop-blur-sm transition sm:right-4 sm:top-4 sm:h-10 sm:w-10 ${interested
-                            ? "border-[#FF2D55] bg-[#FF2D55] text-white"
-                            : "border-[#FF2D55]/25 text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE8ED]"
+                        ? "border-[#FF2D55] text-[#FF2D55]"
+                        : "border-[#FF2D55]/25 text-[#FF2D55] hover:border-[#FF2D55] hover:bg-[#FFE8ED]"
                         }`}
                 >
                     <Heart
@@ -329,7 +328,7 @@ const EventCard = ({
 
                     {event.price && (
                         <span className="text-[#182322]">
-                            ₹{event.price}
+                            Starts from ₹{String(event.price).replace(/^₹\s*/, "")}
                         </span>
                     )}
                 </div>
@@ -352,6 +351,10 @@ const EventsHome = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [showFilters, setShowFilters] = useState(false);
     const [slideIndex, setSlideIndex] = useState(0);
+    const featuredScrollRef = useRef(null);
+    const featuredTouchStartX = useRef(0);
+    const featuredTouchMoved = useRef(false);
+    const suppressFeaturedClick = useRef(false);
     const [paused, setPaused] = useState(false);
     const [interestedEvents, setInterestedEvents] = useState([]);
     const [wishlistToast, setWishlistToast] = useState(null);
@@ -607,77 +610,17 @@ const EventsHome = () => {
             .filter((event) => !isEventExpired(event));
 
 
-        const gridEvents = source
-            .filter(
-                (event) =>
-                    event?.displaySection === "events_youll_love" ||
-                    event?.displaySection === "all"
-            )
+        const gridEvents = [...source]
             .sort((a, b) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
+                const startA = toDate(getEventStartDate(a));
+                const startB = toDate(getEventStartDate(b));
 
-                const getEventPriorityDate = (event) => {
-                    const start = toDateOnly(getEventStartDate(event));
-                    const end =
-                        toDateOnly(getEventEndDate(event)) || start;
+                if (!startA && !startB) return 0;
+                if (!startA) return 1;
+                if (!startB) return -1;
 
-                    if (!start) return null;
-
-                    // Event abhi ongoing hai: aaj start aur end ke beech hai
-                    if (start <= today && end >= today) {
-                        return today.getTime();
-                    }
-
-                    // Upcoming event: start date ko priority do
-                    if (start > today) {
-                        return start.getTime();
-                    }
-
-                    // Past event: end date ke hisaab se nearest past event
-                    return end.getTime();
-                };
-
-                const priorityA = getEventPriorityDate(a);
-                const priorityB = getEventPriorityDate(b);
-
-                // Invalid/missing dates wale events end mein
-                if (priorityA === null && priorityB === null) return 0;
-                if (priorityA === null) return 1;
-                if (priorityB === null) return -1;
-
-                // Ongoing → upcoming → past
-                const getGroup = (event) => {
-                    const start = toDateOnly(getEventStartDate(event));
-                    const end =
-                        toDateOnly(getEventEndDate(event)) || start;
-
-                    if (!start) return 3;
-                    if (start <= today && end >= today) return 0;
-                    if (start > today) return 1;
-                    return 2;
-                };
-
-                const groupA = getGroup(a);
-                const groupB = getGroup(b);
-
-                if (groupA !== groupB) return groupA - groupB;
-                if (groupA === 0) {
-                    const endA = toDateOnly(getEventEndDate(a)) || priorityA;
-                    const endB = toDateOnly(getEventEndDate(b)) || priorityB;
-
-                    return endA.getTime() - endB.getTime();
-                }
-
-                // Upcoming events: nearest start date first
-                if (groupA === 1) {
-                    return priorityA - priorityB;
-                }
-
-                // Past events: sabse recent end date first
-                return priorityB - priorityA;
+                return startA.getTime() - startB.getTime();
             })
-            // 12 cards = 3 rows x 4 (desktop) / 3 rows x 4 (mobile)
             .slice(0, 12);
 
         const interestEvents = source
@@ -706,6 +649,13 @@ const EventsHome = () => {
 
     useEffect(() => {
         setSlideIndex(0);
+
+        requestAnimationFrame(() => {
+            featuredScrollRef.current?.scrollTo({
+                left: 0,
+                behavior: "auto",
+            });
+        });
     }, [selectedCategory, selectedDate, searchTerm]);
 
     const activeIndex = slides.length ? slideIndex % slides.length : 0;
@@ -720,14 +670,59 @@ const EventsHome = () => {
         if (!autoplay) return;
 
         const timer = setTimeout(() => {
-            setSlideIndex((activeIndex + 1) % slides.length);
+            goToSlide(activeIndex + 1);
         }, SLIDE_INTERVAL);
 
         return () => clearTimeout(timer);
     }, [autoplay, activeIndex, slides.length]);
 
-    const goToSlide = (index) =>
-        setSlideIndex((index + slides.length) % slides.length);
+    const goToSlide = (index) => {
+        const nextIndex =
+            (index + slides.length) % slides.length;
+
+        setSlideIndex(nextIndex);
+
+        if (featuredScrollRef.current) {
+            const container = featuredScrollRef.current;
+            const slideWidth = container.clientWidth;
+
+            container.scrollTo({
+                left: nextIndex * slideWidth,
+                behavior: "smooth",
+            });
+        }
+    };
+
+    useEffect(() => {
+        const container = featuredScrollRef.current;
+
+        if (!container || slides.length <= 1) return;
+
+        const handleScroll = () => {
+            const slideWidth = container.clientWidth;
+
+            if (!slideWidth) return;
+
+            const index = Math.round(
+                container.scrollLeft / slideWidth
+            );
+
+            setSlideIndex(
+                Math.max(0, Math.min(index, slides.length - 1))
+            );
+        };
+
+        container.addEventListener("scroll", handleScroll, {
+            passive: true,
+        });
+
+        return () => {
+            container.removeEventListener(
+                "scroll",
+                handleScroll
+            );
+        };
+    }, [slides.length]);
 
     /* --------------------------------- actions -------------------------------- */
 
@@ -818,7 +813,7 @@ const EventsHome = () => {
             <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
 
                 {/* HERO HEADING */}
-                <h1 className="mb-4 mx-auto flex max-w-full items-center justify-center gap-3 whitespace-nowrap text-center text-[30px] font-extrabold leading-[1.15] tracking-[-0.035em] sm:text-5xl lg:text-6xl">
+                <h1 className="mt-1 mx-auto flex max-w-full items-center justify-center gap-3 whitespace-nowrap text-center text-[30px] font-extrabold leading-[1.15] tracking-[-0.035em] sm:text-5xl lg:text-6xl">
                     <span className="min-w-0 truncate">
                         Hey! {userName || "Explorer"}
                     </span>
@@ -1044,13 +1039,13 @@ const EventsHome = () => {
             {/* ================================================== */}
             <div
                 id="events"
-                className="relative z-10 mx-auto mt-5 w-full max-w-[1600px] scroll-mt-24 px-3 sm:mt-6 sm:px-6 lg:px-10"
+                className="relative z-10 mx-auto mt-3 w-full max-w-[1600px] scroll-mt-24 px-3 sm:mt-6 sm:px-6 lg:px-10"
             >
                 {/* FEATURED LABEL */}
                 <div className="mb-3 flex items-center gap-1.5 px-1 sm:mb-4 sm:px-2">
                     <Sparkles size={16} className="text-[#FEDF24]" />
 
-                    <span className="text-sm font-extrabold tracking-tight text-[#182322] sm:text-base">
+                    <span className="mt-1 text-sm font-extrabold tracking-tight text-[#182322] sm:text-base">
                         Featured
                     </span>
                 </div>
@@ -1066,243 +1061,406 @@ const EventsHome = () => {
                         className="relative overflow-hidden rounded-lg bg-[#182322] shadow-[0_28px_70px_rgba(24,35,34,0.16)] sm:rounded-[32px]"
                     >
                         {/* ================================================== */}
-                        {/* IMAGE / SLIDER                                    */}
+                        {/* MOBILE FEATURED SLIDER */}
                         {/* ================================================== */}
-                        <motion.div
-                            drag={slides.length > 1 ? "x" : false}
-                            dragConstraints={{ left: 0, right: 0 }}
-                            dragElastic={0.12}
-                            style={{ touchAction: "pan-y" }}
-                            onDragStart={() => setPaused(true)}
-                            onDragEnd={(_, info) => {
-                                setPaused(false);
+                        <div className="relative sm:hidden">
 
-                                if (info.offset.x < -60) {
-                                    goToSlide(activeIndex + 1);
-                                } else if (info.offset.x > 60) {
-                                    goToSlide(activeIndex - 1);
-                                }
-                            }}
-                            onTap={(e) => {
-                                if (e.target.closest("button")) return;
+                            <div
+                                ref={featuredScrollRef}
+                                className={`flex snap-x snap-mandatory overflow-x-auto scroll-smooth ${hideScrollbar}`}
+                                style={{ touchAction: "pan-x" }}
+                                onTouchStart={(e) => {
+                                    setPaused(true);
 
-                                openEvent(currentSlide);
-                            }}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    openEvent(currentSlide);
-                                }
-                            }}
-                            aria-label={`Open ${currentSlide.title || "featured event"
-                                }`}
-                            className="relative aspect-[16/10] w-full cursor-pointer overflow-hidden bg-[#e9ece7] sm:aspect-[16/8] lg:aspect-[16/5]"
-                        >
-                            <AnimatePresence initial={false}>
-                                <motion.div
-                                    key={currentSlide.id ?? activeIndex}
-                                    initial={{ opacity: 0, scale: 1.02 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{
-                                        duration: reduceMotion ? 0 : 0.5,
-                                        ease: "easeInOut",
-                                    }}
-                                    className="absolute inset-0"
-                                >
-                                    <BlurBackdrop src={getImage(currentSlide)} eager />
+                                    featuredTouchStartX.current =
+                                        e.touches[0]?.clientX ?? 0;
 
-                                    <img
-                                        src={getImage(currentSlide)}
-                                        alt={currentSlide.title || "Featured event"}
-                                        loading="eager"
-                                        decoding="async"
-                                        draggable={false}
-                                        onError={handleImageError}
-                                        className="absolute inset-0 z-[1] h-full w-full object-contain"
-                                    />
+                                    featuredTouchMoved.current = false;
+                                }}
+                                onTouchMove={(e) => {
+                                    const currentX = e.touches[0]?.clientX ?? 0;
+                                    const diff = Math.abs(
+                                        currentX - featuredTouchStartX.current
+                                    );
 
-                                    <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
-                                </motion.div>
-                            </AnimatePresence>
+                                    // 10px se zyada move hua = swipe
+                                    if (diff > 10) {
+                                        featuredTouchMoved.current = true;
+                                    }
+                                }}
+                                onTouchEnd={() => {
+                                    setPaused(false);
 
-                            {/* ================================================== */}
-                            {/* SLIDE COUNT                                        */}
-                            {/* ================================================== */}
-                            {slides.length > 1 && (
-                                <span className="absolute right-4 top-4 z-20 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-bold text-white backdrop-blur-sm sm:right-6 sm:top-6 sm:text-xs">
-                                    {activeIndex + 1} / {slides.length}
-                                </span>
-                            )}
+                                    if (featuredTouchMoved.current) {
+                                        suppressFeaturedClick.current = true;
 
-                            {/* ================================================== */}
-                            {/* BOTTOM LEFT CONTENT                                */}
-                            {/* ================================================== */}
-                            <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-white sm:p-7 lg:p-9">
-                                <div className="max-w-3xl">
+                                        // Browser ke synthetic click ko ignore karo
+                                        setTimeout(() => {
+                                            suppressFeaturedClick.current = false;
+                                            featuredTouchMoved.current = false;
+                                        }, 350);
+                                    }
+                                }}
+                            >
+                                {slides.map((slide, index) => {
+                                    const parts = getDateParts(slide);
 
-                                    {/* EVENT NAME */}
-                                    <h2 className="line-clamp-2 text-xl font-black leading-[1.05] tracking-[-0.035em] sm:text-3xl lg:text-5xl">
-                                        {currentSlide.title ||
-                                            "An unforgettable experience"}
-                                    </h2>
-
-                                    {/* ================================================== */}
-                                    {/* DATE + HEART                                      */}
-                                    {/* ================================================== */}
-                                    <div className="mt-2 flex items-center gap-2 sm:mt-3">
-
-                                        {/* DATE */}
-                                        <div className="flex items-center gap-2 text-xs font-semibold text-white/80 sm:text-sm">
-                                            <CalendarDays
-                                                size={15}
-                                                className="shrink-0 text-[#FEDF24]"
-                                            />
-
-                                            {currentParts ? (
-                                                <span>
-                                                    {currentParts.day}{" "}
-                                                    {currentParts.month}{" "}
-                                                    {currentParts.weekday}
-
-                                                    {currentParts.until &&
-                                                        ` • till ${currentParts.until}`}
-                                                </span>
-                                            ) : (
-                                                <span>Date TBA</span>
-                                            )}
-                                        </div>
-
-                                        {/* HEART */}
-                                        <motion.button
-                                            type="button"
-                                            onPointerDown={(e) =>
-                                                e.stopPropagation()
-                                            }
-                                            onPointerUp={(e) =>
-                                                e.stopPropagation()
-                                            }
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-
-                                                toggleInterested(
-                                                    currentSlide.id
-                                                );
+                                    return (
+                                        <div
+                                            key={slide.id ?? index}
+                                            className="relative min-w-full shrink-0 snap-start overflow-hidden bg-[#182322]"
+                                            onClick={() => {
+                                                if (suppressFeaturedClick.current) return;
+                                                openEvent(slide);
                                             }}
-                                            whileTap={{ scale: 0.88 }}
-                                            aria-label={
-                                                interestedEvents.includes(
+                                        >
+                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#e9ece7]">
+
+                                                <BlurBackdrop
+                                                    src={getImage(slide)}
+                                                    eager={index === 0}
+                                                />
+
+                                                <img
+                                                    src={getImage(slide)}
+                                                    alt={slide.title || "Featured event"}
+                                                    loading={index === 0 ? "eager" : "lazy"}
+                                                    decoding="async"
+                                                    draggable={false}
+                                                    onError={handleImageError}
+                                                    className="absolute inset-0 z-[1] h-full w-full object-contain"
+                                                />
+
+                                                <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+
+                                                {/* COUNT */}
+                                                {slides.length > 1 && (
+                                                    <span className="absolute right-4 top-4 z-20 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                                                        {index + 1} / {slides.length}
+                                                    </span>
+                                                )}
+
+                                                {/* CONTENT */}
+                                                <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-white">
+
+                                                    <h2 className="line-clamp-2 text-xl font-black leading-[1.05] tracking-[-0.035em]">
+                                                        {slide.title ||
+                                                            "An unforgettable experience"}
+                                                    </h2>
+
+                                                    <div className="mt-2 flex items-center gap-2">
+
+                                                        {/* DATE */}
+                                                        <div className="flex items-center gap-2 text-xs font-semibold text-white/80">
+                                                            <CalendarDays
+                                                                size={15}
+                                                                className="shrink-0 text-[#FEDF24]"
+                                                            />
+
+                                                            {parts ? (
+                                                                <span>
+                                                                    {parts.day}{" "}
+                                                                    {parts.month}{" "}
+                                                                    {parts.weekday}
+
+                                                                    {parts.until &&
+                                                                        ` • till ${parts.until}`}
+                                                                </span>
+                                                            ) : (
+                                                                <span>Date TBA</span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* HEART */}
+                                                        <motion.button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleInterested(slide.id);
+                                                            }}
+                                                            whileTap={{ scale: 0.88 }}
+                                                            aria-label={
+                                                                interestedEvents.includes(
+                                                                    slide.id
+                                                                )
+                                                                    ? "Remove from interested"
+                                                                    : "Add to interested"
+                                                            }
+                                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border backdrop-blur-sm ${interestedEvents.includes(
+                                                                slide.id
+                                                            )
+                                                                ? "border-[#FF2D55] bg-white text-[#FF2D55]"
+                                                                : "border-white/40 bg-black/30 text-white"
+                                                                }`}
+                                                        >
+                                                            <Heart
+                                                                size={14}
+                                                                strokeWidth={2.5}
+                                                                fill={
+                                                                    interestedEvents.includes(
+                                                                        slide.id
+                                                                    )
+                                                                        ? "currentColor"
+                                                                        : "none"
+                                                                }
+                                                            />
+                                                        </motion.button>
+                                                    </div>
+
+                                                    {/* DOTS */}
+                                                    {slides.length > 1 && (
+                                                        <div className="mt-3 flex items-center gap-1.5">
+                                                            {slides.map((_, dotIndex) => (
+                                                                <button
+                                                                    key={`mobile-featured-dot-${dotIndex}`}
+                                                                    type="button"
+                                                                    aria-label={`Go to featured event ${dotIndex + 1
+                                                                        }`}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        goToSlide(dotIndex);
+                                                                    }}
+                                                                    className={`h-1.5 rounded-full transition-all duration-300 ${dotIndex === activeIndex
+                                                                        ? "w-7 bg-[#FEDF24]"
+                                                                        : "w-1.5 bg-white/40"
+                                                                        }`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* MOBILE ARROWS */}
+                                                {slides.length > 1 && (
+                                                    <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
+
+                                                        {/* PREVIOUS */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                goToSlide(activeIndex - 1);
+                                                            }}
+                                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition active:scale-95"
+                                                            aria-label="Previous featured event"
+                                                        >
+                                                            <ChevronLeft size={17} />
+                                                        </button>
+
+                                                        {/* NEXT */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                goToSlide(activeIndex + 1);
+                                                            }}
+                                                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition active:scale-95"
+                                                            aria-label="Next featured event"
+                                                        >
+                                                            <ChevronRight size={17} />
+                                                        </button>
+
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* ================================================== */}
+                        {/* DESKTOP FEATURED SLIDER */}
+                        {/* ================================================== */}
+                        <div className="hidden sm:block">
+
+                            <motion.div
+                                drag={slides.length > 1 ? "x" : false}
+                                dragConstraints={{ left: 0, right: 0 }}
+                                dragElastic={0.12}
+                                style={{ touchAction: "pan-y" }}
+                                onDragStart={() => setPaused(true)}
+                                onDragEnd={(_, info) => {
+                                    setPaused(false);
+
+                                    if (info.offset.x < -60) {
+                                        goToSlide(activeIndex + 1);
+                                    } else if (info.offset.x > 60) {
+                                        goToSlide(activeIndex - 1);
+                                    }
+                                }}
+                                onTap={(e) => {
+                                    if (e.target.closest("button")) return;
+
+                                    openEvent(currentSlide);
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        openEvent(currentSlide);
+                                    }
+                                }}
+                                aria-label={`Open ${currentSlide.title || "featured event"
+                                    }`}
+                                className="relative aspect-[16/8] w-full cursor-pointer overflow-hidden bg-[#e9ece7] lg:aspect-[16/5]"
+                            >
+                                <AnimatePresence initial={false}>
+                                    <motion.div
+                                        key={currentSlide.id ?? activeIndex}
+                                        initial={{ opacity: 0, scale: 1.02 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{
+                                            duration: reduceMotion ? 0 : 0.5,
+                                            ease: "easeInOut",
+                                        }}
+                                        className="absolute inset-0"
+                                    >
+                                        <BlurBackdrop
+                                            src={getImage(currentSlide)}
+                                            eager
+                                        />
+
+                                        <img
+                                            src={getImage(currentSlide)}
+                                            alt={
+                                                currentSlide.title ||
+                                                "Featured event"
+                                            }
+                                            loading="eager"
+                                            decoding="async"
+                                            draggable={false}
+                                            onError={handleImageError}
+                                            className="absolute inset-0 z-[1] h-full w-full object-contain"
+                                        />
+
+                                        <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+                                    </motion.div>
+                                </AnimatePresence>
+
+                                {/* COUNT */}
+                                {slides.length > 1 && (
+                                    <span className="absolute right-4 top-4 z-20 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-bold text-white backdrop-blur-sm sm:right-6 sm:top-6 sm:text-xs">
+                                        {activeIndex + 1} / {slides.length}
+                                    </span>
+                                )}
+
+                                {/* DESKTOP CONTENT */}
+                                <div className="absolute inset-x-0 bottom-0 z-10 p-7 text-white lg:p-9">
+                                    <div className="max-w-3xl">
+
+                                        <h2 className="line-clamp-2 text-3xl font-black leading-[1.05] tracking-[-0.035em] lg:text-5xl">
+                                            {currentSlide.title ||
+                                                "An unforgettable experience"}
+                                        </h2>
+
+                                        <div className="mt-3 flex items-center gap-2">
+
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+                                                <CalendarDays
+                                                    size={15}
+                                                    className="shrink-0 text-[#FEDF24]"
+                                                />
+
+                                                {currentParts ? (
+                                                    <span>
+                                                        {currentParts.day}{" "}
+                                                        {currentParts.month}{" "}
+                                                        {currentParts.weekday}
+
+                                                        {currentParts.until &&
+                                                            ` • till ${currentParts.until}`}
+                                                    </span>
+                                                ) : (
+                                                    <span>Date TBA</span>
+                                                )}
+                                            </div>
+
+                                            <motion.button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleInterested(
+                                                        currentSlide.id
+                                                    );
+                                                }}
+                                                whileTap={{ scale: 0.88 }}
+                                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-sm ${interestedEvents.includes(
                                                     currentSlide.id
                                                 )
-                                                    ? "Remove from interested"
-                                                    : "Add to interested"
-                                            }
-                                            aria-pressed={interestedEvents.includes(
-                                                currentSlide.id
-                                            )}
-                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border backdrop-blur-sm transition sm:h-9 sm:w-9 ${interestedEvents.includes(
-                                                currentSlide.id
-                                            )
-                                                ? "border-[#FF2D55] bg-[#FF2D55] text-white"
-                                                : "border-white/40 bg-black/30 text-white hover:border-[#FF2D55] hover:bg-[#FF2D55]"
-                                                }`}
-                                        >
-                                            <Heart
-                                                size={14}
-                                                strokeWidth={2.5}
-                                                fill={
-                                                    interestedEvents.includes(
-                                                        currentSlide.id
-                                                    )
-                                                        ? "currentColor"
-                                                        : "none"
-                                                }
-                                            />
-                                        </motion.button>
-                                    </div>
-
-                                    {/* ================================================== */}
-                                    {/* DOTS — BOTTOM LEFT                              */}
-                                    {/* ================================================== */}
-                                    {slides.length > 1 && (
-                                        <div className="mt-2 flex items-center gap-1.5">
-                                            {slides.map((slide, index) => (
-                                                <button
-                                                    key={`featured-dot-${slide.id ?? index
-                                                        }`}
-                                                    type="button"
-                                                    aria-label={`Go to featured event ${index + 1
-                                                        }`}
-                                                    onPointerDown={(e) =>
-                                                        e.stopPropagation()
+                                                    ? "border-[#FF2D55] bg-white text-[#FF2D55]"
+                                                    : "border-white/40 bg-black/30 text-white hover:border-[#FF2D55] hover:bg-[#FF2D55]"
+                                                    }`}
+                                            >
+                                                <Heart
+                                                    size={14}
+                                                    strokeWidth={2.5}
+                                                    fill={
+                                                        interestedEvents.includes(
+                                                            currentSlide.id
+                                                        )
+                                                            ? "currentColor"
+                                                            : "none"
                                                     }
-                                                    onPointerUp={(e) =>
-                                                        e.stopPropagation()
-                                                    }
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        goToSlide(index);
-                                                    }}
-                                                    className={`h-1.5 rounded-full transition-all duration-300 ${index === activeIndex
-                                                        ? "w-7 bg-[#FEDF24]"
-                                                        : "w-1.5 bg-white/40"
-                                                        }`}
                                                 />
-                                            ))}
+                                            </motion.button>
                                         </div>
-                                    )}
+
+                                        {/* DOTS */}
+                                        {slides.length > 1 && (
+                                            <div className="mt-2 flex items-center gap-1.5">
+                                                {slides.map((slide, index) => (
+                                                    <button
+                                                        key={`featured-dot-${slide.id ?? index}`}
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            goToSlide(index);
+                                                        }}
+                                                        className={`h-1.5 rounded-full transition-all duration-300 ${index === activeIndex
+                                                            ? "w-7 bg-[#FEDF24]"
+                                                            : "w-1.5 bg-white/40"
+                                                            }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* ================================================== */}
-                            {/* LEFT / RIGHT ARROWS — ACTUAL BOTTOM RIGHT        */}
-                            {/* ================================================== */}
-                            {slides.length > 1 && (
-                                <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2 sm:bottom-7 sm:right-7 lg:bottom-9 lg:right-9">
+                                {/* DESKTOP ARROWS */}
+                                {slides.length > 1 && (
+                                    <div className="absolute bottom-7 right-7 z-20 flex items-center gap-2 lg:bottom-9 lg:right-9">
 
-                                    {/* PREVIOUS */}
-                                    <button
-                                        type="button"
-                                        onPointerDown={(e) =>
-                                            e.stopPropagation()
-                                        }
-                                        onPointerUp={(e) =>
-                                            e.stopPropagation()
-                                        }
-                                        onClick={(e) => {
-                                            e.stopPropagation();
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                goToSlide(activeIndex - 1);
+                                            }}
+                                            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition hover:bg-white hover:text-[#182322]"
+                                            aria-label="Previous featured event"
+                                        >
+                                            <ChevronLeft size={17} />
+                                        </button>
 
-                                            goToSlide(activeIndex - 1);
-                                        }}
-                                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition hover:bg-white hover:text-[#182322] sm:h-10 sm:w-10"
-                                        aria-label="Previous featured event"
-                                    >
-                                        <ChevronLeft size={17} />
-                                    </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                goToSlide(activeIndex + 1);
+                                            }}
+                                            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition hover:bg-white hover:text-[#182322]"
+                                            aria-label="Next featured event"
+                                        >
+                                            <ChevronRight size={17} />
+                                        </button>
 
-                                    {/* NEXT */}
-                                    <button
-                                        type="button"
-                                        onPointerDown={(e) =>
-                                            e.stopPropagation()
-                                        }
-                                        onPointerUp={(e) =>
-                                            e.stopPropagation()
-                                        }
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-
-                                            goToSlide(activeIndex + 1);
-                                        }}
-                                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/40 text-white backdrop-blur-sm transition hover:bg-white hover:text-[#182322] sm:h-10 sm:w-10"
-                                        aria-label="Next featured event"
-                                    >
-                                        <ChevronRight size={17} />
-                                    </button>
-                                </div>
-                            )}
-                        </motion.div>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </div>
                     </div>
                 )}
             </div>
