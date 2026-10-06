@@ -32,6 +32,7 @@ import { db, storage } from "../lib/firebase";
 const initialForm = {
     eventName: "",
     category: "",
+    organizedBy: "",
     otherCategory: "",
     startDate: "",
     endDate: "",
@@ -59,6 +60,13 @@ const placementOptions = [
         description:
             "Show your event in the main Featured section on the home page.",
         icon: Sparkles,
+    },
+    {
+        value: "general",
+        title: "General Events",
+        description:
+            "Show your event in the General Events section on the home page.",
+        icon: CalendarDays,
     },
 ];
 
@@ -146,8 +154,13 @@ const ListYourEventModal = ({
             formData.category === "other" &&
             !formData.otherCategory.trim()
         ) {
+            setSubmitError("Please enter your event category.");
+            return;
+        }
+
+        if (!formData.displaySection) {
             setSubmitError(
-                "Please enter your event category."
+                "Please select where you want your event to appear."
             );
             return;
         }
@@ -175,23 +188,22 @@ const ListYourEventModal = ({
 
             const eventDoc = await addDoc(eventsRef, {
                 eventName: formData.eventName.trim(),
+                organizedBy: formData.organizedBy.trim(),
                 startDate: formData.startDate,
                 endDate: formData.endDate,
-
                 time: formData.startDate
                     ? new Date(formData.startDate).toLocaleTimeString("en-IN", {
                         hour: "numeric",
                         minute: "2-digit",
                     })
                     : "",
-
                 category: finalCategory,
                 otherCategory: customCategory,
                 venue: formData.venue.trim(),
                 description: formData.description.trim(),
                 pricing: formData.pricing.trim(),
                 bookingUrl: formData.bookingUrl.trim(),
-                displaySection: formData.displaySection || "all",
+                displaySection: formData.displaySection,
                 status: "published",
                 source: "outsold",
                 createdAt: serverTimestamp(),
@@ -309,7 +321,7 @@ const ListYourEventModal = ({
                             duration: 0.25,
                             ease: "easeOut",
                         }}
-                        className="relative flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-md border border-[#182322]/10 bg-[#fffdf5] shadow-[0_30px_100px_rgba(24,35,34,0.25)]"
+                        className="relative flex h-[70vh] max-h-[70vh] w-full max-w-3xl flex-col overflow-hidden rounded-md border border-[#182322]/10 bg-[#fffdf5] shadow-[0_30px_100px_rgba(24,35,34,0.25)] sm:h-auto sm:max-h-[94vh]"
                     >
                         {/* HEADER */}
 
@@ -388,23 +400,43 @@ const ListYourEventModal = ({
                                         </div>
                                     )}
 
-                                    {/* EVENT NAME */}
+                                    {/* EVENT NAME + ORGANIZED BY */}
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        {/* EVENT NAME */}
+                                        <div>
+                                            <label className="mb-2 block text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
+                                                Event Name
+                                            </label>
 
-                                    <div>
-                                        <label className="mb-2 block text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
-                                            Event Name
-                                        </label>
+                                            <input
+                                                type="text"
+                                                name="eventName"
+                                                value={formData.eventName}
+                                                onChange={handleChange}
+                                                placeholder="e.g. Sunset Music Festival"
+                                                required
+                                                disabled={isSubmitting}
+                                                className="w-full rounded-md border border-[#182322]/10 bg-white px-4 py-3 text-sm font-semibold text-[#182322] outline-none transition-all placeholder:text-[#182322]/30 focus:border-[#FEDF24] focus:ring-4 focus:ring-[#FEDF24]/15 disabled:opacity-60"
+                                            />
+                                        </div>
 
-                                        <input
-                                            type="text"
-                                            name="eventName"
-                                            value={formData.eventName}
-                                            onChange={handleChange}
-                                            placeholder="e.g. Sunset Music Festival"
-                                            required
-                                            disabled={isSubmitting}
-                                            className="w-full rounded-md border border-[#182322]/10 bg-white px-4 py-3 text-sm font-semibold text-[#182322] outline-none transition-all placeholder:text-[#182322]/30 focus:border-[#FEDF24] focus:ring-4 focus:ring-[#FEDF24]/15 disabled:opacity-60"
-                                        />
+                                        {/* ORGANIZED BY */}
+                                        <div>
+                                            <label className="mb-2 block text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
+                                                Organized By
+                                            </label>
+
+                                            <input
+                                                type="text"
+                                                name="organizedBy"
+                                                value={formData.organizedBy}
+                                                onChange={handleChange}
+                                                placeholder="e.g. OutSold Events"
+                                                required
+                                                disabled={isSubmitting}
+                                                className="w-full rounded-md border border-[#182322]/10 bg-white px-4 py-3 text-sm font-semibold text-[#182322] outline-none transition-all placeholder:text-[#182322]/30 focus:border-[#FEDF24] focus:ring-4 focus:ring-[#FEDF24]/15 disabled:opacity-60"
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* CATEGORY */}
@@ -466,8 +498,9 @@ const ListYourEventModal = ({
                                     </div>
 
                                     {/* DATES */}
+                                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
 
-                                    <div className="grid gap-4 grid-cols-2">
+                                        {/* START DATE */}
                                         <div>
                                             <label className="mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
                                                 <CalendarDays size={14} />
@@ -475,7 +508,7 @@ const ListYourEventModal = ({
                                             </label>
 
                                             <input
-                                                type="datetime-local"
+                                                type="date"
                                                 name="startDate"
                                                 value={formData.startDate}
                                                 onChange={handleChange}
@@ -485,22 +518,26 @@ const ListYourEventModal = ({
                                             />
                                         </div>
 
+                                        {/* END DATE */}
                                         <div>
                                             <label className="mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
                                                 <CalendarDays size={14} />
                                                 End Date
+                                                <span className="text-[10px] font-semibold normal-case tracking-normal text-[#182322]/35">
+                                                    (Optional)
+                                                </span>
                                             </label>
 
                                             <input
-                                                type="datetime-local"
+                                                type="date"
                                                 name="endDate"
                                                 value={formData.endDate}
                                                 onChange={handleChange}
-                                                required
                                                 disabled={isSubmitting}
                                                 className="w-full rounded-md border border-[#182322]/10 bg-white px-4 py-3 text-sm font-semibold text-[#182322] outline-none transition-all focus:border-[#FEDF24] focus:ring-4 focus:ring-[#FEDF24]/15 disabled:opacity-60"
                                             />
                                         </div>
+
                                     </div>
 
                                     {/* COVER IMAGE */}
@@ -584,7 +621,6 @@ const ListYourEventModal = ({
                                     </div>
 
                                     {/* DESCRIPTION */}
-
                                     <div>
                                         <label className="mb-2 block text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
                                             Event Description
@@ -603,8 +639,7 @@ const ListYourEventModal = ({
                                     </div>
 
                                     {/* PRICING */}
-
-                                    <div>
+                                    <div className="-mt-2">
                                         <label className="mb-2 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.08em] text-[#182322]/70">
                                             <Ticket size={14} />
                                             Pricing
@@ -669,7 +704,7 @@ const ListYourEventModal = ({
                                             </p>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-3">
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                             {placementOptions.map(
                                                 (option) => {
                                                     const Icon = option.icon;

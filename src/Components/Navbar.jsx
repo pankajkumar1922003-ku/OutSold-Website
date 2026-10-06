@@ -12,9 +12,9 @@ import ListYourEventModal from "../Components/ListYourEventModal";
 import { useAuth } from "../context/AuthContext";
 
 const navLinks = [
-  { name: "Discover", route: "/all-events" },
-  { name: "Home", id: "home" },
-  { name: "Organizer?", id: "organizerCTA" },
+  { name: "Discover", route: "/all-events"},
+  { name: "Home", route: "/"},
+  { name: "Organizer?", route: "/explore" },
 ];
 
 const STORAGE_KEY = "outsold_user_profile";
@@ -146,8 +146,14 @@ const Navbar = () => {
       navigate(link.route);
       return;
     }
+  };
 
-    scrollToSection(link.id);
+  const isNavLinkActive = (link) => {
+    if (link.route === "/") {
+      return location.pathname === "/";
+    }
+
+    return location.pathname === link.route;
   };
 
   useEffect(() => {
@@ -208,7 +214,7 @@ const Navbar = () => {
           "
         >
           {/* DESKTOP */}
-          <div className="hidden w-full items-center md:flex">
+          <div className="hidden w-full items-center md:flex mb-1">
             {/* LOGO */}
             <motion.button
               onClick={() => scrollToSection("home")}
@@ -276,11 +282,17 @@ const Navbar = () => {
                     duration: 0.45,
                     delay: 0.1 + index * 0.07,
                   }}
-                  className="group relative cursor-pointer rounded-md px-3.5 py-2.5 text-sm font-bold text-[#182322]/60 transition-all duration-200 hover:bg-[#44807F]/10 hover:text-[#182322] lg:px-4"
+                  className={`group relative cursor-pointer rounded-md px-3.5 py-2.5 text-sm font-bold transition-all duration-200 lg:px-4 ${isNavLinkActive(link)
+                    ? "bg-[#44807F]/10 text-[#44807F]"
+                    : "text-[#182322]/60 hover:bg-[#44807F]/10 hover:text-[#182322]"
+                    }`}
                 >
                   {link.name}
 
-                  <span className="absolute bottom-1 left-1/2 h-0.5 w-0 -translate-x-1/2 rounded-full bg-[#FEDF24] transition-all duration-300 group-hover:w-6" />
+                  <span
+                    className={`absolute bottom-1 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-[#FEDF24] transition-all duration-300 ${isNavLinkActive(link) ? "w-6" : "w-0 group-hover:w-6"
+                      }`}
+                  />
                 </motion.button>
               ))}
 
@@ -334,7 +346,7 @@ const Navbar = () => {
           {/* MOBILE */}
           <div className="w-full md:hidden">
             {/* TOP ROW */}
-            <div className="relative mb-1 flex h-[54px] w-full items-center justify-between px-1">
+            <div className="relative mb-1.5 flex h-[54px] w-full items-center justify-between px-1">
               {/* LOCATION */}
               <div className="relative z-[60] shrink-0">
                 <button
@@ -439,7 +451,10 @@ const Navbar = () => {
                     duration: 0.4,
                     delay: 0.1 + index * 0.06,
                   }}
-                  className="flex h-[30px] cursor-pointer items-center justify-center rounded-md px-2 text-[10.5px] font-bold text-[#182322]/55 transition-all duration-200 hover:bg-[#44807F]/10 hover:text-[#182322] active:scale-95 min-[380px]:text-[11px]"
+                  className={`mt-1 flex h-[26px] cursor-pointer items-center justify-center rounded-md px-2 text-[10.5px] font-bold transition-all duration-200 active:scale-95 min-[380px]:text-[11px] ${isNavLinkActive(link)
+                      ? "bg-[#44807F]/10 text-[#44807F]"
+                      : "text-[#182322]/55 hover:bg-[#44807F]/10 hover:text-[#182322]"
+                    }`}
                 >
                   {link.name}
                 </motion.button>

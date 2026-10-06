@@ -358,7 +358,7 @@ const CreateEventSection = () => {
                 <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[75%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#FEDF24]/35 to-transparent" />
 
                 <div className="relative z-10 mx-auto max-w-7xl">
-                    
+
                     {/* Feature Cards + Stats */}
                     <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4">
                         {organizerFeatures.map((feature, index) => {
@@ -366,11 +366,11 @@ const CreateEventSection = () => {
 
                             const stats = [
                                 {
-                                    value: "1K+",
+                                    value: "100+",
                                     label: "Events Created",
                                 },
                                 {
-                                    value: "50K+",
+                                    value: "10K+",
                                     label: "Tickets Sold",
                                 },
                                 {
@@ -380,8 +380,11 @@ const CreateEventSection = () => {
                             ];
 
                             return (
-                                <motion.div
+                                <motion.a
                                     key={feature.title}
+                                    href="https://app.outsold.in/login"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     initial={{
                                         opacity: 0,
                                         y: 20,
@@ -396,7 +399,7 @@ const CreateEventSection = () => {
                                         delay: index * 0.1,
                                     }}
                                     whileHover={{ y: -5 }}
-                                    className="group relative"
+                                    className="group relative block cursor-pointer"
                                 >
                                     {/* Stat directly above card */}
                                     <div className="mb-3 text-center">
@@ -430,7 +433,7 @@ const CreateEventSection = () => {
                                         {/* Bottom Accent */}
                                         <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-[#FEDF24] to-[#44807F] transition-all duration-500 group-hover:w-full" />
                                     </div>
-                                </motion.div>
+                                </motion.a>
                             );
                         })}
                     </div>

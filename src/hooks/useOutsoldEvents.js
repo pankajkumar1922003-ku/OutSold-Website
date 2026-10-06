@@ -112,6 +112,7 @@ const mapSubmittedEvent = (id, data) => {
             "Untitled Event",
 
         category: data.category || "Other",
+        organizedBy: data.organizedBy || "",
         description: data.description || "",
         otherCategory:
             data.otherCategory ||
@@ -218,13 +219,6 @@ export function useOutsoldEvents() {
     useEffect(() => {
         let unsubscribers = [];
         let isActive = true;
-
-        /*
-         * We keep events from BOTH sources here:
-         *
-         * 1. companies/{companyId}/events
-         * 2. event_submissions
-         */
         const allEvents = new Map();
 
         const updateEvents = () => {
@@ -292,10 +286,6 @@ export function useOutsoldEvents() {
                             onSnapshot(
                                 eventsQuery,
                                 (snapshot) => {
-                                    /*
-                                     * Remove previous events
-                                     * belonging to this company.
-                                     */
                                     for (const [
                                         key,
                                         event,

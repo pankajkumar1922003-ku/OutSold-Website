@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import EventDetailsModal from "../Components/EventDetailsModal";
 import {
   Heart,
   Loader2,
   LogOut,
   Phone,
   User,
-  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
   History,
@@ -48,114 +48,81 @@ const EventCard = ({ event, onOpen }) => {
 
   const day = validDate
     ? parsedDate.toLocaleDateString("en-IN", {
-        day: "2-digit",
-      })
+      day: "2-digit",
+    })
     : "";
 
   const month = validDate
     ? parsedDate.toLocaleDateString("en-IN", {
-        month: "short",
-      })
+      month: "short",
+    })
     : "";
 
   return (
     <motion.article
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
-      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-md bg-white shadow-[0_10px_30px_rgba(24,35,34,0.08)] transition duration-300 hover:shadow-[0_16px_36px_rgba(24,35,34,0.14)]"
+      onClick={() => onOpen(event)}
+      className="group flex h-full w-full min-w-0 cursor-pointer flex-col outline-none"
     >
       {/* EVENT IMAGE */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#e9ece7]">
-        {/* Blurred background */}
-        <img
-          src={image}
-          alt=""
-          aria-hidden="true"
-          loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src = FALLBACK_IMAGE;
-          }}
-          className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-80 blur-2xl"
-        />
-
-        {/* Complete event image */}
+      <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-[#e9ece7] shadow-[0_10px_28px_rgba(24,35,34,0.07)] transition duration-300 group-hover:shadow-[0_18px_38px_rgba(24,35,34,0.12)]">
         <img
           src={image}
           alt={event?.title || "Event"}
           loading="lazy"
+          draggable={false}
           onError={(e) => {
             e.currentTarget.src = FALLBACK_IMAGE;
           }}
-          className="absolute inset-0 h-full w-full object-contain transition duration-700 group-hover:scale-[1.03]"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
         />
-
-        {/* CATEGORY BADGE */}
-        <span className="absolute left-2.5 top-2.5 z-10 rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[#182322] shadow-sm sm:text-xs">
-          {event?.category || "Event"}
-        </span>
       </div>
 
-      {/* TICKET CONTENT */}
-      <div className="relative flex flex-1 flex-col border-t-2 border-dashed border-[#182322]/15 p-3 sm:p-4">
-        {/* Ticket cutouts */}
-        <span
-          aria-hidden="true"
-          className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-md bg-[#fffdf5]"
-        />
+      {/* EVENT DETAILS */}
+      <div className="px-1.5 pt-3.5 sm:px-2 sm:pt-4">
 
-        <span
-          aria-hidden="true"
-          className="absolute -right-2.5 -top-2.5 h-5 w-5 rounded-md bg-[#fffdf5]"
-        />
-
-        <div className="flex min-w-0 items-start gap-3">
-          {/* DATE */}
-          <div className="min-w-[44px] shrink-0 border-r border-[#182322]/10 pr-3 text-center leading-none">
-            {validDate ? (
-              <>
-                <p className="text-2xl font-extrabold tabular-nums text-[#44807F]">
-                  {day}
-                </p>
-
-                <p className="mt-1 text-xs font-semibold text-[#182322]/70">
-                  {month}
-                </p>
-              </>
-            ) : (
-              <p className="text-xs font-bold text-[#182322]/60">
-                Date TBA
-              </p>
-            )}
-          </div>
-
-          {/* EVENT DETAILS */}
-          <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 text-sm font-extrabold leading-snug tracking-[-0.01em] text-[#182322] sm:text-lg">
-              {event?.title || "Untitled Event"}
-            </h3>
-
-            {(event?.venue || event?.location) && (
-              <p className="mt-1 line-clamp-1 text-xs font-medium text-[#182322]/55 sm:text-sm">
-                {event.venue || event.location}
-              </p>
-            )}
-          </div>
+        {/* DATE */}
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#44807F] sm:text-[11px]">
+          {validDate ? (
+            <>
+              {day} {month}
+            </>
+          ) : (
+            "Date TBA"
+          )}
         </div>
 
-        {/* EXPLORE BUTTON */}
-        <button
-          type="button"
-          onClick={() => onOpen(event)}
-          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-md bg-[#182322] px-3 py-2.5 text-xs font-bold text-[#FEDF24] transition hover:bg-[#44807F] hover:text-white sm:text-sm"
-        >
-          Explore Event
-          <ArrowUpRight size={15} />
-        </button>
+        {/* EVENT NAME */}
+        <h4 className="line-clamp-2 text-sm font-extrabold leading-[1.15] tracking-[-0.02em] text-[#182322] sm:text-base">
+          {event?.title || "Untitled Event"}
+        </h4>
+
+        {/* LOCATION / PRICE */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-[#182322]/60 sm:text-xs">
+          {(event?.location || event?.venue) && (
+            <span className="truncate">
+              {event?.location || event?.venue}
+            </span>
+          )}
+
+          {(event?.location || event?.venue) && event?.price && (
+            <span className="text-[#182322]/25">
+              •
+            </span>
+          )}
+
+          {event?.price && (
+            <span className="text-[#182322]">
+              Starts from ₹
+              {String(event.price).replace(/^₹\s*/, "")}
+            </span>
+          )}
+        </div>
       </div>
     </motion.article>
   );
 };
-
 /* =====================================================
    EMPTY WISHLIST
 ===================================================== */
@@ -204,24 +171,7 @@ const EmptyBookedEvents = () => {
    REUSABLE EVENT RAIL
 ===================================================== */
 
-const EventRail = ({ events, railId, label }) => {
-  const handleOpenEvent = (selectedEvent) => {
-    const baseUrl = selectedEvent?.subdomain
-      ? `https://${selectedEvent.subdomain}.outsold.in`
-      : "https://app.outsold.in";
-
-    const title = String(selectedEvent?.title || "event");
-    const eventId = String(selectedEvent?.id || "");
-
-    const slug = title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-    window.location.href = `${baseUrl}/e/${slug || "event"}--${eventId}`;
-  };
-
+const EventRail = ({ events, railId, label, onOpenEvent }) => {
   return (
     <div className="relative px-0 sm:px-14">
       {/* DESKTOP LEFT BUTTON */}
@@ -276,7 +226,7 @@ const EventRail = ({ events, railId, label }) => {
           >
             <EventCard
               event={event}
-              onOpen={handleOpenEvent}
+              onOpen={onOpenEvent}
             />
           </div>
         ))}
@@ -303,10 +253,22 @@ const AccountPage = () => {
   const [wishlistLoading, setWishlistLoading] = useState(true);
 
   const [bookedEvents, setBookedEvents] = useState([]);
-  const [bookedEventsLoading, setBookedEventsLoading] =
-    useState(true);
-
+  const [bookedEventsLoading, setBookedEventsLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleOpenEvent = (event) => {
+    if (!event) return;
+
+    setSelectedEvent(event);
+    setIsEventModalOpen(true);
+  };
+
+  const handleCloseEvent = () => {
+    setIsEventModalOpen(false);
+    setSelectedEvent(null);
+  };
 
   /* =====================================================
      WISHLIST
@@ -691,6 +653,7 @@ const AccountPage = () => {
               events={bookedEvents}
               railId="booked-events-rail"
               label="booked events"
+              onOpenEvent={handleOpenEvent}
             />
           )}
         </section>
@@ -701,10 +664,9 @@ const AccountPage = () => {
             <div>
               <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight sm:text-3xl">
                 Wishlist
-
                 <Heart
                   size={24}
-                  className="fill-[#FEDF24] text-[#182322]"
+                  className="fill-[#FF4F8B] text-[#FF4F8B]"
                 />
               </h2>
 
@@ -728,10 +690,19 @@ const AccountPage = () => {
               events={wishlist}
               railId="wishlist-events-rail"
               label="wishlist events"
+              onOpenEvent={handleOpenEvent}
             />
           )}
         </section>
       </div>
+
+      {selectedEvent && (
+        <EventDetailsModal
+          event={selectedEvent}
+          isOpen={isEventModalOpen}
+          onClose={handleCloseEvent}
+        />
+      )}
     </main>
   );
 };

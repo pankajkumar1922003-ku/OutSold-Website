@@ -8,6 +8,7 @@ import {
   FaPhone,
   FaHeart,
 } from "react-icons/fa6";
+import { FaWhatsapp } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from "/Outsold Logo.png";
 import { motion } from "framer-motion";
@@ -241,14 +242,34 @@ const Footer = () => {
               </p>
 
               <div className="mt-6 flex items-center gap-3">
+                {/* LIST YOUR EVENT BUTTON */}
+                <motion.button
+                  type="button"
+                  onClick={() => setIsListEventOpen(true)}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#FEDF24] px-5
+    text-sm font-bold text-[#182322]
+    shadow-sm transition
+    hover:bg-[#ffe84f]
+  "
+                >
+                  <span className="whitespace-nowrap">
+                    List your event
+                  </span>
+
+                  <FaArrowUpRightFromSquare size={12} />
+                </motion.button>
+
+                {/* SOCIAL ICONS */}
                 <a
                   href="https://www.instagram.com/outsold.in?stkn=YWlocjRpaGFhN29u"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fffdf5]/15 bg-[#fffdf5]/5 text-[#fffdf5] transition hover:border-[#FEDF24] hover:bg-[#FEDF24] hover:text-[#182322]"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#fffdf5]/15 bg-[#fffdf5]/5 text-[#fffdf5] transition hover:border-[#FEDF24] hover:bg-[#FEDF24] hover:text-[#182322]"
                 >
-                  <FaInstagram size={18} />
+                  <FaInstagram size={17} />
                 </a>
 
                 <a
@@ -256,19 +277,19 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="YouTube"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fffdf5]/15 bg-[#fffdf5]/5 text-[#fffdf5] transition hover:border-[#FEDF24] hover:bg-[#FEDF24] hover:text-[#182322]"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#fffdf5]/15 bg-[#fffdf5]/5 text-[#fffdf5] transition hover:border-[#FEDF24] hover:bg-[#FEDF24] hover:text-[#182322]"
                 >
-                  <FaYoutube size={18} />
+                  <FaYoutube size={17} />
                 </a>
 
                 <a
-                  href="https://www.facebook.com/people/Sellarin/61583546437046/"
+                  href="https://www.facebook.com/people/Outsoldin/61595180038409/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fffdf5]/15 bg-[#fffdf5]/5 text-[#fffdf5] transition hover:border-[#FEDF24] hover:bg-[#FEDF24] hover:text-[#182322]"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#fffdf5]/15 bg-[#fffdf5]/5 text-[#fffdf5] transition hover:border-[#FEDF24] hover:bg-[#FEDF24] hover:text-[#182322]"
                 >
-                  <FaFacebookF size={18} />
+                  <FaFacebookF size={17} />
                 </a>
               </div>
             </div>
@@ -328,7 +349,7 @@ const Footer = () => {
             </div>
 
             {/* GET IN TOUCH */}
-            <div className="flex flex-col items-center text-center -mt-5 md:mt-0 md:items-start md:text-left">
+            <div className="flex flex-col items-center text-center -mt-2 md:mt-0 md:items-start md:text-left">
               <h3 className="text-base font-semibold text-[#fffdf5]">
                 Get In Touch
               </h3>
@@ -364,8 +385,35 @@ const Footer = () => {
                     9818815838
                   </span>
                 </a>
-
               </div>
+              {/* WHATSAPP */}
+              <a
+                href="https://wa.me/9818815838?text=Hi%2C%20I%20would%20like%20to%20do%20ticketing%20for%20my%20event%3F"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat on WhatsApp"
+                className="mt-5 flex w-full max-w-[235px] items-center gap-3 rounded-lg bg-[#25D366] px-3 py-2.5 text-[#182322] transition-all duration-300 hover:scale-[1.02] hover:bg-[#20c75a]"
+              >
+                {/* WhatsApp Icon */}
+                <FaWhatsapp className="shrink-0 text-[28px]" />
+
+                {/* Text */}
+                <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
+                  <span className="text-sm font-bold">
+                    Chat on WhatsApp
+                  </span>
+
+                  <span className="mt-0.5 text-[11px] font-medium opacity-80">
+                    Message us, we reply on WhatsApp
+                  </span>
+                </span>
+
+                {/* Arrow */}
+                <FaArrowUpRightFromSquare
+                  size={12}
+                  className="shrink-0"
+                />
+              </a>
             </div>
           </div>
 
