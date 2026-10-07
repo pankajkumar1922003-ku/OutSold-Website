@@ -1,14 +1,24 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
 import { AnimatePresence, motion } from "framer-motion";
+
 import {
     X,
     CalendarDays,
-    Clock3,
     MapPin,
     ExternalLink,
     Tag,
+    Download,
 } from "lucide-react";
 
+import html2canvas from "html2canvas";
+
+import TicketDownloadTemplate from "./TicketDownloadTemplate";
+
+
+/* =========================================================
+   DATE HELPERS
+========================================================= */
 
 const toValidDate = (value) => {
     if (!value) return null;
@@ -17,13 +27,11 @@ const toValidDate = (value) => {
         let date;
 
         if (typeof value?.toDate === "function") {
-            // Firebase Timestamp
             date = value.toDate();
         } else if (
             typeof value === "object" &&
             typeof value.seconds === "number"
         ) {
-            // Timestamp object: { seconds, nanoseconds }
             date = new Date(
                 value.seconds * 1000 +
                 (value.nanoseconds || 0) / 1_000_000
@@ -31,12 +39,12 @@ const toValidDate = (value) => {
         } else if (value instanceof Date) {
             date = value;
         } else if (typeof value === "number") {
-            // Unix seconds or milliseconds
             date = new Date(
-                value < 100000000000 ? value * 1000 : value
+                value < 100000000000
+                    ? value * 1000
+                    : value
             );
         } else if (typeof value === "string") {
-            // Agar string mein Timestamp representation aa rahi ho
             const timestampMatch = value.match(
                 /seconds\s*=\s*(\d+)/
             );
@@ -52,11 +60,14 @@ const toValidDate = (value) => {
             return null;
         }
 
-        return Number.isNaN(date.getTime()) ? null : date;
+        return Number.isNaN(date.getTime())
+            ? null
+            : date;
     } catch {
         return null;
     }
 };
+
 
 const formatDate = (value) => {
     const date = toValidDate(value);
@@ -70,32 +81,58 @@ const formatDate = (value) => {
     });
 };
 
-/* --------------------------------------------------
-   DESCRIPTION HELPER
--------------------------------------------------- */
+
+const formatTime = (value) => {
+    const date = toValidDate(value);
+
+    if (!date) return "";
+
+    return date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+    });
+};
+
+
+/* =========================================================
+   DESCRIPTION CLEANER
+========================================================= */
 
 const cleanDescription = (value) => {
     if (!value) return "";
 
-    if (typeof value !== "string") return "";
+    if (typeof value !== "string") {
+        return "";
+    }
 
-    // Normal text ho toh as-is return karo
-    if (!/<\/?[a-z][\s\S]*?>/i.test(value) && !/&(?:amp|lt|gt|quot|#\d+|#x[\da-f]+);/i.test(value)) {
+    if (
+        !/<\/?[a-z][\s\S]*?>/i.test(value) &&
+        !/&(?:amp|lt|gt|quot|#\d+|#x[\da-f]+);/i.test(value)
+    ) {
         return value.trim();
     }
 
     try {
-        // HTML formatting ko readable line breaks mein convert karo
         const formattedHtml = value
-            .replace(/<\s*br\s*\/?>/gi, "\n")
-            .replace(/<\/\s*(p|div|li|h[1-6]|blockquote)\s*>/gi, "\n")
-            .replace(/<\s*li\b[^>]*>/gi, "• ");
+            .replace(
+                /<\s*br\s*\/?>/gi,
+                "\n"
+            )
+            .replace(
+                /<\/?\s*(p|div|li|h[1-6]|blockquote)\s*>/gi,
+                "\n"
+            )
+            .replace(
+                /<\s*li\b[^>]*>/gi,
+                "• "
+            );
 
-        // Tags ko render kiye bina plain text nikalo
-        const parsed = new DOMParser().parseFromString(
-            formattedHtml,
-            "text/html"
-        );
+        const parsed =
+            new DOMParser().parseFromString(
+                formattedHtml,
+                "text/html"
+            );
 
         return (parsed.body.textContent || "")
             .replace(/\u00a0/g, " ")
@@ -104,34 +141,70 @@ const cleanDescription = (value) => {
             .replace(/\n{3,}/g, "\n\n")
             .trim();
     } catch {
-        return value.replace(/<[^>]*>/g, "").trim();
+        return value
+            .replace(/<[^>]*>/g, "")
+            .trim();
     }
 };
 
-/* --------------------------------------------------
-   EVENT DETAILS MODAL
--------------------------------------------------- */
 
-const EventDetailsModal = ({ event, isOpen, onClose }) => {
+/* =========================================================
+   EVENT DETAILS MODAL
+========================================================= */
+
+const EventDetailsModal = ({
+    event,
+    isOpen,
+    onClose,
+}) => {
+    /* =======================================================
+       TICKET DOWNLOAD REF
+    ======================================================= */
+
+    const ticketDownloadRef = useRef(null);
+
+
+    /* =======================================================
+       LOCK BODY SCROLL
+    ======================================================= */
+
     useEffect(() => {
         if (!isOpen) return;
 
-        const previousOverflow = document.body.style.overflow;
+        const previousOverflow =
+            document.body.style.overflow;
+
         document.body.style.overflow = "hidden";
 
         const handleKeyDown = (e) => {
-            if (e.key === "Escape") onClose();
+            if (e.key === "Escape") {
+                onClose();
+            }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener(
+            "keydown",
+            handleKeyDown
+        );
 
         return () => {
-            document.body.style.overflow = previousOverflow;
-            window.removeEventListener("keydown", handleKeyDown);
+            document.body.style.overflow =
+                previousOverflow;
+
+            window.removeEventListener(
+                "keydown",
+                handleKeyDown
+            );
         };
     }, [isOpen, onClose]);
 
+
     if (!event) return null;
+
+
+    /* =======================================================
+       EVENT DATA
+    ======================================================= */
 
     const startDate =
         event.startDate ||
@@ -144,245 +217,752 @@ const EventDetailsModal = ({ event, isOpen, onClose }) => {
         event.end_date ||
         event.eventEndDate;
 
-    const formattedStartDate = formatDate(startDate);
-    const formattedEndDate = formatDate(endDate);
+    const formattedStartDate =
+        formatDate(startDate);
 
-    const description = cleanDescription(event.description);
+    const formattedEndDate =
+        formatDate(endDate);
+
+    const description =
+        cleanDescription(event.description);
 
     const image =
         event.image ||
         event.coverImageDesktop ||
         event.coverImage ||
-        event.coverImageUrl;
+        event.coverImageUrl ||
+        event.imageUrl;
+
+
+    /* =======================================================
+       BOOKING URL
+    ======================================================= */
 
     const bookingUrl =
         event.bookingUrl ||
         event.ticketBookingUrl ||
-        (event.source === "company" && event.id
-            ? (() => {
-                const title = String(event.title || "event");
+        (
+            event.source === "company" &&
+                event.id
+                ? (() => {
+                    const title = String(
+                        event.title || "event"
+                    );
 
-                const slug = title
-                    .toLowerCase()
-                    .trim()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/^-+|-+$/g, "");
+                    const slug = title
+                        .toLowerCase()
+                        .trim()
+                        .replace(
+                            /[^a-z0-9]+/g,
+                            "-"
+                        )
+                        .replace(
+                            /^-+|-+$/g,
+                            ""
+                        );
 
-                const baseUrl = event.subdomain
-                    ? `https://${event.subdomain}.outsold.in`
-                    : "https://app.outsold.in";
+                    const baseUrl =
+                        event.subdomain
+                            ? `https://${event.subdomain}.outsold.in`
+                            : "https://app.outsold.in";
 
-                return `${baseUrl}/e/${slug || "event"}--${event.id}`;
-            })()
-            : "");
+                    return `${baseUrl}/e/${slug || "event"
+                        }--${event.id}`;
+                })()
+                : ""
+        );
+
 
     const hasDifferentEndDate =
         formattedEndDate &&
         formattedStartDate &&
-        formattedEndDate !== formattedStartDate;
+        formattedEndDate !==
+        formattedStartDate;
+
+
+    /* =======================================================
+       BOOKING / TICKET DATA
+    ======================================================= */
+
+    const ticketId =
+        event.ticketId ||
+        event.ticketID ||
+        event.ticketNumber ||
+        event.id ||
+        "TICKET";
+
+    const tierName =
+        event.tierName ||
+        event.ticketTier ||
+        event.ticketType ||
+        event.categoryName ||
+        "General";
+
+    const attendeeName =
+        event.attendeeName ||
+        event.name ||
+        event.userName ||
+        event.customerName ||
+        "Guest";
+
+    const attendeeEmail =
+        event.attendeeEmail ||
+        event.email ||
+        event.userEmail ||
+        "";
+
+    const attendeePhone =
+        event.attendeePhone ||
+        event.phone ||
+        event.phoneNumber ||
+        event.userPhone ||
+        "";
+
+    const ticketQuantity = Number(
+        event.quantity ||
+        event.ticketQuantity ||
+        event.qty ||
+        event.ticketsCount ||
+        event.numberOfTickets ||
+        1
+    );
+
+    const totalAmount =
+        event.totalAmount ||
+        event.totalPrice ||
+        event.amountPaid ||
+        event.paidAmount ||
+        event.orderAmount ||
+        event.price ||
+        "";
+
+    const paymentMethod =
+        event.paymentMethod ||
+        event.paymentMode ||
+        event.paidVia ||
+        "UPI";
+
+    const bookingDate =
+        event.bookedAt ||
+        event.bookingDate ||
+        event.createdAt ||
+        event.purchasedAt ||
+        new Date();
+
+    const bookingDateText =
+        formatDate(bookingDate);
+
+    const accessCode =
+        event.accessCode ||
+        event.access_code ||
+        "";
+
+    const eventTime =
+        event.startTime ||
+        event.eventTime ||
+        event.time ||
+        formatTime(startDate);
+
+
+    /* =======================================================
+       DOWNLOAD HTML TICKET
+    ======================================================= */
+
+    const downloadTicket = async () => {
+        const ticketElement =
+            ticketDownloadRef.current;
+
+        if (!ticketElement) {
+            console.error(
+                "Ticket download element not found."
+            );
+            return;
+        }
+
+        try {
+            /*
+             * Wait one frame so that QRCodeCanvas and
+             * all HTML elements are completely rendered.
+             */
+
+            await new Promise((resolve) => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(resolve);
+                });
+            });
+
+
+            const canvas =
+                await html2canvas(ticketElement, {
+                    scale: 3,
+
+                    useCORS: true,
+
+                    allowTaint: false,
+
+                    backgroundColor: "#F1F1EF",
+
+                    logging: false,
+
+                    imageTimeout: 15000,
+
+                    width: ticketElement.scrollWidth,
+
+                    height: ticketElement.scrollHeight,
+
+                    windowWidth:
+                        ticketElement.scrollWidth,
+
+                    windowHeight:
+                        ticketElement.scrollHeight,
+                });
+
+
+            const safeTitle = String(
+                event.title ||
+                event.eventName ||
+                "event"
+            )
+                .replace(
+                    /[^a-z0-9]+/gi,
+                    "-"
+                )
+                .replace(
+                    /^-+|-+$/g,
+                    "");
+
+
+            const safeTicketId =
+                String(ticketId)
+                    .replace(
+                        /[^a-z0-9_-]+/gi,
+                        "-"
+                    )
+                    .replace(
+                        /^-+|-+$/g,
+                        "");
+
+
+            const link =
+                document.createElement("a");
+
+            link.href =
+                canvas.toDataURL(
+                    "image/jpeg",
+                    0.96
+                );
+
+            link.download =
+                `${safeTicketId}-${safeTitle}-ticket.jpg`;
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error(
+                "Ticket download failed:",
+                error
+            );
+        }
+    };
+
+
+    /* =======================================================
+       RENDER
+    ======================================================= */
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    className="fixed inset-0 z-[200] flex items-center justify-center bg-[#182322]/60 p-3 backdrop-blur-sm sm:p-5"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onMouseDown={(e) => {
-                        if (e.target === e.currentTarget) onClose();
+        <>
+            {event?.isBooked && (
+                <div
+                    aria-hidden="true"
+                    style={{
+                        position: "fixed",
+                        left: "-10000px",
+                        top: "0",
+                        width: "512px",
+                        pointerEvents: "none",
+                        zIndex: -1,
                     }}
                 >
+                    <TicketDownloadTemplate
+                        ref={ticketDownloadRef}
+
+                        ticketId={ticketId}
+
+                        tierName={tierName}
+
+                        attendeeName={attendeeName}
+
+                        attendeeEmail={attendeeEmail}
+
+                        attendeePhone={attendeePhone}
+
+                        eventTitle={
+                            event.title ||
+                            event.eventName ||
+                            "Event"
+                        }
+
+                        eventDate={startDate}
+
+                        eventDay={
+                            startDate
+                                ? new Date(startDate).toLocaleDateString(
+                                    "en-IN",
+                                    {
+                                        weekday: "long",
+                                    }
+                                )
+                                : ""
+                        }
+
+                        eventTime={eventTime}
+
+                        venue={
+                            event.venue ||
+                            event.location ||
+                            ""
+                        }
+
+                        quantity={ticketQuantity}
+
+                        totalAmount={totalAmount}
+
+                        paymentMethod={paymentMethod}
+
+                        bookingDate={bookingDateText}
+
+                        eventImage={image}
+
+                        generatedAt={
+                            new Date().toLocaleString(
+                                "en-IN",
+                                {
+                                    day: "numeric",
+                                    month: "numeric",
+                                    year: "numeric",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    second: "2-digit",
+                                    hour12: true,
+                                }
+                            )
+                        }
+                    />
+                </div>
+            )}
+
+
+            {/* ===================================================
+          MODAL
+      ==================================================== */}
+
+            <AnimatePresence>
+                {isOpen && (
                     <motion.div
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label={`${event.title || "Event"} details`}
-                        initial={{ opacity: 0, y: 18, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                        transition={{ duration: 0.2 }}
-                        className="relative flex max-h-[85vh] w-full max-w-[600px] flex-col overflow-hidden rounded-md border border-[#182322]/10 bg-white shadow-2xl"
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-[#182322]/60 p-3 backdrop-blur-sm sm:p-5"
+                        initial={{
+                            opacity: 0,
+                        }}
+                        animate={{
+                            opacity: 1,
+                        }}
+                        exit={{
+                            opacity: 0,
+                        }}
+                        onMouseDown={(e) => {
+                            if (
+                                e.target ===
+                                e.currentTarget
+                            ) {
+                                onClose();
+                            }
+                        }}
                     >
-                        {/* Header */}
-                        <div className="flex shrink-0 items-center justify-between border-b border-[#182322]/10 px-4 py-3 sm:px-5">
-                            <div className="flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-[#FEDF24]" />
-                                <span className="text-xs font-black uppercase tracking-[0.16em] text-[#44807F]">
-                                    Event Details
-                                </span>
-                            </div>
+                        <motion.div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={`${event.title || "Event"} details`}
+                            initial={{
+                                opacity: 0,
+                                y: 18,
+                                scale: 0.98,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                                scale: 1,
+                            }}
+                            exit={{
+                                opacity: 0,
+                                y: 12,
+                                scale: 0.98,
+                            }}
+                            transition={{
+                                duration: 0.2,
+                            }}
+                            className="relative flex max-h-[85vh] w-full max-w-[600px] flex-col overflow-hidden rounded-md border border-[#182322]/10 bg-white shadow-2xl"
+                        >
+                            {/* =========================================
+                  HEADER
+              ========================================== */}
 
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                aria-label="Close event details"
-                                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#182322]/5 text-[#182322] transition hover:bg-[#182322] hover:text-white"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
+                            <div className="flex shrink-0 items-center justify-between border-b border-[#182322]/10 px-4 py-3 sm:px-5">
+                                <div className="flex items-center gap-2">
+                                    <span className="h-2.5 w-2.5 rounded-full bg-[#FEDF24]" />
 
-                        {/* Scrollable Content */}
-                        <div className="min-h-0 flex-1 overflow-y-auto">
-                            {image && (
-                                <div className="relative mx-4 mt-4 h-[180px] overflow-hidden rounded-md bg-[#f3f5f4] sm:mx-5 sm:h-[240px]">
-                                    {/* Blurred background fills the extra space */}
-                                    <img
-                                        src={image}
-                                        alt=""
-                                        aria-hidden="true"
-                                        className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl opacity-70"
-                                    />
-
-                                    {/* Full image visible without cropping */}
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <img
-                                            src={image}
-                                            alt={event.title || "Event"}
-                                            className="relative z-10 h-full w-full object-contain"
-                                        />
-                                    </div>
-
-                                    {event.category && (
-                                        <span className="absolute bottom-3 left-3 z-20 max-w-[85%] truncate rounded-md bg-[#FEDF24] px-3 py-1.5 text-[11px] font-extrabold text-[#182322]">
-                                            {event.otherCategory || event.category}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-                            <div className="px-4 py-4 sm:px-5 sm:py-5">
-                                <h2 className="break-words text-xl font-black leading-tight text-[#182322] sm:text-2xl">
-                                    {event.title || event.eventName || "Untitled Event"}
-                                </h2>
-
-                                {event.organizedBy && (
-                                    <p className="mt-2 text-sm font-semibold text-[#182322]/55">
-                                        Organized by{" "}
-                                        <span className="font-extrabold text-[#44807F]">
-                                            {event.organizedBy}
-                                        </span>
-                                    </p>
-                                )}
-
-                                {/* Event Information */}
-                                <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                                    {formattedStartDate && (
-                                        <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-[#182322]/8 bg-[#f8faf9] p-3">
-                                            <CalendarDays
-                                                size={17}
-                                                className="mt-0.5 shrink-0 text-[#44807F]"
-                                            />
-
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
-                                                    {hasDifferentEndDate
-                                                        ? "Event Dates"
-                                                        : "Event Date"}
-                                                </p>
-
-                                                <p className="mt-1 wrap-break-word text-sm font-bold text-[#182322]">
-                                                    {formattedStartDate}
-
-                                                    {hasDifferentEndDate &&
-                                                        ` – ${formattedEndDate}`}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {event.price && (
-                                        <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-[#182322]/8 bg-[#f8faf9] p-3">
-                                            <Tag
-                                                size={17}
-                                                className="mt-0.5 shrink-0 text-[#44807F]"
-                                            />
-
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
-                                                    Price
-                                                </p>
-
-                                                <p className="mt-1 break-words text-sm font-bold text-[#182322]">
-                                                    Starts from ₹{String(event.price).replace(/^₹\s*/, "")}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {(event.venue || event.location) && (
-                                        <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-[#182322]/8 bg-[#f8faf9] p-3 sm:col-span-2">
-                                            <MapPin
-                                                size={17}
-                                                className="mt-0.5 shrink-0 text-[#44807F]"
-                                            />
-
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
-                                                    Location
-                                                </p>
-
-                                                <p className="mt-1 break-words text-sm font-bold text-[#182322]">
-                                                    {event.venue ||
-                                                        event.location}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <span className="text-xs font-black uppercase tracking-[0.16em] text-[#44807F]">
+                                        Event Details
+                                    </span>
                                 </div>
 
-                                {/* Clean Description */}
-                                {description && (
-                                    <div className="mt-5">
-                                        <h3 className="flex items-center gap-2 text-sm font-black text-[#182322]">
-                                            <Tag
-                                                size={16}
-                                                className="text-[#44807F]"
-                                            />
-                                            About this event
-                                        </h3>
-
-                                        <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-[#182322]/65">
-                                            {description}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="flex shrink-0 flex-row gap-2 border-t border-[#182322]/10 bg-white p-3.5 sm:justify-end sm:px-5">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="flex-1 cursor-pointer rounded-md bg-[#182322]/10 px-5 py-3 text-sm font-bold text-black sm:flex-none"
-                            >
-                                Close
-                            </button>
-
-                            {bookingUrl ? (
-                                <a
-                                    href={bookingUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#FEDF24] px-5 py-3 text-sm font-black text-[#182322] transition duration-200 hover:bg-[#44807F] hover:text-white sm:flex-none"
-                                >
-                                    Book Tickets
-                                    <ExternalLink size={16} />
-                                </a>
-                            ) : (
                                 <button
                                     type="button"
-                                    disabled
-                                    className="cursor-not-allowed rounded-md bg-[#182322]/10 px-5 py-3 text-sm font-bold text-[#182322]/40"
+                                    onClick={onClose}
+                                    aria-label="Close event details"
+                                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#182322]/5 text-[#182322] transition hover:bg-[#182322] hover:text-white"
                                 >
-                                    Booking Unavailable
+                                    <X size={18} />
                                 </button>
-                            )}
-                        </div>
+                            </div>
+
+
+                            {/* =========================================
+                  SCROLLABLE CONTENT
+              ========================================== */}
+
+                            <div className="min-h-0 flex-1 overflow-y-auto">
+                                {/* Event image */}
+
+                                {image && (
+                                    <div className="relative mx-4 mt-4 h-[180px] overflow-hidden rounded-md bg-[#f3f5f4] sm:mx-5 sm:h-[240px]">
+                                        <img
+                                            src={image}
+                                            alt=""
+                                            aria-hidden="true"
+                                            className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl opacity-70"
+                                        />
+
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <img
+                                                src={image}
+                                                alt={
+                                                    event.title ||
+                                                    "Event"
+                                                }
+                                                className="relative z-10 h-full w-full object-contain"
+                                            />
+                                        </div>
+
+                                        {event.category && (
+                                            <span className="absolute bottom-3 left-3 z-20 max-w-[85%] truncate rounded-md bg-[#FEDF24] px-3 py-1.5 text-[11px] font-extrabold text-[#182322]">
+                                                {event.otherCategory ||
+                                                    event.category}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+
+                                <div className="px-4 py-4 sm:px-5 sm:py-5">
+                                    {/* Title */}
+
+                                    <h2 className="break-words text-xl font-black leading-tight text-[#182322] sm:text-2xl">
+                                        {event.title ||
+                                            event.eventName ||
+                                            "Untitled Event"}
+                                    </h2>
+
+
+                                    {/* Organized By */}
+
+                                    {event.organizedBy && (
+                                        <p className="mt-2 text-sm font-semibold text-[#182322]/55">
+                                            Organized by{" "}
+                                            <span className="font-extrabold text-[#44807F]">
+                                                {event.organizedBy}
+                                            </span>
+                                        </p>
+                                    )}
+
+
+                                    {/* =====================================
+                      EVENT INFO
+                  ====================================== */}
+
+                                    <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                                        {/* Date */}
+
+                                        {formattedStartDate && (
+                                            <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-[#182322]/8 bg-[#f8faf9] p-3">
+                                                <CalendarDays
+                                                    size={17}
+                                                    className="mt-0.5 shrink-0 text-[#44807F]"
+                                                />
+
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
+                                                        {hasDifferentEndDate
+                                                            ? "Event Dates"
+                                                            : "Event Date"}
+                                                    </p>
+
+                                                    <p className="mt-1 break-words text-sm font-bold text-[#182322]">
+                                                        {formattedStartDate}
+
+                                                        {hasDifferentEndDate &&
+                                                            ` – ${formattedEndDate}`}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+
+                                        {/* Price */}
+
+                                        {event.price && (
+                                            <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-[#182322]/8 bg-[#f8faf9] p-3">
+                                                <Tag
+                                                    size={17}
+                                                    className="mt-0.5 shrink-0 text-[#44807F]"
+                                                />
+
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
+                                                        Price
+                                                    </p>
+
+                                                    <p className="mt-1 break-words text-sm font-bold text-[#182322]">
+                                                        Starts from ₹
+                                                        {String(
+                                                            event.price
+                                                        ).replace(
+                                                            /^₹\s*/,
+                                                            ""
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+
+                                        {/* Location */}
+
+                                        {(event.venue ||
+                                            event.location) && (
+                                                <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-[#182322]/8 bg-[#f8faf9] p-3 sm:col-span-2">
+                                                    <MapPin
+                                                        size={17}
+                                                        className="mt-0.5 shrink-0 text-[#44807F]"
+                                                    />
+
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
+                                                            Location
+                                                        </p>
+
+                                                        <p className="mt-1 break-words text-sm font-bold text-[#182322]">
+                                                            {event.venue ||
+                                                                event.location}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                    </div>
+
+
+                                    {/* =====================================
+                      DESCRIPTION
+                  ====================================== */}
+
+                                    {description && (
+                                        <div className="mt-5">
+                                            <h3 className="flex items-center gap-2 text-sm font-black text-[#182322]">
+                                                <Tag
+                                                    size={16}
+                                                    className="text-[#44807F]"
+                                                />
+
+                                                About this event
+                                            </h3>
+
+                                            <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-[#182322]/65">
+                                                {description}
+                                            </p>
+                                        </div>
+                                    )}
+
+
+                                    {/* =====================================
+                      BOOKING DETAILS
+                      Only show for booked event
+                  ====================================== */}
+
+                                    {event.isBooked && (
+                                        <div className="mt-5 rounded-md border border-[#44807F]/15 bg-[#44807F]/5 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
+                                                Booking Details
+                                            </p>
+
+                                            <div className="mt-3 grid grid-cols-2 gap-3">
+                                                {/* Ticket */}
+
+                                                <div>
+                                                    <p className="text-[10px] font-semibold text-[#182322]/45">
+                                                        Ticket ID
+                                                    </p>
+
+                                                    <p className="mt-1 break-all text-xs font-black text-[#182322]">
+                                                        {ticketId}
+                                                    </p>
+                                                </div>
+
+
+                                                {/* Tier */}
+
+                                                <div>
+                                                    <p className="text-[10px] font-semibold text-[#182322]/45">
+                                                        Ticket Type
+                                                    </p>
+
+                                                    <p className="mt-1 text-xs font-black text-[#182322]">
+                                                        {tierName}
+                                                    </p>
+                                                </div>
+
+
+                                                {/* Attendee */}
+
+                                                {attendeeName && (
+                                                    <div>
+                                                        <p className="text-[10px] font-semibold text-[#182322]/45">
+                                                            Attendee
+                                                        </p>
+
+                                                        <p className="mt-1 break-words text-xs font-black text-[#182322]">
+                                                            {attendeeName}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+
+                                                {/* Quantity */}
+
+                                                <div>
+                                                    <p className="text-[10px] font-semibold text-[#182322]/45">
+                                                        Tickets
+                                                    </p>
+
+                                                    <p className="mt-1 text-xs font-black text-[#182322]">
+                                                        {ticketQuantity}
+                                                    </p>
+                                                </div>
+
+
+                                                {/* Amount */}
+
+                                                {totalAmount && (
+                                                    <div>
+                                                        <p className="text-[10px] font-semibold text-[#182322]/45">
+                                                            Amount Paid
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-black text-[#182322]">
+                                                            ₹
+                                                            {String(
+                                                                totalAmount
+                                                            ).replace(
+                                                                /^₹\s*/,
+                                                                ""
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+
+                                                {/* Payment */}
+
+                                                {paymentMethod && (
+                                                    <div>
+                                                        <p className="text-[10px] font-semibold text-[#182322]/45">
+                                                            Payment
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs font-black text-[#182322]">
+                                                            {paymentMethod}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+
+                            {/* =========================================
+                  FOOTER
+              ========================================== */}
+
+                            <div className="flex shrink-0 flex-row gap-2 border-t border-[#182322]/10 bg-white p-3.5 sm:justify-end sm:px-5">
+                                {/* Close */}
+
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 cursor-pointer rounded-md bg-[#182322]/10 px-5 py-3 text-sm font-bold text-black sm:flex-none"
+                                >
+                                    Close
+                                </button>
+
+
+                                {/* Download Ticket */}
+
+                                {event.isBooked ? (
+                                    <button
+                                        type="button"
+                                        onClick={downloadTicket}
+                                        className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#FEDF24] px-5 py-3 text-sm font-black text-[#182322] transition duration-200 hover:bg-[#44807F] hover:text-white sm:flex-none"
+                                    >
+                                        <Download size={16} />
+
+                                        Download Ticket
+                                    </button>
+                                ) : bookingUrl ? (
+                                    /* Book Tickets */
+
+                                    <a
+                                        href={bookingUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#FEDF24] px-5 py-3 text-sm font-black text-[#182322] transition duration-200 hover:bg-[#44807F] hover:text-white sm:flex-none"
+                                    >
+                                        Book Tickets
+
+                                        <ExternalLink
+                                            size={16}
+                                        />
+                                    </a>
+                                ) : (
+                                    /* Booking unavailable */
+
+                                    <button
+                                        type="button"
+                                        disabled
+                                        className="cursor-not-allowed rounded-md bg-[#182322]/10 px-5 py-3 text-sm font-bold text-[#182322]/40"
+                                    >
+                                        Booking Unavailable
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
                     </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                )}
+            </AnimatePresence>
+        </>
     );
 };
 

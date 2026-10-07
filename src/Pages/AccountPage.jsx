@@ -419,9 +419,20 @@ const AccountPage = () => {
 
             if (!matchedAttendee) continue;
 
+            const attendeeData = matchedAttendee.data();
+
             const event = {
               id: eventId,
               companyId: COMPANY_ID,
+              isBooked: true,
+              ticketId: attendeeData?.ticketId || "",
+              attendeeName: attendeeData?.name || "",
+              attendeeEmail: attendeeData?.email || "",
+              attendeePhone: attendeeData?.phone || "",
+              tierName: attendeeData?.tierName || "",
+              amountPaid: attendeeData?.amountPaid ?? 0,
+              paymentMode: attendeeData?.paymentMode || "",
+              ticketStatus: attendeeData?.status || "valid",
               title: eventData?.title || "Untitled Event",
               category: eventData?.category || "",
               description: eventData?.description || "",
@@ -456,7 +467,7 @@ const AccountPage = () => {
 
             bookedEventsMap.set(uniqueKey, event);
           } catch (eventError) {
-            // Ignore errors for individual events.
+            console.error(eventError)
           }
         }
 
