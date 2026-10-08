@@ -11,6 +11,7 @@ import EventsPage from './Components/AllEvents.jsx'
 import AccountPage from './Pages/AccountPage.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import FloatingWhatsApp from './Components/FloatingWhatsApp.jsx'
+import EventDetailsPage from './Pages/EventDetailsPage.jsx'
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
         element: <App />
       },
       {
+        path: "/event/:eventId",
+        element: <EventDetailsPage />
+      },
+      {
         path: "/explore",
         element: <ExploreLayout />
       },
@@ -30,8 +35,8 @@ const router = createBrowserRouter([
         element: <EventsPage />
       },
       {
-        path:"/account",
-        element:<AccountPage/>
+        path: "/account",
+        element: <AccountPage />
       },
       {
         path: "/privacy-policy",
