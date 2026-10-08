@@ -187,7 +187,11 @@ const ListYourEventModal = ({
             );
 
             const eventDoc = await addDoc(eventsRef, {
-                eventName: formData.eventName.trim(),
+                eventName: formData.eventName
+                    .replace(/&nbsp;/gi, " ")
+                    .replace(/\u00A0/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim(),
                 organizedBy: formData.organizedBy.trim(),
                 startDate: formData.startDate,
                 endDate: formData.endDate,

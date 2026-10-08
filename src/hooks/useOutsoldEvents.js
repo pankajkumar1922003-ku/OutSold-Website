@@ -21,6 +21,16 @@ const getPrice = (tiers = []) => {
     return `₹${Math.min(...prices)}`;
 };
 
+const cleanEventTitle = (value) => {
+    if (!value) return "";
+
+    return String(value)
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\u00A0/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+};
+
 /* -------------------------------------------------------------------------- */
 /* COMPANY EVENT                                                              */
 /* -------------------------------------------------------------------------- */
@@ -28,7 +38,7 @@ const getPrice = (tiers = []) => {
 const mapCompanyEvent = (id, data, companyId, companyData = {}) => {
     return {
         id,
-        title: data.title || "Untitled Event",
+        title: cleanEventTitle(data.title || "Untitled Event"),
         category: data.category || "Other",
         otherCategory:
             data.otherCategory ||
@@ -106,10 +116,11 @@ const mapCompanyEvent = (id, data, companyId, companyData = {}) => {
 const mapSubmittedEvent = (id, data) => {
     return {
         id: `submission_${id}`,
-        title:
+        title: cleanEventTitle(
             data.eventName ||
             data.title ||
-            "Untitled Event",
+            "Untitled Event"
+        ),
 
         category: data.category || "Other",
         organizedBy: data.organizedBy || "",
