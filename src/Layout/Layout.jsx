@@ -5,20 +5,16 @@ import LocationOnboarding from "../Components/LocationOnboarding";
 
 const Layout = () => {
   const location = useLocation();
-
   const isEventDetailsPage = location.pathname.startsWith("/event/");
 
   return (
     <>
       {!isEventDetailsPage && <Navbar />}
-
       <main>
         <Outlet />
       </main>
-
       <Footer />
-
-      <LocationOnboarding />
+      {!isEventDetailsPage && <LocationOnboarding />}
     </>
   );
 };
