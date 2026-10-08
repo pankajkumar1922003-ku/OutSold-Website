@@ -586,7 +586,7 @@ const ListYourEventModal = ({
                                                 </span>
 
                                                 <span className="mt-1 text-xs text-[#182322]/45">
-                                                    JPG, PNG or WEBP recommended
+                                                    Recommended: 1600 × 1000 px (8:5) • JPG, PNG or WEBP
                                                 </span>
                                             </button>
                                         )}

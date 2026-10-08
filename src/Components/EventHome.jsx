@@ -254,16 +254,7 @@ const EventCard = ({
                     loading="lazy"
                     draggable={false}
                     onError={handleImageError}
-                    className="
-                        absolute
-                        inset-0
-                        h-full
-                        w-full
-                        object-cover
-                        transition-transform
-                        duration-500
-                        group-hover:scale-[1.03]
-                    "
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 />
 
                 {/* WISHLIST HEART */}

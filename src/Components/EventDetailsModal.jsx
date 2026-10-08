@@ -10,11 +10,9 @@ import {
     Tag,
     Download,
 } from "lucide-react";
-
 import html2canvas from "html2canvas";
-
 import TicketDownloadTemplate from "./TicketDownloadTemplate";
-
+import { useNavigate } from "react-router-dom";
 
 /* =========================================================
    DATE HELPERS
@@ -147,26 +145,14 @@ const cleanDescription = (value) => {
     }
 };
 
-
-/* =========================================================
-   EVENT DETAILS MODAL
-========================================================= */
-
 const EventDetailsModal = ({
     event,
     isOpen,
     onClose,
 }) => {
-    /* =======================================================
-       TICKET DOWNLOAD REF
-    ======================================================= */
 
     const ticketDownloadRef = useRef(null);
-
-
-    /* =======================================================
-       LOCK BODY SCROLL
-    ======================================================= */
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!isOpen) return;
@@ -222,9 +208,6 @@ const EventDetailsModal = ({
 
     const formattedEndDate =
         formatDate(endDate);
-
-    const description =
-        cleanDescription(event.description);
 
     const image =
         event.image ||
@@ -773,34 +756,6 @@ const EventDetailsModal = ({
                                             )}
                                     </div>
 
-
-                                    {/* =====================================
-                      DESCRIPTION
-                  ====================================== */}
-
-                                    {description && (
-                                        <div className="mt-5">
-                                            <h3 className="flex items-center gap-2 text-sm font-black text-[#182322]">
-                                                <Tag
-                                                    size={16}
-                                                    className="text-[#44807F]"
-                                                />
-
-                                                About this event
-                                            </h3>
-
-                                            <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-[#182322]/65">
-                                                {description}
-                                            </p>
-                                        </div>
-                                    )}
-
-
-                                    {/* =====================================
-                      BOOKING DETAILS
-                      Only show for booked event
-                  ====================================== */}
-
                                     {event.isBooked && (
                                         <div className="mt-5 rounded-md border border-[#44807F]/15 bg-[#44807F]/5 p-4">
                                             <p className="text-[10px] font-bold uppercase tracking-wider text-[#182322]/45">
@@ -932,20 +887,24 @@ const EventDetailsModal = ({
                                         Download Ticket
                                     </button>
                                 ) : bookingUrl ? (
-                                    /* Book Tickets */
-
-                                    <a
-                                        href={bookingUrl}
+                                    <button
+                                        type="button"
                                         target="_blank"
-                                        rel="noopener noreferrer"
+                                        onClick={() => {
+                                            onClose();
+
+                                            navigate(`/event/${event.id || event._id || "details"}`, {
+                                                state: {
+                                                    event,
+                                                },
+                                            });
+                                        }}
                                         className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#FEDF24] px-5 py-3 text-sm font-black text-[#182322] transition duration-200 hover:bg-[#44807F] hover:text-white sm:flex-none"
                                     >
-                                        Book Tickets
+                                        View More
 
-                                        <ExternalLink
-                                            size={16}
-                                        />
-                                    </a>
+                                        <ExternalLink size={16} />
+                                    </button>
                                 ) : (
                                     /* Booking unavailable */
 
