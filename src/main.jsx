@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, useLocation } from 'react-router-dom'
 import PrivacyPolicy from './Pages/PrivacyPolicy.jsx'
 import TermsConditions from './Pages/Terms-Cond.jsx'
 import Layout from './Layout/Layout.jsx'
@@ -54,7 +54,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <RouterProvider router={router} />
-      <FloatingWhatsApp />
+      {/* <FloatingWhatsApp /> */}
     </AuthProvider>
   </StrictMode>,
 )

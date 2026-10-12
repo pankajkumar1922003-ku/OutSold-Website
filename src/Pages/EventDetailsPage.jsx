@@ -43,6 +43,18 @@ const cleanEventTitle = (value) => {
         .trim();
 };
 
+const getPrice = (tiers = []) => {
+    if (!Array.isArray(tiers) || !tiers.length) return "Free";
+
+    const prices = tiers
+        .map((tier) => Number(tier.price))
+        .filter((price) => Number.isFinite(price));
+
+    if (!prices.length) return "Free";
+
+    return `₹${Math.min(...prices)}`;
+};
+
 /* -------------------------------------------------------------------------- */
 /* CREATE EVENT SLUG                                                          */
 /* -------------------------------------------------------------------------- */
@@ -74,7 +86,7 @@ const toValidDate = (value) => {
         ) {
             date = new Date(
                 value.seconds * 1000 +
-                    (value.nanoseconds || 0) / 1000000
+                (value.nanoseconds || 0) / 1000000
             );
         } else if (value instanceof Date) {
             date = value;
@@ -242,8 +254,8 @@ const EventDetailsPage = () => {
 
         const eventTitle = cleanEventTitle(
             data.title ||
-                data.eventName ||
-                "Untitled Event"
+            data.eventName ||
+            "Untitled Event"
         );
 
         return {
@@ -300,7 +312,7 @@ const EventDetailsPage = () => {
                 data.venue || "",
 
             price:
-                data.pricing || "Free",
+                data.pricing || getPrice(data.tiers),
 
             image:
                 data.coverImageDesktop ||
@@ -388,8 +400,8 @@ const EventDetailsPage = () => {
 
         const eventTitle = cleanEventTitle(
             data.eventName ||
-                data.title ||
-                "Untitled Event"
+            data.title ||
+            "Untitled Event"
         );
 
         return {
@@ -445,7 +457,7 @@ const EventDetailsPage = () => {
                 "",
 
             price:
-                data.pricing || "Free",
+                data.pricing || getPrice(data.tiers),
 
             image:
                 data.coverImageDesktop ||
@@ -600,7 +612,7 @@ const EventDetailsPage = () => {
                             if (
                                 !data.status ||
                                 data.status ===
-                                    "published"
+                                "published"
                             ) {
                                 if (
                                     !data.isPrivate
@@ -651,7 +663,7 @@ const EventDetailsPage = () => {
                             if (
                                 (!data.status ||
                                     data.status ===
-                                        "published") &&
+                                    "published") &&
                                 !data.isPrivate
                             ) {
                                 normalizedEvent =
@@ -688,7 +700,7 @@ const EventDetailsPage = () => {
 
                         for (
                             const companyDoc of
-                                companiesSnapshot.docs
+                            companiesSnapshot.docs
                         ) {
                             if (!isActive) return;
 
@@ -726,7 +738,7 @@ const EventDetailsPage = () => {
                                 if (
                                     data.status &&
                                     data.status !==
-                                        "published"
+                                    "published"
                                 ) {
                                     continue;
                                 }
@@ -764,9 +776,9 @@ const EventDetailsPage = () => {
                                 "submission_"
                             )
                                 ? routeEventId.replace(
-                                      "submission_",
-                                      ""
-                                  )
+                                    "submission_",
+                                    ""
+                                )
                                 : routeEventId;
 
                         const eventRef = doc(
@@ -787,7 +799,7 @@ const EventDetailsPage = () => {
                             if (
                                 (!data.status ||
                                     data.status ===
-                                        "published") &&
+                                    "published") &&
                                 !data.isPrivate
                             ) {
                                 normalizedEvent =
@@ -832,7 +844,7 @@ const EventDetailsPage = () => {
 
                         for (
                             const companyDoc of
-                                companiesSnapshot.docs
+                            companiesSnapshot.docs
                         ) {
                             if (!isActive) return;
 
@@ -857,7 +869,7 @@ const EventDetailsPage = () => {
 
                             for (
                                 const eventDoc of
-                                    eventsSnapshot.docs
+                                eventsSnapshot.docs
                             ) {
                                 const data =
                                     eventDoc.data();
@@ -865,7 +877,7 @@ const EventDetailsPage = () => {
                                 if (
                                     data.status &&
                                     data.status !==
-                                        "published"
+                                    "published"
                                 ) {
                                     continue;
                                 }
@@ -879,8 +891,8 @@ const EventDetailsPage = () => {
                                 const eventTitle =
                                     cleanEventTitle(
                                         data.title ||
-                                            data.eventName ||
-                                            ""
+                                        data.eventName ||
+                                        ""
                                     );
 
                                 const eventSlug =
@@ -890,11 +902,11 @@ const EventDetailsPage = () => {
 
                                 if (
                                     eventSlug ===
-                                        requestedSlug ||
+                                    requestedSlug ||
                                     eventTitle
                                         .toLowerCase()
                                         .trim() ===
-                                        requestedSlug
+                                    requestedSlug
                                 ) {
                                     normalizedEvent =
                                         normalizeCompanyEvent(
@@ -934,7 +946,7 @@ const EventDetailsPage = () => {
 
                             for (
                                 const eventDoc of
-                                    submissionsSnapshot.docs
+                                submissionsSnapshot.docs
                             ) {
                                 const data =
                                     eventDoc.data();
@@ -942,7 +954,7 @@ const EventDetailsPage = () => {
                                 if (
                                     data.status &&
                                     data.status !==
-                                        "published"
+                                    "published"
                                 ) {
                                     continue;
                                 }
@@ -956,8 +968,8 @@ const EventDetailsPage = () => {
                                 const eventTitle =
                                     cleanEventTitle(
                                         data.eventName ||
-                                            data.title ||
-                                            ""
+                                        data.title ||
+                                        ""
                                     );
 
                                 const eventSlug =
@@ -967,11 +979,11 @@ const EventDetailsPage = () => {
 
                                 if (
                                     eventSlug ===
-                                        requestedSlug ||
+                                    requestedSlug ||
                                     eventTitle
                                         .toLowerCase()
                                         .trim() ===
-                                        requestedSlug
+                                    requestedSlug
                                 ) {
                                     normalizedEvent =
                                         normalizeSubmittedEvent(
@@ -1274,36 +1286,35 @@ const EventDetailsPage = () => {
         event.bookingUrl ||
         event.ticketBookingUrl ||
         (event.source === "company" &&
-        event.id
+            event.id
             ? (() => {
-                  const title =
-                      cleanEventTitle(
-                          event.title ||
-                              event.eventName ||
-                              "event"
-                      );
+                const title =
+                    cleanEventTitle(
+                        event.title ||
+                        event.eventName ||
+                        "event"
+                    );
 
-                  const slug =
-                      createEventSlug(
-                          title
-                      );
+                const slug =
+                    createEventSlug(
+                        title
+                    );
 
-                  const baseUrl =
-                      event.subdomain
-                          ? `https://${event.subdomain}.outsold.in`
-                          : "https://app.outsold.in";
+                const baseUrl =
+                    event.subdomain
+                        ? `https://${event.subdomain}.outsold.in`
+                        : "https://app.outsold.in";
 
-                  return `${baseUrl}/e/${
-                      slug || "event"
-                  }--${event.id}`;
-              })()
+                return `${baseUrl}/e/${slug || "event"
+                    }--${event.id}`;
+            })()
             : "");
 
     const hasDifferentEndDate =
         formattedEndDate &&
         formattedStartDate &&
         formattedEndDate !==
-            formattedStartDate;
+        formattedStartDate;
 
     /* ---------------------------------------------------------------------- */
     /* BOOK TICKET                                                            */
@@ -1356,7 +1367,7 @@ const EventDetailsPage = () => {
                 )}`;
         } else if (
             event.source ===
-                "event_submission" &&
+            "event_submission" &&
             event.id
         ) {
             const submissionId =
@@ -1364,9 +1375,9 @@ const EventDetailsPage = () => {
                     "submission_"
                 )
                     ? event.id.replace(
-                          "submission_",
-                          ""
-                      )
+                        "submission_",
+                        ""
+                    )
                     : event.id;
 
             shareUrl =
@@ -1381,31 +1392,30 @@ const EventDetailsPage = () => {
             const shareTitle =
                 cleanEventTitle(
                     event.title ||
-                        event.eventName ||
-                        "Event"
+                    event.eventName ||
+                    "Event"
                 );
 
             const slug =
                 event.slug &&
-                event.slug !== "null"
+                    event.slug !== "null"
                     ? createEventSlug(
-                          event.slug
-                      )
+                        event.slug
+                    )
                     : createEventSlug(
-                          shareTitle
-                      );
+                        shareTitle
+                    );
 
             shareUrl =
-                `${window.location.origin}/event/${
-                    slug || "event"
+                `${window.location.origin}/event/${slug || "event"
                 }`;
         }
 
         const shareTitle =
             cleanEventTitle(
                 event.title ||
-                    event.eventName ||
-                    "Event"
+                event.eventName ||
+                "Event"
             );
 
         const shareText =
@@ -1546,11 +1556,10 @@ const EventDetailsPage = () => {
                                 aria-pressed={
                                     isWishlisted
                                 }
-                                className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border backdrop-blur-md transition-all duration-200 md:h-11 md:w-11 ${
-                                    isWishlisted
-                                        ? "border-[#FF2D55] bg-white text-[#FF2D55] shadow-[0_5px_14px_rgba(255,45,85,0.18)]"
-                                        : "border-white/30 bg-black/45 text-white hover:bg-white hover:text-[#182322]"
-                                }`}
+                                className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border backdrop-blur-md transition-all duration-200 md:h-11 md:w-11 ${isWishlisted
+                                    ? "border-[#FF2D55] bg-white text-[#FF2D55] shadow-[0_5px_14px_rgba(255,45,85,0.18)]"
+                                    : "border-white/30 bg-black/45 text-white hover:bg-white hover:text-[#182322]"
+                                    }`}
                             >
                                 <Heart
                                     size={21}
@@ -1585,11 +1594,11 @@ const EventDetailsPage = () => {
                         {/* Category */}
                         {(event.category ||
                             event.otherCategory) && (
-                            <span className="absolute bottom-2 left-4 z-30 rounded-full bg-[#FEDF24] p-2 text-xs font-black uppercase tracking-wide text-[#182322] shadow-lg md:bottom-5 md:px-4 md:py-2 sm:bottom-7 sm:left-7">
-                                {event.otherCategory ||
-                                    event.category}
-                            </span>
-                        )}
+                                <span className="absolute bottom-2 left-4 z-30 rounded-full bg-[#FEDF24] p-2 text-xs font-black uppercase tracking-wide text-[#182322] shadow-lg md:bottom-5 md:px-4 md:py-2 sm:bottom-7 sm:left-7">
+                                    {event.otherCategory ||
+                                        event.category}
+                                </span>
+                            )}
                     </div>
                 ) : (
                     <div className="flex min-h-[55vh] items-center justify-center text-sm font-bold text-white/50">
@@ -1606,8 +1615,8 @@ const EventDetailsPage = () => {
                         <h1 className="max-w-4xl text-3xl font-black leading-tight text-[#182322] sm:text-4xl lg:text-5xl">
                             {cleanEventTitle(
                                 event.title ||
-                                    event.eventName ||
-                                    "Untitled Event"
+                                event.eventName ||
+                                "Untitled Event"
                             )}
                         </h1>
 
@@ -1676,26 +1685,26 @@ const EventDetailsPage = () => {
 
                         {(event.venue ||
                             event.location) && (
-                            <div className="flex items-start gap-4 rounded-2xl border border-[#182322]/8 bg-white p-4 shadow-sm sm:col-span-2">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#44807F]/10">
-                                    <MapPin
-                                        size={20}
-                                        className="text-[#44807F]"
-                                    />
-                                </div>
+                                <div className="flex items-start gap-4 rounded-2xl border border-[#182322]/8 bg-white p-4 shadow-sm sm:col-span-2">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#44807F]/10">
+                                        <MapPin
+                                            size={20}
+                                            className="text-[#44807F]"
+                                        />
+                                    </div>
 
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#182322]/40">
-                                        Location
-                                    </p>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#182322]/40">
+                                            Location
+                                        </p>
 
-                                    <p className="mt-1 break-words text-sm font-black text-[#182322] sm:text-base">
-                                        {event.venue ||
-                                            event.location}
-                                    </p>
+                                        <p className="mt-1 break-words text-sm font-black text-[#182322] sm:text-base">
+                                            {event.venue ||
+                                                event.location}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
                         {event.price && (
                             <div className="flex items-start gap-4 rounded-2xl border border-[#182322]/8 bg-white p-4 shadow-sm">
@@ -1726,26 +1735,26 @@ const EventDetailsPage = () => {
 
                         {(event.capacity ||
                             event.totalSeats) && (
-                            <div className="flex items-start gap-4 rounded-2xl border border-[#182322]/8 bg-white p-4 shadow-sm">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#44807F]/10">
-                                    <Users
-                                        size={20}
-                                        className="text-[#44807F]"
-                                    />
-                                </div>
+                                <div className="flex items-start gap-4 rounded-2xl border border-[#182322]/8 bg-white p-4 shadow-sm">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#44807F]/10">
+                                        <Users
+                                            size={20}
+                                            className="text-[#44807F]"
+                                        />
+                                    </div>
 
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#182322]/40">
-                                        Capacity
-                                    </p>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#182322]/40">
+                                            Capacity
+                                        </p>
 
-                                    <p className="mt-1 text-sm font-black text-[#182322] sm:text-base">
-                                        {event.capacity ||
-                                            event.totalSeats}
-                                    </p>
+                                        <p className="mt-1 text-sm font-black text-[#182322] sm:text-base">
+                                            {event.capacity ||
+                                                event.totalSeats}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
                     </div>
 
                     {/* Description */}
