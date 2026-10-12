@@ -21,7 +21,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOutsoldEvents } from "../hooks/useOutsoldEvents";
 import { db } from "../lib/firebase";
-import EventDetailsModal from "../Components/EventDetailsModal";
 import {
     collection,
     onSnapshot,
@@ -351,20 +350,29 @@ const EventsHome = () => {
     const [wishlistToast, setWishlistToast] = useState(null);
     const { user } = useAuth();
     const { events: fetchedEvents = [] } = useOutsoldEvents();
-    const [selectedEvent, setSelectedEvent] = useState(null);
-    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+
 
     const openEvent = (event) => {
-        if (!event) return;
+        if (!event?.id) return;
 
-        setSelectedEvent(event);
-        setIsEventModalOpen(true);
+        const source =
+            event.source ||
+            (String(event.id).startsWith("submission_")
+                ? "event_submission"
+                : "company");
+
+        const params = new URLSearchParams();
+        params.set("source", source);
+
+        if (source === "company" && event.companyId) {
+            params.set("companyId", event.companyId);
+        }
+
+        navigate(
+            `/event/${encodeURIComponent(event.id)}?${params.toString()}`
+        );
     };
 
-    const closeEventModal = () => {
-        setIsEventModalOpen(false);
-        setSelectedEvent(null);
-    };
 
     const events = useMemo(
         () =>
@@ -767,6 +775,13 @@ const EventsHome = () => {
                     price: event.price || "",
                     slug: event.slug || null,
                     subdomain: event.subdomain || null,
+                    source:
+                        event.source ||
+                        (String(event.id).startsWith("submission_")
+                            ? "event_submission"
+                            : "company"),
+                    bookingUrl: event.bookingUrl || event.ticketBookingUrl || "",
+                    ticketBookingUrl: event.ticketBookingUrl || event.bookingUrl || "",
                     companyId: event.companyId || null,
                     createdAt: new Date(),
                 });
@@ -1725,9 +1740,7 @@ const EventsHome = () => {
                                             <EventCard
                                                 event={event}
                                                 onOpen={openEvent}
-                                                interested={interestedEvents.includes(
-                                                    event.id
-                                                )}
+                                                interested={interestedEvents.includes(event.id)}
                                                 onToggle={toggleInterested}
                                             />
                                         </div>
@@ -1743,9 +1756,7 @@ const EventsHome = () => {
                                     <EventCard
                                         event={event}
                                         onOpen={openEvent}
-                                        interested={interestedEvents.includes(
-                                            event.id
-                                        )}
+                                        interested={interestedEvents.includes(event.id)}
                                         onToggle={toggleInterested}
                                     />
                                 </div>
@@ -1894,12 +1905,6 @@ const EventsHome = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            <EventDetailsModal
-                event={selectedEvent}
-                isOpen={isEventModalOpen}
-                onClose={closeEventModal}
-            />
         </section>
     );
 };

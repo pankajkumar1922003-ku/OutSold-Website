@@ -265,6 +265,30 @@ const AccountPage = () => {
     setIsEventModalOpen(true);
   };
 
+
+  const handleOpenWishlistEvent = (event) => {
+    if (!event?.id) return;
+
+    // Older wishlist records ke liye source identify karo
+    const source =
+      event.source ||
+      (String(event.id).startsWith("submission_")
+        ? "event_submission"
+        : "company");
+
+    const params = new URLSearchParams();
+    params.set("source", source);
+
+    if (source === "company" && event.companyId) {
+      params.set("companyId", event.companyId);
+    }
+
+    navigate(
+      `/event/${encodeURIComponent(event.id)}?${params.toString()}`
+    );
+  };
+
+
   const handleCloseEvent = () => {
     setIsEventModalOpen(false);
     setSelectedEvent(null);
@@ -701,7 +725,7 @@ const AccountPage = () => {
               events={wishlist}
               railId="wishlist-events-rail"
               label="wishlist events"
-              onOpenEvent={handleOpenEvent}
+              onOpenEvent={handleOpenWishlistEvent}
             />
           )}
         </section>

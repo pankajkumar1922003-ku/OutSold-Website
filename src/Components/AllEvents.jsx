@@ -17,8 +17,8 @@ import {
     X,
 } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useOutsoldEvents } from "../hooks/useOutsoldEvents";
-import EventDetailsModal from "./EventDetailsModal";
 import { db } from "../lib/firebase";
 import {
     collection,
@@ -840,8 +840,7 @@ const EventsPage = () => {
     const { events: fetchedEvents = [] } = useOutsoldEvents();
     const [interestedEvents, setInterestedEvents] = useState([]);
     const [wishlistToast, setWishlistToast] = useState(null);
-    const [selectedEvent, setSelectedEvent] = useState(null);
-    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+    const navigate = useNavigate();
     const { user } = useAuth();
 
     const events = useMemo(() => {
@@ -1003,16 +1002,26 @@ const EventsPage = () => {
 
 
     const openEvent = (event) => {
-        if (!event) return;
+        if (!event?.id) return;
 
-        setSelectedEvent(event);
-        setIsEventModalOpen(true);
+        const source =
+            event.source ||
+            (String(event.id).startsWith("submission_")
+                ? "event_submission"
+                : "company");
+
+        const params = new URLSearchParams();
+        params.set("source", source);
+
+        if (source === "company" && event.companyId) {
+            params.set("companyId", event.companyId);
+        }
+
+        navigate(
+            `/event/${encodeURIComponent(event.id)}?${params.toString()}`
+        );
     };
 
-    const closeEventModal = () => {
-        setIsEventModalOpen(false);
-        setSelectedEvent(null);
-    };
 
     const toggleInterested = async (eventId) => {
         if (!user?.uid) {
@@ -1056,6 +1065,13 @@ const EventsPage = () => {
                     slug: event.slug || null,
                     subdomain: event.subdomain || null,
                     companyId: event.companyId || null,
+                    source:
+                        event.source ||
+                        (String(event.id).startsWith("submission_")
+                            ? "event_submission"
+                            : "company"),
+                    bookingUrl: event.bookingUrl || event.ticketBookingUrl || "",
+                    ticketBookingUrl: event.ticketBookingUrl || event.bookingUrl || "",
                     createdAt: new Date(),
                 });
                 setWishlistToast({
@@ -1735,11 +1751,6 @@ const EventsPage = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-            <EventDetailsModal
-                event={selectedEvent}
-                isOpen={isEventModalOpen}
-                onClose={closeEventModal}
-            />
         </main>
     );
 };

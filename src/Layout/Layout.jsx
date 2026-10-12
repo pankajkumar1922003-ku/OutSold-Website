@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import LocationOnboarding from "../Components/LocationOnboarding";
+import FloatingWhatsApp from "../Components/FloatingWhatsApp";
 
 const Layout = () => {
   const location = useLocation();
@@ -10,6 +11,7 @@ const Layout = () => {
   return (
     <>
       {!isEventDetailsPage && <Navbar />}
+      {!isEventDetailsPage && <FloatingWhatsApp />}
       <main>
         <Outlet />
       </main>
