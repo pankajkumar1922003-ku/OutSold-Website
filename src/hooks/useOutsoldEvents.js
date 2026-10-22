@@ -126,7 +126,7 @@ const mapCompanyEvent = (id, data, companyId, companyData = {}) => {
         title: cleanEventTitle(data.title || "Untitled Event"),
         category: data.category || "Other",
         isPrivate: Boolean(data.isPrivate),
-        isWebsite: data.isWebsite === true,
+        isWebsite: data.isWebsite === true || data.isWebsite === "true",
         status: data.status,
 
         otherCategory:
@@ -458,7 +458,7 @@ export function useOutsoldEvents() {
                     const eventsQuery = query(
                         eventsRef,
                         where("status", "==", "published"),
-                        where("isWebsite", "==", "true")
+                        where("isWebsite", "in", [true, "true"])
                     );
 
                     const unsubscribe = onSnapshot(
