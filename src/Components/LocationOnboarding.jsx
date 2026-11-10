@@ -1,1151 +1,876 @@
 import { useEffect, useRef, useState } from "react";
 import {
-    MapPin,
-    Navigation,
-    ArrowRight,
-    Loader2,
-    Sparkles,
-    Search,
-    CheckCircle2,
+  MapPin,
+  Navigation,
+  ArrowRight,
+  Loader2,
+  Sparkles,
+  Search,
+  CheckCircle2,
 } from "lucide-react";
 
 const STORAGE_KEY = "outsold_user_profile";
 
 const extractCityName = (item) => {
-    const a = item?.address || {};
+  const a = item?.address || {};
 
-    return (
-        a.city ||
-        a.town ||
-        a.municipality ||
-        ""
-    );
+  return a.city || a.town || a.municipality || "";
 };
 const getSavedProfile = () => {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
 
-        if (!saved) return null;
+    if (!saved) return null;
 
-        const profile = JSON.parse(saved);
+    const profile = JSON.parse(saved);
 
-        if (!profile || typeof profile !== "object") {
-            return null;
-        }
-
-        return profile;
-    } catch {
-        return null;
+    if (!profile || typeof profile !== "object") {
+      return null;
     }
+
+    return profile;
+  } catch {
+    return null;
+  }
 };
 
 const LocationOnboarding = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [locationInput, setLocationInput] = useState("");
-    const [coordinates, setCoordinates] = useState(null);
-    const [locationSource, setLocationSource] = useState(null);
-    const [selectedSuggestion, setSelectedSuggestion] = useState(null);
-    const [suggestions, setSuggestions] = useState([]);
-    const [isDetecting, setIsDetecting] = useState(false);
-    const [isSearching, setIsSearching] = useState(false);
-    const [locationError, setLocationError] = useState("");
-    const [permissionIssue, setPermissionIssue] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const detectReqId = useRef(0);
-    const searchReqId = useRef(0);
-    const searchTimer = useRef(null);
-    const autoDetectTriedRef = useRef(false);
-    const manualEditRef = useRef(false);
-    const latestSavedLocationRef = useRef("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [locationInput, setLocationInput] = useState("");
+  const [coordinates, setCoordinates] = useState(null);
+  const [locationSource, setLocationSource] = useState(null);
+  const [selectedSuggestion, setSelectedSuggestion] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [permissionIssue, setPermissionIssue] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const detectReqId = useRef(0);
+  const searchReqId = useRef(0);
+  const searchTimer = useRef(null);
+  const autoDetectTriedRef = useRef(false);
+  const manualEditRef = useRef(false);
+  const latestSavedLocationRef = useRef("");
 
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        Load saved location
     ------------------------------------------------------- */
 
-    const loadProfileIntoState = () => {
-        const profile = getSavedProfile();
+  const loadProfileIntoState = () => {
+    const profile = getSavedProfile();
 
-        if (!profile) {
-            setLocationInput("");
-            setCoordinates(null);
-            setLocationSource(null);
-            setSelectedSuggestion(null);
+    if (!profile) {
+      setLocationInput("");
+      setCoordinates(null);
+      setLocationSource(null);
+      setSelectedSuggestion(null);
 
-            latestSavedLocationRef.current = "";
+      latestSavedLocationRef.current = "";
 
-            return false;
-        }
+      return false;
+    }
 
-        const savedLocation = profile?.location || "";
+    const savedLocation = profile?.location || "";
 
-        setLocationInput(savedLocation);
-        setCoordinates(profile?.coordinates || null);
-        setLocationSource(profile?.locationSource || "manual");
+    setLocationInput(savedLocation);
+    setCoordinates(profile?.coordinates || null);
+    setLocationSource(profile?.locationSource || "manual");
 
-        setSelectedSuggestion(
-            savedLocation
-                ? {
-                    display_name: savedLocation,
-                    lat: profile?.coordinates?.latitude,
-                    lon: profile?.coordinates?.longitude,
-                }
-                : null
-        );
+    setSelectedSuggestion(
+      savedLocation
+        ? {
+            display_name: savedLocation,
+            lat: profile?.coordinates?.latitude,
+            lon: profile?.coordinates?.longitude,
+          }
+        : null,
+    );
 
-        latestSavedLocationRef.current = savedLocation;
+    latestSavedLocationRef.current = savedLocation;
 
-        return !!profile?.completed;
-    };
+    return !!profile?.completed;
+  };
 
-    useEffect(() => {
-        const profile = getSavedProfile();
-
-        if (profile?.completed) {
-            const savedLocation = profile?.location || "";
-
-            setLocationInput(savedLocation);
-            setCoordinates(profile?.coordinates || null);
-            setLocationSource(profile?.locationSource || "manual");
-
-            setSelectedSuggestion(
-                savedLocation
-                    ? {
-                        display_name: savedLocation,
-                        lat: profile?.coordinates?.latitude,
-                        lon: profile?.coordinates?.longitude,
-                    }
-                    : null
-            );
-
-            latestSavedLocationRef.current = savedLocation;
-
-            setIsOpen(false);
-        } else {
-            setLocationInput("");
-            setCoordinates(null);
-            setLocationSource(null);
-            setSelectedSuggestion(null);
-
-            latestSavedLocationRef.current = "";
-
-            setIsOpen(true);
-
-            autoDetectTriedRef.current = false;
-            manualEditRef.current = false;
-        }
-    }, []);
-
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        Navbar trigger
     ------------------------------------------------------- */
 
-    useEffect(() => {
-        const openFromNavbar = () => {
-            loadProfileIntoState();
+  useEffect(() => {
+    const openFromNavbar = () => {
+      loadProfileIntoState();
 
-            setLocationError("");
-            setPermissionIssue(false);
+      setLocationError("");
+      setPermissionIssue(false);
 
-            setSuggestions([]);
-            setIsSearching(false);
-            setSaving(false);
+      setSuggestions([]);
+      setIsSearching(false);
+      setSaving(false);
 
-            autoDetectTriedRef.current = true;
-            manualEditRef.current = false;
+      autoDetectTriedRef.current = true;
+      manualEditRef.current = false;
 
-            setIsOpen(true);
-        };
-
-        window.addEventListener(
-            "openLocationOnboarding",
-            openFromNavbar
-        );
-
-        return () => {
-            window.removeEventListener(
-                "openLocationOnboarding",
-                openFromNavbar
-            );
-        };
-    }, []);
-
-    /* -------------------------------------------------------
-       Auto detect
-    ------------------------------------------------------- */
-
-    useEffect(() => {
-        if (!isOpen) return;
-
-        if (autoDetectTriedRef.current) return;
-
-        if (manualEditRef.current) return;
-
-        if (locationInput.trim()) return;
-
-        autoDetectTriedRef.current = true;
-
-        const timer = setTimeout(() => {
-            detectLocation();
-        }, 300);
-
-        return () => clearTimeout(timer);
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]);
-
-    /* -------------------------------------------------------
-       Reverse geocode
-    ------------------------------------------------------- */
-
-    const getCityFromCoordinates = async (
-        latitude,
-        longitude
-    ) => {
-        try {
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
-                {
-                    headers: {
-                        Accept: "application/json",
-                    },
-                }
-            );
-
-            if (!res.ok) {
-                throw new Error("Reverse geocode failed");
-            }
-
-            const data = await res.json();
-
-            return extractCityName({
-                address: data?.address,
-                display_name: "",
-            });
-        } catch {
-            return "";
-        }
+      setIsOpen(true);
     };
 
-    /* -------------------------------------------------------
-       Forward geocode
-    ------------------------------------------------------- */
+    window.addEventListener("openLocationOnboarding", openFromNavbar);
 
-    const geocodeCity = async (query) => {
-        try {
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&countrycodes=in&q=${encodeURIComponent(
-                    query
-                )}`,
-                {
-                    headers: {
-                        Accept: "application/json",
-                    },
-                }
-            );
-
-            if (!res.ok) {
-                return null;
-            }
-
-            const data = await res.json();
-
-            if (!Array.isArray(data) || data.length === 0) {
-                return null;
-            }
-
-            const normalizedQuery = query
-                .trim()
-                .toLowerCase();
-
-            const matchingCity = data.find((item) => {
-                const city = extractCityName(item)
-                    .trim()
-                    .toLowerCase();
-
-                return (
-                    city === normalizedQuery ||
-                    city.includes(normalizedQuery) ||
-                    normalizedQuery.includes(city)
-                );
-            });
-
-            const item = matchingCity || data[0];
-
-            if (!item?.lat || !item?.lon) {
-                return null;
-            }
-
-            return {
-                latitude: Number(item.lat),
-                longitude: Number(item.lon),
-            };
-        } catch {
-            return null;
-        }
+    return () => {
+      window.removeEventListener("openLocationOnboarding", openFromNavbar);
     };
+  }, []);
 
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        GPS detect
     ------------------------------------------------------- */
 
-    const detectLocation = () => {
-        if (!navigator.geolocation) {
-            setPermissionIssue(true);
+  /* -------------------------------------------------------
+       Reverse geocode
+    ------------------------------------------------------- */
 
-            setLocationError(
-                "Location is not supported on this device. Please enter your city manually."
-            );
+  const getCityFromCoordinates = async (latitude, longitude) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
 
-            return;
+      if (!res.ok) {
+        throw new Error("Reverse geocode failed");
+      }
+
+      const data = await res.json();
+
+      return extractCityName({
+        address: data?.address,
+        display_name: "",
+      });
+    } catch {
+      return "";
+    }
+  };
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      setPermissionIssue(true);
+
+      setLocationError(
+        "Location is not supported on this device. Please enter your city manually.",
+      );
+
+      return;
+    }
+
+    const reqId = ++detectReqId.current;
+
+    setIsDetecting(true);
+    setLocationError("");
+    setPermissionIssue(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        if (reqId !== detectReqId.current || manualEditRef.current) {
+          return;
         }
 
-        const reqId = ++detectReqId.current;
+        const { latitude, longitude } = position.coords;
 
-        setIsDetecting(true);
-        setLocationError("");
-        setPermissionIssue(false);
+        const city = await getCityFromCoordinates(latitude, longitude);
 
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                /*
-                  If user started typing while GPS was running,
-                  completely ignore GPS response.
-                */
-                if (
-                    reqId !== detectReqId.current ||
-                    manualEditRef.current
-                ) {
-                    return;
-                }
+        if (reqId !== detectReqId.current || manualEditRef.current) {
+          return;
+        }
 
-                const {
-                    latitude,
-                    longitude,
-                } = position.coords;
+        setIsDetecting(false);
 
-                const city =
-                    await getCityFromCoordinates(
-                        latitude,
-                        longitude
-                    );
+        if (!city) {
+          setLocationError(
+            "Your location was detected, but we couldn't find your city name. Please select your city manually.",
+          );
 
-                /*
-                  User may have typed while reverse geocoding
-                  was happening.
-                */
-                if (
-                    reqId !== detectReqId.current ||
-                    manualEditRef.current
-                ) {
-                    return;
-                }
+          return;
+        }
 
-                setIsDetecting(false);
+        setCoordinates({
+          latitude,
+          longitude,
+        });
 
-                if (!city) {
-                    setLocationError(
-                        "Your location was detected, but we couldn't find your city name. Please select your city manually."
-                    );
+        setLocationInput(city);
 
-                    return;
-                }
+        setSelectedSuggestion({
+          display_name: city,
+        });
 
-                setCoordinates({
-                    latitude,
-                    longitude,
-                });
+        setLocationSource("detected");
+      },
 
-                setLocationInput(city);
+      (error) => {
+        if (reqId !== detectReqId.current || manualEditRef.current) {
+          return;
+        }
 
-                setSelectedSuggestion({
-                    display_name: city,
-                });
+        setIsDetecting(false);
+        setPermissionIssue(true);
 
-                setLocationSource("detected");
-            },
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError(
+              "Please allow location access for OutSold to automatically find events near you.",
+            );
+            break;
 
-            (error) => {
-                if (
-                    reqId !== detectReqId.current ||
-                    manualEditRef.current
-                ) {
-                    return;
-                }
+          case error.POSITION_UNAVAILABLE:
+            setLocationError(
+              "Your phone's Location Services are turned off or unavailable. You can select your city manually.",
+            );
+            break;
 
-                setIsDetecting(false);
-                setPermissionIssue(true);
+          case error.TIMEOUT:
+            setLocationError(
+              "Location detection took too long. Please select your city manually.",
+            );
+            break;
 
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        setLocationError(
-                            "Please allow location access for OutSold to automatically find events near you."
-                        );
-                        break;
+          default:
+            setLocationError(
+              "We couldn't detect your location. Please select your city manually.",
+            );
+        }
+      },
 
-                    case error.POSITION_UNAVAILABLE:
-                        setLocationError(
-                            "Your phone's Location Services are turned off or unavailable. You can select your city manually."
-                        );
-                        break;
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      },
+    );
+  };
 
-                    case error.TIMEOUT:
-                        setLocationError(
-                            "Location detection took too long. Please select your city manually."
-                        );
-                        break;
+  /* -------------------------------------------------------
+       Auto detect
+    ------------------------------------------------------- */
 
-                    default:
-                        setLocationError(
-                            "We couldn't detect your location. Please select your city manually."
-                        );
-                }
-            },
+  useEffect(() => {
+    if (!isOpen) return;
 
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0,
-            }
-        );
-    };
+    if (autoDetectTriedRef.current) return;
 
-    /* -------------------------------------------------------
+    if (manualEditRef.current) return;
+
+    if (locationInput.trim()) return;
+
+    autoDetectTriedRef.current = true;
+
+    const timer = setTimeout(() => {
+      detectLocation();
+    }, 300);
+
+    return () => clearTimeout(timer);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  /* -------------------------------------------------------
        Search suggestions
     ------------------------------------------------------- */
 
-    const searchLocations = async (query, reqId) => {
-        try {
-            setIsSearching(true);
+  const searchLocations = async (query, reqId) => {
+    try {
+      setIsSearching(true);
 
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&countrycodes=in&featuretype=city&q=${encodeURIComponent(
-                    query
-                )}`,
-                {
-                    headers: {
-                        Accept: "application/json",
-                    },
-                }
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=10&countrycodes=in&featuretype=city&q=${encodeURIComponent(
+          query,
+        )}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error("Search failed");
+      }
+
+      const data = await res.json();
+
+      if (reqId !== searchReqId.current) {
+        return;
+      }
+
+      const normalizedQuery = query.trim().toLowerCase();
+
+      const validResults = Array.isArray(data)
+        ? data.filter((item) => {
+            if (!item?.lat || !item?.lon) {
+              return false;
+            }
+
+            const city = extractCityName(item).trim().toLowerCase();
+
+            if (!city) {
+              return false;
+            }
+
+            // Only actual city/town/municipality results
+            const placeType = String(item?.type || "").toLowerCase();
+
+            const addressType = String(item?.addresstype || "").toLowerCase();
+
+            const isCity =
+              placeType === "city" ||
+              placeType === "town" ||
+              addressType === "city" ||
+              addressType === "town";
+
+            if (!isCity) {
+              return false;
+            }
+
+            // Query must actually match the city name
+            return (
+              city.includes(normalizedQuery) || normalizedQuery.includes(city)
             );
+          })
+        : [];
 
-            if (!res.ok) {
-                throw new Error("Search failed");
-            }
+      // Remove duplicate city names
+      const uniqueCities = validResults.filter((item, index, array) => {
+        const city = extractCityName(item).trim().toLowerCase();
 
-            const data = await res.json();
+        return (
+          array.findIndex(
+            (other) => extractCityName(other).trim().toLowerCase() === city,
+          ) === index
+        );
+      });
 
-            if (reqId !== searchReqId.current) {
-                return;
-            }
+      setSuggestions(uniqueCities);
+    } catch {
+      if (reqId !== searchReqId.current) {
+        return;
+      }
 
-            const normalizedQuery = query.trim().toLowerCase();
-
-            const validResults = Array.isArray(data)
-                ? data.filter((item) => {
-                    if (!item?.lat || !item?.lon) {
-                        return false;
-                    }
-
-                    const city = extractCityName(item)
-                        .trim()
-                        .toLowerCase();
-
-                    if (!city) {
-                        return false;
-                    }
-
-                    // Only actual city/town/municipality results
-                    const placeType = String(
-                        item?.type || ""
-                    ).toLowerCase();
-
-                    const addressType = String(
-                        item?.addresstype || ""
-                    ).toLowerCase();
-
-                    const isCity =
-                        placeType === "city" ||
-                        placeType === "town" ||
-                        addressType === "city" ||
-                        addressType === "town";
-
-                    if (!isCity) {
-                        return false;
-                    }
-
-                    // Query must actually match the city name
-                    return (
-                        city.includes(normalizedQuery) ||
-                        normalizedQuery.includes(city)
-                    );
-                })
-                : [];
-
-            // Remove duplicate city names
-            const uniqueCities = validResults.filter(
-                (item, index, array) => {
-                    const city = extractCityName(item)
-                        .trim()
-                        .toLowerCase();
-
-                    return (
-                        array.findIndex(
-                            (other) =>
-                                extractCityName(other)
-                                    .trim()
-                                    .toLowerCase() === city
-                        ) === index
-                    );
-                }
-            );
-
-            setSuggestions(uniqueCities);
-        } catch {
-            if (reqId !== searchReqId.current) {
-                return;
-            }
-
-            setSuggestions([]);
-        } finally {
-            if (reqId === searchReqId.current) {
-                setIsSearching(false);
-            }
-        }
-    };
-    /* -------------------------------------------------------
+      setSuggestions([]);
+    } finally {
+      if (reqId === searchReqId.current) {
+        setIsSearching(false);
+      }
+    }
+  };
+  /* -------------------------------------------------------
        Manual typing
     ------------------------------------------------------- */
 
-    const handleLocationInput = (value) => {
-        /*
+  const handleLocationInput = (value) => {
+    /*
           The moment user types anything, GPS is cancelled
           and saved location is no longer re-injected.
         */
-        manualEditRef.current = true;
+    manualEditRef.current = true;
 
-        detectReqId.current += 1;
-        searchReqId.current += 1;
+    detectReqId.current += 1;
+    searchReqId.current += 1;
 
-        autoDetectTriedRef.current = true;
+    autoDetectTriedRef.current = true;
 
-        setLocationSource("manual");
-        setLocationInput(value);
+    setLocationSource("manual");
+    setLocationInput(value);
 
-        setCoordinates(null);
-        setSelectedSuggestion(null);
+    setCoordinates(null);
+    setSelectedSuggestion(null);
 
-        setLocationError("");
-        setPermissionIssue(false);
-        setSuggestions([]);
+    setLocationError("");
+    setPermissionIssue(false);
+    setSuggestions([]);
 
-        if (searchTimer.current) {
-            clearTimeout(searchTimer.current);
-        }
+    if (searchTimer.current) {
+      clearTimeout(searchTimer.current);
+    }
 
-        const trimmed = value.trim();
+    const trimmed = value.trim();
 
-        if (trimmed.length < 2) {
-            setIsSearching(false);
-            return;
-        }
+    if (trimmed.length < 2) {
+      setIsSearching(false);
+      return;
+    }
 
-        const reqId = ++searchReqId.current;
+    const reqId = ++searchReqId.current;
 
-        searchTimer.current = setTimeout(() => {
-            searchLocations(
-                trimmed,
-                reqId
-            );
-        }, 350);
-    };
+    searchTimer.current = setTimeout(() => {
+      searchLocations(trimmed, reqId);
+    }, 350);
+  };
 
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        Select suggestion
     ------------------------------------------------------- */
 
-    const handleSelectSuggestion = (item) => {
-        manualEditRef.current = true;
+  const handleSelectSuggestion = (item) => {
+    manualEditRef.current = true;
 
-        detectReqId.current += 1;
-        searchReqId.current += 1;
+    detectReqId.current += 1;
+    searchReqId.current += 1;
 
-        autoDetectTriedRef.current = true;
+    autoDetectTriedRef.current = true;
 
-        const cityName = extractCityName(item);
+    const cityName = extractCityName(item);
 
-        if (!cityName) {
-            setLocationError(
-                "Please select a valid location from the suggestions."
-            );
+    if (!cityName) {
+      setLocationError("Please select a valid location from the suggestions.");
 
-            return;
-        }
+      return;
+    }
 
-        setLocationInput(cityName);
+    setLocationInput(cityName);
 
-        setCoordinates({
-            latitude: Number(item.lat),
-            longitude: Number(item.lon),
-        });
+    setCoordinates({
+      latitude: Number(item.lat),
+      longitude: Number(item.lon),
+    });
 
-        setSelectedSuggestion(item);
+    setSelectedSuggestion(item);
 
-        setSuggestions([]);
-        setIsSearching(false);
-        setLocationError("");
-        setPermissionIssue(false);
+    setSuggestions([]);
+    setIsSearching(false);
+    setLocationError("");
+    setPermissionIssue(false);
 
-        setLocationSource("manual");
-    };
+    setLocationSource("manual");
+  };
 
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        Detect button
     ------------------------------------------------------- */
 
-    const handleDetectClick = () => {
-        manualEditRef.current = false;
+  const handleDetectClick = () => {
+    manualEditRef.current = false;
 
-        detectReqId.current += 1;
+    detectReqId.current += 1;
 
-        setLocationError("");
-        setPermissionIssue(false);
+    setLocationError("");
+    setPermissionIssue(false);
 
-        setLocationSource(null);
-        setCoordinates(null);
-        setSelectedSuggestion(null);
+    setLocationSource(null);
+    setCoordinates(null);
+    setSelectedSuggestion(null);
 
-        setLocationInput("");
-        setSuggestions([]);
+    setLocationInput("");
+    setSuggestions([]);
 
-        autoDetectTriedRef.current = true;
+    autoDetectTriedRef.current = true;
 
-        detectLocation();
-    };
+    detectLocation();
+  };
 
+  const handleContinue = async () => {
+    const trimmed = locationInput.trim();
 
-    const handleContinue = async () => {
-        const trimmed = locationInput.trim();
+    if (!trimmed) {
+      setLocationError("Please select your city or detect your location.");
+      return;
+    }
 
-        if (!trimmed) {
-            setLocationError(
-                "Please select your city or detect your location."
-            );
-            return;
-        }
+    /*
+     * Manual location must come from a valid suggestion.
+     * GPS-detected location already has selectedSuggestion.
+     */
+    if (locationSource === "manual" && !selectedSuggestion) {
+      setLocationError("Please select a valid city from the suggestions.");
+      return;
+    }
 
-        /*
-         * Manual location must come from a valid suggestion.
-         * GPS-detected location already has selectedSuggestion.
-         */
-        if (
-            locationSource === "manual" &&
-            !selectedSuggestion
-        ) {
-            setLocationError(
-                "Please select a valid city from the suggestions."
-            );
-            return;
-        }
+    setSaving(true);
+    setLocationError("");
 
-        setSaving(true);
-        setLocationError("");
+    let finalCoordinates = coordinates;
+    let finalCity = trimmed;
 
-        let finalCoordinates = coordinates;
-        let finalCity = trimmed;
+    /*
+     * For manually selected locations, use the
+     * selected suggestion's exact city and coordinates.
+     */
+    if (locationSource === "manual" && selectedSuggestion) {
+      const selectedCity = extractCityName(selectedSuggestion);
 
-        /*
-         * For manually selected locations, use the
-         * selected suggestion's exact city and coordinates.
-         */
-        if (
-            locationSource === "manual" &&
-            selectedSuggestion
-        ) {
-            const selectedCity =
-                extractCityName(selectedSuggestion);
-
-            if (
-                !selectedCity ||
-                !selectedSuggestion?.lat ||
-                !selectedSuggestion?.lon
-            ) {
-                setSaving(false);
-                setLocationError(
-                    "Please select a valid city from the suggestions."
-                );
-                return;
-            }
-
-            finalCity = selectedCity;
-
-            finalCoordinates = {
-                latitude: Number(
-                    selectedSuggestion.lat
-                ),
-                longitude: Number(
-                    selectedSuggestion.lon
-                ),
-            };
-        }
-
-        try {
-            const existingProfile =
-                getSavedProfile() || {};
-
-            const profile = {
-                ...existingProfile,
-                location: finalCity,
-                coordinates:
-                    finalCoordinates || null,
-                locationSource:
-                    locationSource || "manual",
-                completed: true,
-                updatedAt:
-                    new Date().toISOString(),
-            };
-
-            localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(profile)
-            );
-
-            latestSavedLocationRef.current =
-                finalCity;
-
-            window.dispatchEvent(
-                new CustomEvent("locationChanged", {
-                    detail: profile,
-                })
-            );
-        } catch {
-            setSaving(false);
-
-            setLocationError(
-                "Something went wrong while saving your location. Please try again."
-            );
-
-            return;
-        }
-
-        setCoordinates(
-            finalCoordinates || null
-        );
-
-        setSelectedSuggestion({
-            display_name: finalCity,
-            lat: finalCoordinates?.latitude,
-            lon: finalCoordinates?.longitude,
-        });
-
-        setLocationInput(finalCity);
-        setSuggestions([]);
-        setLocationError("");
-        setPermissionIssue(false);
+      if (
+        !selectedCity ||
+        !selectedSuggestion?.lat ||
+        !selectedSuggestion?.lon
+      ) {
         setSaving(false);
+        setLocationError("Please select a valid city from the suggestions.");
+        return;
+      }
 
-        manualEditRef.current = false;
-        autoDetectTriedRef.current = true;
+      finalCity = selectedCity;
 
-        setIsOpen(false);
+      finalCoordinates = {
+        latitude: Number(selectedSuggestion.lat),
+        longitude: Number(selectedSuggestion.lon),
+      };
+    }
 
-        const currentPath =
-            window.location.pathname;
+    try {
+      const existingProfile = getSavedProfile() || {};
 
-        if (currentPath !== "/") {
-            window.history.pushState(
-                {},
-                "",
-                "/"
-            );
+      const profile = {
+        ...existingProfile,
+        location: finalCity,
+        coordinates: finalCoordinates || null,
+        locationSource: locationSource || "manual",
+        completed: true,
+        updatedAt: new Date().toISOString(),
+      };
 
-            window.dispatchEvent(
-                new PopStateEvent("popstate")
-            );
-        }
-    };
-    /* -------------------------------------------------------
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+
+      latestSavedLocationRef.current = finalCity;
+
+      window.dispatchEvent(
+        new CustomEvent("locationChanged", {
+          detail: profile,
+        }),
+      );
+    } catch {
+      setSaving(false);
+
+      setLocationError(
+        "Something went wrong while saving your location. Please try again.",
+      );
+
+      return;
+    }
+
+    setCoordinates(finalCoordinates || null);
+
+    setSelectedSuggestion({
+      display_name: finalCity,
+      lat: finalCoordinates?.latitude,
+      lon: finalCoordinates?.longitude,
+    });
+
+    setLocationInput(finalCity);
+    setSuggestions([]);
+    setLocationError("");
+    setPermissionIssue(false);
+    setSaving(false);
+
+    manualEditRef.current = false;
+    autoDetectTriedRef.current = true;
+
+    setIsOpen(false);
+
+    const currentPath = window.location.pathname;
+
+    if (currentPath !== "/") {
+      window.history.pushState({}, "", "/");
+
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
+  };
+  /* -------------------------------------------------------
        Skip
     ------------------------------------------------------- */
 
-    const handleSkip = () => {
-        setIsOpen(false);
+  const handleSkip = () => {
+    setIsOpen(false);
 
-        setSuggestions([]);
-        setLocationError("");
-        setPermissionIssue(false);
+    setSuggestions([]);
+    setLocationError("");
+    setPermissionIssue(false);
 
-        setSaving(false);
+    setSaving(false);
 
-        manualEditRef.current = false;
+    manualEditRef.current = false;
 
-        /*
+    /*
           Keep existing saved location intact.
         */
-        const saved = getSavedProfile();
+    const saved = getSavedProfile();
 
-        if (saved?.location) {
-            setLocationInput(saved.location);
+    if (saved?.location) {
+      setLocationInput(saved.location);
 
-            setCoordinates(
-                saved.coordinates || null
-            );
+      setCoordinates(saved.coordinates || null);
 
-            setLocationSource(
-                saved.locationSource || "manual"
-            );
+      setLocationSource(saved.locationSource || "manual");
 
-            setSelectedSuggestion({
-                display_name: saved.location,
-                lat: saved.coordinates?.latitude,
-                lon: saved.coordinates?.longitude,
-            });
-        }
-    };
+      setSelectedSuggestion({
+        display_name: saved.location,
+        lat: saved.coordinates?.latitude,
+        lon: saved.coordinates?.longitude,
+      });
+    }
+  };
 
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        Cleanup
     ------------------------------------------------------- */
 
-    useEffect(() => {
-        return () => {
-            if (searchTimer.current) {
-                clearTimeout(
-                    searchTimer.current
-                );
-            }
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) {
+        clearTimeout(searchTimer.current);
+      }
 
-            searchReqId.current += 1;
-            detectReqId.current += 1;
-        };
-    }, []);
+      searchReqId.current += 1;
+      detectReqId.current += 1;
+    };
+  }, []);
 
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        Modal hidden
     ------------------------------------------------------- */
 
-    if (!isOpen) {
-        return null;
-    }
+  if (!isOpen) {
+    return null;
+  }
 
-    /* -------------------------------------------------------
+  /* -------------------------------------------------------
        UI
     ------------------------------------------------------- */
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-3 py-1.5 backdrop-blur-md sm:px-6 sm:py-4">
-            <div className="relative w-[86vw] max-w-[430px] rounded-md border border-white/60 bg-[#fffdf5] shadow-[0_30px_100px_rgba(0,0,0,0.28)] sm:w-[70vw] sm:max-w-[440px]">
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-3 py-1.5 backdrop-blur-md sm:px-6 sm:py-4">
+      <div className="relative w-[86vw] max-w-[430px] rounded-md border border-white/60 bg-[#fffdf5] shadow-[0_30px_100px_rgba(0,0,0,0.28)] sm:w-[70vw] sm:max-w-[440px]">
+        {/* Top decorative background */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 overflow-hidden rounded-t-[24px]">
+          <div className="absolute -right-10 -top-20 h-44 w-44 rounded-full bg-[#FEDF24]/25 blur-3xl" />
 
-                {/* Top decorative background */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-24 overflow-hidden rounded-t-[24px]">
-                    <div className="absolute -right-10 -top-20 h-44 w-44 rounded-full bg-[#FEDF24]/25 blur-3xl" />
-
-                    <div className="absolute -left-12 -top-16 h-36 w-36 rounded-full bg-[#44807F]/20 blur-3xl" />
-                </div>
-
-                <div className="relative px-4 pb-4 pt-2 sm:px-7 sm:pb-6 sm:pt-7">
-
-                    {/* Icon */}
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#44807F] text-white shadow-[0_10px_30px_rgba(68,128,127,0.25)]">
-                        <Sparkles
-                            size={18}
-                            strokeWidth={2.2}
-                        />
-                    </div>
-
-                    {/* Heading */}
-                    <div>
-                        <h2 className="text-[23px] font-black leading-[1.12] tracking-[-0.04em] text-[#182322] sm:text-3xl">
-                            Find what's
-
-                            <span className="block bg-gradient-to-r from-[#44807F] to-[#6ba58f] bg-clip-text text-transparent">
-                                happening near you.
-                            </span>
-                        </h2>
-
-                        <p className="mt-2 max-w-sm text-[12px] leading-4 text-[#182322]/60 sm:mt-2 sm:text-sm sm:leading-5">
-                            Tell us where you are and discover events happening around you.
-                        </p>
-                    </div>
-
-                    {/* Location */}
-                    <div className="mt-3 sm:mt-4">
-
-                        <div className="mb-2 flex items-center justify-between">
-                            <label className="text-sm font-bold text-[#182322]">
-                                Your location
-                            </label>
-
-                            <button
-                                type="button"
-                                onClick={
-                                    handleDetectClick
-                                }
-                                disabled={isDetecting}
-                                className="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#44807F] transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {isDetecting ? (
-                                    <>
-                                        <Loader2
-                                            size={13}
-                                            className="animate-spin"
-                                        />
-
-                                        Detecting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Navigation
-                                            size={13}
-                                        />
-
-                                        Detect location
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Input */}
-                        <div className="relative">
-
-                            <MapPin
-                                size={17}
-                                className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#44807F]"
-                            />
-
-                            <input
-                                type="text"
-                                value={locationInput}
-                                onChange={(e) =>
-                                    handleLocationInput(
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Enter your city"
-                                autoComplete="off"
-                                className="h-11 w-full rounded-md border border-[#182322]/10 bg-white pl-11 pr-10 text-sm font-medium text-[#182322] outline-none transition placeholder:text-[#182322]/35 focus:border-[#44807F]/50 focus:ring-4 focus:ring-[#44807F]/10"
-                            />
-
-                            {isSearching && (
-                                <Loader2
-                                    size={16}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-[#44807F]"
-                                />
-                            )}
-
-                            {!isSearching &&
-                                selectedSuggestion && (
-                                    <CheckCircle2
-                                        size={17}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#44807F]"
-                                    />
-                                )}
-                        </div>
-
-                        {/* Suggestions */}
-                        {suggestions.length > 0 && (
-                            <div className="mt-2 overflow-hidden rounded-xl border border-[#182322]/10 bg-white shadow-[0_15px_35px_rgba(24,35,34,0.12)]">
-
-                                <div className="border-b border-[#182322]/5 px-3 py-2">
-                                    <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#182322]/35">
-                                        Select a location
-                                    </p>
-                                </div>
-
-                                {suggestions.map(
-                                    (
-                                        item,
-                                        index
-                                    ) => {
-                                        const address =
-                                            item?.address ||
-                                            {};
-
-                                        const city =
-                                            extractCityName(
-                                                item
-                                            );
-
-                                        const state =
-                                            address.state ||
-                                            "";
-
-                                        return (
-                                            <button
-                                                key={`${item.place_id}-${index}`}
-                                                type="button"
-                                                onClick={() =>
-                                                    handleSelectSuggestion(
-                                                        item
-                                                    )
-                                                }
-                                                className="flex w-full cursor-pointer items-start gap-3 border-b border-[#182322]/5 px-3 py-3 text-left transition last:border-b-0 hover:bg-[#44807F]/5"
-                                            >
-                                                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#44807F]/10">
-                                                    <MapPin
-                                                        size={14}
-                                                        className="text-[#44807F]"
-                                                    />
-                                                </div>
-
-                                                <div className="min-w-0">
-                                                    <p className="truncate text-xs font-bold text-[#182322]">
-                                                        {city}
-                                                    </p>
-
-                                                    <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-[#182322]/45">
-                                                        {state
-                                                            ? `${city}, ${state}`
-                                                            : item.display_name}
-                                                    </p>
-                                                </div>
-                                            </button>
-                                        );
-                                    }
-                                )}
-                            </div>
-                        )}
-
-                        {/* No results */}
-                        {!isSearching &&
-                            locationInput
-                                .trim()
-                                .length >= 2 &&
-                            suggestions.length === 0 &&
-                            !selectedSuggestion && (
-                                <div className="mt-2 flex items-center gap-2 rounded-xl bg-[#182322]/5 px-3 py-2.5">
-                                    <Search
-                                        size={14}
-                                        className="shrink-0 text-[#182322]/35"
-                                    />
-
-                                    <p className="text-[10px] text-[#182322]/50">
-                                        No matching location found. Please try another city.
-                                    </p>
-                                </div>
-                            )}
-
-                        {/* Error */}
-                        {locationError && (
-                            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
-
-                                <div className="flex items-start gap-2.5">
-
-                                    <MapPin
-                                        size={17}
-                                        className="mt-0.5 shrink-0 text-red-500"
-                                    />
-
-                                    <div className="flex-1">
-
-                                        <p className="text-xs font-bold text-red-600">
-                                            Location access needed
-                                        </p>
-                                        <p className="mt-1 text-[11px] leading-4 text-red-500/80">
-                                            {locationError}
-                                        </p>
-
-                                        {permissionIssue && (
-                                            <button
-                                                type="button"
-                                                onClick={
-                                                    handleDetectClick
-                                                }
-                                                disabled={
-                                                    isDetecting
-                                                }
-                                                className="mt-2 inline-flex cursor-pointer items-center gap-1.5 text-[11px] font-bold text-[#44807F] transition hover:opacity-70 disabled:opacity-50"
-                                            >
-                                                {isDetecting ? (
-                                                    <>
-                                                        <Loader2
-                                                            size={12}
-                                                            className="animate-spin"
-                                                        />
-
-                                                        Detecting...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Navigation
-                                                            size={12}
-                                                        />
-
-                                                        Try Again
-                                                    </>
-                                                )}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Valid selected location */}
-                        {!locationError &&
-                            locationInput &&
-                            selectedSuggestion && (
-                                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#44807F]">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-[#44807F]" />
-
-                                    {coordinates
-                                        ? "Valid location selected"
-                                        : "Location selected"}
-                                </div>
-                            )}
-                    </div>
-
-                    {/* Continue */}
-                    <div className="mt-4 sm:mt-5">
-
-                        <button
-                            type="button"
-                            onClick={
-                                handleContinue
-                            }
-                            disabled={saving}
-                            className="group flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[#182322] px-5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(24,35,34,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#44807F] hover:shadow-[0_16px_35px_rgba(68,128,127,0.22)] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {saving ? (
-                                <>
-                                    <Loader2
-                                        size={16}
-                                        className="animate-spin"
-                                    />
-
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    Show Events
-
-                                    <ArrowRight
-                                        size={16}
-                                        className="transition-transform duration-300 group-hover:translate-x-1"
-                                    />
-                                </>
-                            )}
-                        </button>
-
-                        <p className="mt-1.5 text-center text-[10px] leading-4 text-[#182322]/40">
-                            You can change your location anytime.
-                        </p>
-                    </div>
-
-                    {/* Skip */}
-                    <button
-                        type="button"
-                        onClick={
-                            handleSkip
-                        }
-                        className="mx-auto mt-1 block cursor-pointer text-[11px] font-semibold text-[#182322]/40 transition hover:text-[#182322]"
-                    >
-                        Skip for now
-                    </button>
-                </div>
-            </div>
+          <div className="absolute -left-12 -top-16 h-36 w-36 rounded-full bg-[#44807F]/20 blur-3xl" />
         </div>
-    );
+
+        <div className="relative px-4 pb-4 pt-2 sm:px-7 sm:pb-6 sm:pt-7">
+          {/* Icon */}
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#44807F] text-white shadow-[0_10px_30px_rgba(68,128,127,0.25)]">
+            <Sparkles size={18} strokeWidth={2.2} />
+          </div>
+
+          {/* Heading */}
+          <div>
+            <h2 className="text-[23px] font-black leading-[1.12] tracking-[-0.04em] text-[#182322] sm:text-3xl">
+              Find what's
+              <span className="block bg-gradient-to-r from-[#44807F] to-[#6ba58f] bg-clip-text text-transparent">
+                happening near you.
+              </span>
+            </h2>
+
+            <p className="mt-2 max-w-sm text-[12px] leading-4 text-[#182322]/60 sm:mt-2 sm:text-sm sm:leading-5">
+              Tell us where you are and discover events happening around you.
+            </p>
+          </div>
+
+          {/* Location */}
+          <div className="mt-3 sm:mt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-bold text-[#182322]">
+                Your location
+              </label>
+
+              <button
+                type="button"
+                onClick={handleDetectClick}
+                disabled={isDetecting}
+                className="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#44807F] transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isDetecting ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    Detecting...
+                  </>
+                ) : (
+                  <>
+                    <Navigation size={13} />
+                    Detect location
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Input */}
+            <div className="relative">
+              <MapPin
+                size={17}
+                className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#44807F]"
+              />
+
+              <input
+                type="text"
+                value={locationInput}
+                onChange={(e) => handleLocationInput(e.target.value)}
+                placeholder="Enter your city"
+                autoComplete="off"
+                className="h-11 w-full rounded-md border border-[#182322]/10 bg-white pl-11 pr-10 text-sm font-medium text-[#182322] outline-none transition placeholder:text-[#182322]/35 focus:border-[#44807F]/50 focus:ring-4 focus:ring-[#44807F]/10"
+              />
+
+              {isSearching && (
+                <Loader2
+                  size={16}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-[#44807F]"
+                />
+              )}
+
+              {!isSearching && selectedSuggestion && (
+                <CheckCircle2
+                  size={17}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#44807F]"
+                />
+              )}
+            </div>
+
+            {/* Suggestions */}
+            {suggestions.length > 0 && (
+              <div className="mt-2 overflow-hidden rounded-xl border border-[#182322]/10 bg-white shadow-[0_15px_35px_rgba(24,35,34,0.12)]">
+                <div className="border-b border-[#182322]/5 px-3 py-2">
+                  <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#182322]/35">
+                    Select a location
+                  </p>
+                </div>
+
+                {suggestions.map((item, index) => {
+                  const address = item?.address || {};
+
+                  const city = extractCityName(item);
+
+                  const state = address.state || "";
+
+                  return (
+                    <button
+                      key={`${item.place_id}-${index}`}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(item)}
+                      className="flex w-full cursor-pointer items-start gap-3 border-b border-[#182322]/5 px-3 py-3 text-left transition last:border-b-0 hover:bg-[#44807F]/5"
+                    >
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#44807F]/10">
+                        <MapPin size={14} className="text-[#44807F]" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-bold text-[#182322]">
+                          {city}
+                        </p>
+
+                        <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-[#182322]/45">
+                          {state ? `${city}, ${state}` : item.display_name}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* No results */}
+            {!isSearching &&
+              locationInput.trim().length >= 2 &&
+              suggestions.length === 0 &&
+              !selectedSuggestion && (
+                <div className="mt-2 flex items-center gap-2 rounded-xl bg-[#182322]/5 px-3 py-2.5">
+                  <Search size={14} className="shrink-0 text-[#182322]/35" />
+
+                  <p className="text-[10px] text-[#182322]/50">
+                    No matching location found. Please try another city.
+                  </p>
+                </div>
+              )}
+
+            {/* Error */}
+            {locationError && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <div className="flex items-start gap-2.5">
+                  <MapPin size={17} className="mt-0.5 shrink-0 text-red-500" />
+
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-red-600">
+                      Location access needed
+                    </p>
+                    <p className="mt-1 text-[11px] leading-4 text-red-500/80">
+                      {locationError}
+                    </p>
+
+                    {permissionIssue && (
+                      <button
+                        type="button"
+                        onClick={handleDetectClick}
+                        disabled={isDetecting}
+                        className="mt-2 inline-flex cursor-pointer items-center gap-1.5 text-[11px] font-bold text-[#44807F] transition hover:opacity-70 disabled:opacity-50"
+                      >
+                        {isDetecting ? (
+                          <>
+                            <Loader2 size={12} className="animate-spin" />
+                            Detecting...
+                          </>
+                        ) : (
+                          <>
+                            <Navigation size={12} />
+                            Try Again
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Valid selected location */}
+            {!locationError && locationInput && selectedSuggestion && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#44807F]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#44807F]" />
+
+                {coordinates ? "Valid location selected" : "Location selected"}
+              </div>
+            )}
+          </div>
+
+          {/* Continue */}
+          <div className="mt-4 sm:mt-5">
+            <button
+              type="button"
+              onClick={handleContinue}
+              disabled={saving}
+              className="group flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[#182322] px-5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(24,35,34,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#44807F] hover:shadow-[0_16px_35px_rgba(68,128,127,0.22)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  Show Events
+                  <ArrowRight
+                    size={16}
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                  />
+                </>
+              )}
+            </button>
+
+            <p className="mt-1.5 text-center text-[10px] leading-4 text-[#182322]/40">
+              You can change your location anytime.
+            </p>
+          </div>
+
+          {/* Skip */}
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="mx-auto mt-1 block cursor-pointer text-[11px] font-semibold text-[#182322]/40 transition hover:text-[#182322]"
+          >
+            Skip for now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default LocationOnboarding;
-

@@ -189,10 +189,6 @@ const mapCompanyEvent = (id, data, companyId, companyData = {}) => {
             companyData.subdomain ||
             null,
 
-        isPrivate: Boolean(data.isPrivate),
-
-        status: data.status,
-
         bookingUrl:
             data.bookingUrl ||
             data.ticketBookingUrl ||

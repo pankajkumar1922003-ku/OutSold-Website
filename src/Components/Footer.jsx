@@ -248,13 +248,9 @@ const Footer = () => {
                   onClick={() => setIsListEventOpen(true)}
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.97 }}
-                  className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#FEDF24] px-5
-    text-sm font-bold text-[#182322]
-    shadow-sm transition
-    hover:bg-[#ffe84f]
-  "
+                  className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#FEDF24] px-5 text-sm font-bold text-[#182322] shadow-sm transition hover:bg-[#ffe84f]"
                 >
-                  <span className="whitespace-nowrap">
+                  <span className="whitespace-nowrap cursor-pointer">
                     List your event
                   </span>
 
